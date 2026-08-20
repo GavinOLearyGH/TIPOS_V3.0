@@ -5,6 +5,9 @@ on:
     branches:
       - v3.0-hardening
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
