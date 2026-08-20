@@ -29,6 +29,7 @@ test('inactive TIP nav mark is smaller than active mark', async ({ page }) => {
   const tip = page.locator('[data-route="tip"] .nav-tip-logo');
   const inactive = await tip.evaluate(el => el.getBoundingClientRect().width);
   await page.locator('[data-route="tip"]').click();
+  await page.waitForTimeout(200);
   const active = await tip.evaluate(el => el.getBoundingClientRect().width);
   expect(active).toBeGreaterThan(inactive);
 });
