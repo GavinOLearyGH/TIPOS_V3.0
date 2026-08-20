@@ -3,6 +3,7 @@ import { TIPState } from './core/storage.js';
 import { deleteJournalEntry } from './core/journal.js';
 import { detectV2Data, importV2FromThisDevice } from './core/import-v2.js';
 import { rebuildTIPMemory } from './coach/memory.js';
+import { getTIPSuggestion } from './coach/recommend.js';
 import { renderEntryForm, saveEntryForm } from './golfer/entry-form.js';
 import { renderHome } from './home/home-view.js';
 import { renderTIP } from './tip/tip-view.js';
@@ -73,11 +74,18 @@ function launchTIP7() {
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
-function launchTIP9() {
+function launchTIP9(preferredPracticeId=null) {
   endExecution();
   executionMode = 'tip9';
-  executionCleanup = startTIP9({ container:view, onExit:returnHomeFromExecution, onComplete:() => showToast('TIP9 saved to your Journal.') });
+  executionCleanup = startTIP9({ container:view, preferredPracticeId, onExit:returnHomeFromExecution, onComplete:() => showToast('TIP9 saved to your Journal.') });
   window.scrollTo({ top:0, behavior:'instant' });
+}
+
+function launchTIPSuggestion(){
+  const suggestion = getTIPSuggestion();
+  if(suggestion.action?.type === 'tip7') { launchTIP7(); return; }
+  if(suggestion.action?.type === 'tip9') { launchTIP9(suggestion.action.practiceId || null); return; }
+  showToast('TIP is still learning what to suggest next.');
 }
 
 function openEntry(entryId = null, type = null) {
@@ -109,6 +117,7 @@ function handleAction(target) {
   switch (action) {
     case 'tip7': launchTIP7(); break;
     case 'tip9': launchTIP9(); break;
+    case 'tip-suggestion': launchTIPSuggestion(); break;
     case 'tell-tip':
     case 'add-entry': openEntry(null, 'round'); break;
     case 'edit-entry': openEntry(target.dataset.entryId); break;
@@ -118,7 +127,7 @@ function handleAction(target) {
         showToast('Journal entry deleted.');
       }
       break;
-    case 'build-session': showToast('Session composition comes after TIP Memory and TIP Suggests.'); break;
+    case 'build-session': showToast('Build Today’s Session arrives in V3.0-G.'); break;
     default: break;
   }
 }
