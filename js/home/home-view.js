@@ -27,7 +27,7 @@ export function renderHome() {
   return `
     <section class="page-header">
       <div class="eyebrow">TODAY</div>
-      <h1 class="page-title">What are you working on?</h1>
+      <h1 class="page-title">What are we working on today?</h1>
     </section>
 
     <section class="home-core-list section" aria-label="The Irish Par">

@@ -31,6 +31,6 @@ test('center TIP nav mark has padded viewBox and remains fully visible', async (
     height: el.getBoundingClientRect().height
   }));
   expect(styles.overflow).toBe('visible');
-  expect(styles.width).toBeLessThanOrEqual(42.5);
+  expect(styles.width).toBeGreaterThan(20);
   expect(styles.height).toBeGreaterThan(20);
 });

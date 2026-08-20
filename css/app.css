@@ -78,13 +78,23 @@
 .nav-item-tip { background: transparent!important; overflow:visible; }
 .nav-tip-logo {
   display:block;
-  width:39px;
-  height:22px;
+  width:42px;
+  height:42px;
+  padding:10px 6px;
+  box-sizing:border-box;
   overflow:visible;
   color:var(--tip-faint);
-  transition:width .15s ease,height .15s ease,color .15s ease;
+  border:1px solid var(--tip-line);
+  border-radius:999px;
+  transition:width .15s ease,height .15s ease,color .15s ease,border-color .15s ease,background .15s ease;
 }
-.nav-item-tip.active .nav-tip-logo { width:42px; height:23px; color: var(--tip-accent); }
+.nav-item-tip.active .nav-tip-logo {
+  width:46px;
+  height:46px;
+  color:var(--tip-accent);
+  border-color:var(--tip-line-accent);
+  background:var(--tip-panel);
+}
 
 .welcome-dialog {
   width: min(100%, var(--tip-max-width));
