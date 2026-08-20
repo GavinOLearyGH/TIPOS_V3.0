@@ -1,10 +1,14 @@
 import { TIPState } from '../core/storage.js';
 import { getTIP7Status } from '../tip7/tip7-engine.js';
 import { memoryConfidenceCopy } from '../coach/memory.js';
+import { getTIPSuggestion, suggestionModeLabel } from '../coach/recommend.js';
+
+function esc(value='') {
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 export function renderHome() {
   const state = TIPState.get();
-  const hasJournal = state.journal.length > 0;
   const tip7 = getTIP7Status();
   const tip7Copy = tip7.complete
     ? 'Foundation complete · 7 / 7'
@@ -16,7 +20,7 @@ export function renderHome() {
     ? `${state.tip9.lifetime} completed${recentTip9?.context ? ` · Last: ${String(recentTip9.context).replace('noball','No Ball')}` : ''}`
     : 'Nine balls · Swing + Skill';
   const memoryCopy = memoryConfidenceCopy(state.memory);
-  const evidence = Number(state.memory?.summary?.totalEvidence || 0);
+  const suggestion = getTIPSuggestion();
 
   return `
     <section>
@@ -44,12 +48,19 @@ export function renderHome() {
       <div class="section-head">
         <div>
           <div class="eyebrow">TIP SUGGESTS</div>
-          <h2>${memoryCopy}</h2>
+          <h2>${esc(memoryCopy)}</h2>
         </div>
       </div>
-      <article class="card card-accent">
-        <div class="card-top"><div><span class="pill">MEMORY</span><h3>${hasJournal ? 'TIP is quietly building your golf memory.' : 'Give TIP something to remember.'}</h3></div></div>
-        <p>${hasJournal ? `${evidence} weighted memory signal${evidence===1?'':'s'} are currently shaping TIP’s read. V3.0-F will turn that memory into one useful next action.` : 'Record a round, practice, complete TIP7 or complete TIP9 and TIP will start learning from what happened.'}</p>
+      <article class="card card-accent tip-suggestion-card">
+        <div class="card-top">
+          <div>
+            <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
+            <h3>${esc(suggestion.title)}</h3>
+          </div>
+          <small>${esc(suggestion.label)}</small>
+        </div>
+        <p>${esc(suggestion.reason)}</p>
+        <button class="primary-button tip-suggestion-start" type="button" data-action="tip-suggestion">START</button>
       </article>
     </section>
   `;
