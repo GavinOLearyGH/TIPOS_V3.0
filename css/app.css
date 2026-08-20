@@ -77,13 +77,10 @@
 .nav-icon { font-size: 21px; line-height: 1; }
 .nav-item-tip { background: transparent!important; }
 .nav-tip-logo {
-  display: inline-block;
-  color: var(--tip-faint);
-  font-size: 24px;
-  line-height: 1;
-  font-weight: 950;
-  letter-spacing: -.07em;
-  transform: translateY(1px);
+  display:block;
+  width:46px;
+  height:25px;
+  color:var(--tip-faint);
 }
 .nav-item-tip.active .nav-tip-logo { color: var(--tip-accent); }
 
