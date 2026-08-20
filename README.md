@@ -17,100 +17,55 @@ The golfer sees only three primary places:
 - **TIP** — the coach that learns from Journal evidence and recommends or composes useful work.
 - **Journal** — the single source of truth for rounds, practice, TIP7, TIP9, lessons, equipment, notes and completed built sessions.
 
-## Build phases
+## V3.0 release candidate
 
-- **V3.0-A — Foundation:** shell, navigation, shared state, storage, PWA. ✓
-- **V3.0-B — Journal:** canonical entries, capture, CRUD, backup/restore and V2 history import. ✓
-- **V3.0-C — TIP7:** native TIP7 engine with shared progress and Journal completion. ✓
-- **V3.0-D — TIP9:** native TIP9 engine with shared progress and Journal completion. ✓
-- **V3.0-E — TIP Memory:** Journal → signals → topics → memory. ✓
-- **V3.0-F — TIP Suggests:** memory → one recommended action. ✓
-- **V3.0-G — Build Today's Session:** time + place + memory → composed TIP7/TIP9 session. ✓
+The A–G build sequence is complete and the codebase has entered a hardening pass before release consolidation.
 
-## Current milestone — V3.0-G Build Today's Session
+Completed milestones:
 
-The second action on the TIP screen is now functional.
+- **Foundation** — shell, navigation, shared state, storage and PWA.
+- **Journal** — canonical entries, manual capture, CRUD, backup/restore and conservative V2 history import.
+- **TIP7** — native body execution with shared progression and automatic Journal completion.
+- **TIP9** — native game execution with shared progression and automatic Journal completion.
+- **TIP Memory** — Journal → signals → normalized topics → confidence/trends/priorities.
+- **TIP Suggests** — Memory → one next action on Home.
+- **Build Today's Session** — time + place + Memory → composed TIP7/TIP9 session.
 
-The golfer chooses only:
+## Core architecture
 
-1. **How much time?** — 7, 15, 30, 45 or 60+ minutes.
-2. **Where are you?** — Range, Hitting Bay, Putting Green, Short Game, Home / No Ball or Anywhere.
+### One golfer
 
-TIP then composes a session from the existing native execution engines rather than inventing a third drill system.
+All persistent V3 data lives behind `TIP_V3_STATE`. TIP7 and TIP9 do not own separate local-storage databases.
 
-### Composition model
+### One visible history
 
-`js/coach/compose-session.js` combines:
+The Journal is the source of truth for completed golf activity. TIP Memory is derived from Journal evidence and can be rebuilt.
 
-- the current TIP Suggests recommendation
-- TIP Memory priority
-- today's TIP7 eligibility and Foundation sequence
-- TIP9 context eligibility
-- TIP9 current progression level
-- recent TIP9 usage
-- available time
+### Native execution blocks
 
-A seven-minute request remains one focused action. Longer sessions can combine today's available TIP7 with one or more TIP9 blocks.
+A built session is an ordered sequence of the existing TIP7 and TIP9 engines. It does not create a third drill engine or duplicate component progression.
 
-Examples:
+### One recommendation
 
-**15 minutes**
-- TIP7
-- TIP9
+Home shows one TIP suggestion rather than a dashboard of weaknesses, plans or coaching scores.
 
-or, where short-game/putting context makes body work less practical:
-- TIP9
-- TIP9
+## Release hardening completed
 
-**30 minutes**
-- TIP7
-- priority TIP9
-- secondary TIP9
+The release-candidate pass includes:
 
-Longer sessions add further non-duplicate context-valid TIP9 blocks while keeping the current coaching priority first.
+- stricter V3 snapshot validation before restore
+- defensive state normalization
+- explicit storage-write failure handling
+- Memory rebuilds limited to Journal/restore/import/reset changes
+- composed-session navigation and abort cleanup
+- transient session-plan cleanup
+- canonical TIP9 topic mappings so practice evidence is not silently dropped by Memory
+- TIP9 completion validation requiring all three scored blocks
+- corrected V2 import deduplication counts
+- release-candidate PWA cache versioning
+- removal of milestone-only version labeling from the golfer-facing shell
 
-### Session preview
-
-Before execution, TIP shows:
-
-- selected time and place
-- the current coaching focus
-- why the session was built this way
-- the ordered TIP7/TIP9 blocks
-
-The golfer can start or change time/place.
-
-### Native execution
-
-Built sessions do not duplicate TIP7 or TIP9 logic.
-
-Each block launches the existing native engine at the correct progression state. A known session context is passed directly into TIP9 so a built Range session does not ask the golfer where they are again.
-
-A block must actually complete before the runner advances. If the golfer stops early, completed component activities remain in the Journal, but V3 does not fabricate a completed parent session.
-
-### Journal model
-
-TIP7 and TIP9 continue to write their own canonical Journal entries.
-
-When every planned block is completed, V3 writes one additional read-only parent `session` entry containing:
-
-- planned time
-- practice context
-- completed/planned block count
-- ordered block descriptors
-- IDs of the underlying TIP7/TIP9 Journal entries
-- combined topics/dimensions
-- session start/completion timestamps
-
-The parent record links the session together without duplicating the component scores, progression or check-ins.
-
-### Offline
-
-The session composer and builder UI are included in the V3 PWA cache alongside the existing Journal, Memory, Suggests, TIP7 and TIP9 modules.
-
-## V3.0 core loop
-
-The complete V3 coaching loop now exists:
+## Current coaching loop
 
 **DO**
 - TIP7
@@ -137,4 +92,12 @@ The complete V3 coaching loop now exists:
 
 **DO AGAIN**
 
-The primary V3.0 product architecture is now functionally represented in the codebase without reintroducing the V2 dashboard, plans, missions, coaching notes or player-card layers.
+## Release scope
+
+V3.0 intentionally does **not** restore the V2 dashboard, Today's Mission, TIP Plans, Coaching Notes, Coach's Corner, player-card/XP/identity layers or a separate Smart Journal UI.
+
+The release remains intentionally small:
+
+**HOME | TIP | GOLFER**
+
+Complexity stays behind the interface.
