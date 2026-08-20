@@ -10,6 +10,10 @@ export function renderHome() {
     : tip7.doneToday
       ? `Done today · 🔥 ${tip7.streak} day streak`
       : `Day ${tip7.nextDay?.day || 1} · ${tip7.nextDay?.theme || 'Foundation'}`;
+  const recentTip9 = (state.tip9.recent || [])[0];
+  const tip9Copy = state.tip9.lifetime
+    ? `${state.tip9.lifetime} completed${recentTip9?.context ? ` · Last: ${String(recentTip9.context).replace('noball','No Ball')}` : ''}`
+    : 'Nine balls · Swing + Skill';
 
   return `
     <section>
@@ -28,7 +32,7 @@ export function renderHome() {
         <button class="card card-button product-card" type="button" data-action="tip9">
           <div class="eyebrow">GAME</div>
           <div class="product-number">TIP<b>9</b></div>
-          <p>Nine balls · Swing + Skill</p>
+          <p>${tip9Copy}</p>
         </button>
       </div>
     </section>
@@ -41,13 +45,8 @@ export function renderHome() {
         </div>
       </div>
       <article class="card card-accent">
-        <div class="card-top">
-          <div>
-            <span class="pill">FOUNDATION</span>
-            <h3>${hasJournal ? 'Recommendation engine arrives in V3.0-F.' : 'Give TIP something to remember.'}</h3>
-          </div>
-        </div>
-        <p>${hasJournal ? 'Your Journal is already stored in the shared V3 state. The coaching layer will turn that evidence into one useful next action.' : 'Record a round, practice, or complete TIP7 and the Journal will begin building your golf history.'}</p>
+        <div class="card-top"><div><span class="pill">FOUNDATION</span><h3>${hasJournal ? 'Recommendation engine arrives in V3.0-F.' : 'Give TIP something to remember.'}</h3></div></div>
+        <p>${hasJournal ? 'Your Journal already includes manual entries, TIP7 and TIP9 activity. The coaching layer will turn that evidence into one useful next action.' : 'Record a round, practice, complete TIP7 or complete TIP9 and the Journal will begin building your golf history.'}</p>
       </article>
     </section>
   `;
