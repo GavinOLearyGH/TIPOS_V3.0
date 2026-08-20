@@ -65,7 +65,7 @@ export function renderHome() {
           <div class="card-top">
             <div>
               <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
-              <h3>${esc(suggestion.title)}</h3>
+              <h2>${esc(suggestion.title)}</h2>
             </div>
             <small>${esc(suggestion.label)}</small>
           </div>
