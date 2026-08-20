@@ -4,7 +4,7 @@ import { memoryConfidenceCopy } from '../coach/memory.js';
 import { getTIPSuggestion, suggestionModeLabel } from '../coach/recommend.js';
 
 function esc(value='') {
-  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 }
 
 export function renderHome() {
@@ -61,7 +61,7 @@ export function renderHome() {
             <h2>${esc(memoryCopy)}</h2>
           </div>
         </div>
-        <article class="card card-accent tip-suggestion-card">
+        <article class="card card-accent tip-suggestion-card home-tip-suggestion">
           <div class="card-top">
             <div>
               <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
