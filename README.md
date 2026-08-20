@@ -6,7 +6,7 @@
 
 The golfer sees only three primary places:
 
-- **Home** — do something now: TIP7, TIP9, or TIP's suggestion.
+- **Home** — TIP7, TIP9, or TIP's suggestion.
 - **TIP** — tell TIP what happened or have TIP build today's session.
 - **Golfer** — the Journal; the single visible history of the golfer.
 
@@ -14,8 +14,8 @@ The golfer sees only three primary places:
 
 - **TIP7** — seven minutes for the golf body: Stretch + Strength.
 - **TIP9** — nine balls/reps for the golf game: Swing + Skill.
-- **TIP** — the coach that learns from Journal evidence and recommends one useful next action.
-- **Journal** — the single source of truth for rounds, practice, TIP7, TIP9, lessons, equipment and notes.
+- **TIP** — the coach that learns from Journal evidence and recommends or composes useful work.
+- **Journal** — the single source of truth for rounds, practice, TIP7, TIP9, lessons, equipment, notes and completed built sessions.
 
 ## Build phases
 
@@ -25,118 +25,116 @@ The golfer sees only three primary places:
 - **V3.0-D — TIP9:** native TIP9 engine with shared progress and Journal completion. ✓
 - **V3.0-E — TIP Memory:** Journal → signals → topics → memory. ✓
 - **V3.0-F — TIP Suggests:** memory → one recommended action. ✓
-- **V3.0-G — Build Today's Session:** compose TIP7/TIP9/custom activities from time, context and memory.
+- **V3.0-G — Build Today's Session:** time + place + memory → composed TIP7/TIP9 session. ✓
 
-## Current milestone — V3.0-F TIP Suggests
+## Current milestone — V3.0-G Build Today's Session
 
-TIP Suggests connects the invisible Memory layer to one visible action on Home. It does not expose a weakness dashboard, topic list or coaching scorecard.
+The second action on the TIP screen is now functional.
 
-The Home contract is now:
+The golfer chooses only:
 
-- TIP7 — Body
-- TIP9 — Game
-- TIP Suggests — one next action
+1. **How much time?** — 7, 15, 30, 45 or 60+ minutes.
+2. **Where are you?** — Range, Hitting Bay, Putting Green, Short Game, Home / No Ball or Anywhere.
 
-### Recommendation contract
+TIP then composes a session from the existing native execution engines rather than inventing a third drill system.
 
-`js/coach/recommend.js` returns one recommendation with:
+### Composition model
 
-- `kind` — TIP7 or TIP9
-- `mode` — Improve, Reinforce, Maintain or Learn
-- coaching topic
-- display title and reason
-- executable action
+`js/coach/compose-session.js` combines:
 
-The Home screen renders only that single recommendation and one `START` button.
+- the current TIP Suggests recommendation
+- TIP Memory priority
+- today's TIP7 eligibility and Foundation sequence
+- TIP9 context eligibility
+- TIP9 current progression level
+- recent TIP9 usage
+- available time
 
-### Improve
+A seven-minute request remains one focused action. Longer sessions can combine today's available TIP7 with one or more TIP9 blocks.
 
-When Memory contains a meaningful recent negative pattern, TIP identifies the strongest current need using recency, confidence, trend and negative evidence.
+Examples:
 
-Game priorities are mapped to the relevant TIP9 practice families. Examples include:
+**15 minutes**
+- TIP7
+- TIP9
 
-- Tee Control → Playable Tee Ball
-- Approach Play → Approach Window / Club Selection
-- Wedge Distance → Wedge Distance / Pitch Control
-- Putting Pace → Lag Putting / Speed Ladder
-- Contact → Contact / Low Point
-- Tempo → Tempo / Transition
-- Short Game → the relevant short-game TIP9 family
+or, where short-game/putting context makes body work less practical:
+- TIP9
+- TIP9
 
-Recent practice history and the golfer's current TIP9 level influence which eligible practice is selected so TIP does not simply repeat the same drill when a useful alternative exists.
+**30 minutes**
+- TIP7
+- priority TIP9
+- secondary TIP9
 
-### Reinforce
+Longer sessions add further non-duplicate context-valid TIP9 blocks while keeping the current coaching priority first.
 
-If there is no sufficiently strong current weakness, TIP can reinforce an established positive Game pattern instead of inventing a problem.
+### Session preview
 
-This supports the coaching principle that a strength can be worth preserving and that every recommendation does not need to be corrective.
+Before execution, TIP shows:
 
-### Body priorities
+- selected time and place
+- the current coaching focus
+- why the session was built this way
+- the ordered TIP7/TIP9 blocks
 
-Body topics continue to respect TIP7's programmed Foundation sequence. TIP will not jump directly to an arbitrary mobility or strength circuit merely because one body topic scores highly.
+The golfer can start or change time/place.
 
-If a Body priority is active and today's TIP7 is available, the suggestion launches the next legitimate Foundation day and explains that it is continuing the body work without breaking progression.
+### Native execution
 
-### Learn / early golfer
+Built sessions do not duplicate TIP7 or TIP9 logic.
 
-TIP does not pretend to know a weakness when the Journal has too little evidence.
+Each block launches the existing native engine at the correct progression state. A known session context is passed directly into TIP9 so a built Range session does not ask the golfer where they are again.
 
-During the learning stage it recommends a simple useful activity — normally the available TIP7 day or a foundational TIP9 — specifically to generate better evidence for the Journal and Memory layer.
+A block must actually complete before the runner advances. If the golfer stops early, completed component activities remain in the Journal, but V3 does not fabricate a completed parent session.
 
-### Suggested TIP9 context
+### Journal model
 
-A Home recommendation can now carry a selected TIP9 practice directly into the execution engine.
+TIP7 and TIP9 continue to write their own canonical Journal entries.
 
-If that practice works in several locations, TIP asks only one question:
+When every planned block is completed, V3 writes one additional read-only parent `session` entry containing:
 
-**Where are you practicing?**
+- planned time
+- practice context
+- completed/planned block count
+- ordered block descriptors
+- IDs of the underlying TIP7/TIP9 Journal entries
+- combined topics/dimensions
+- session start/completion timestamps
 
-The golfer chooses from the contexts supported by that recommended practice, and TIP9 then opens at the correct current progression level. The golfer can still choose a different TIP9 if desired.
-
-This means the sequence is:
-
-**Memory → recommended practice → context → current level → 3 × 3 execution**
-
-rather than selecting a recommendation on Home and then losing it when TIP9 opens.
-
-### Recent-use protection
-
-TIP9 recommendation selection takes account of recent use and completion history. When several practices address the same coaching topic, recently repeated work receives a penalty so an equally useful alternative can surface.
-
-This is intentionally lightweight in V3.0-F. V3.0-G can use the same recommendation contract when composing longer sessions.
-
-### Memory remains derived
-
-The Journal is still truth. TIP Memory and TIP Suggests are interpretations of that history.
-
-Editing or deleting a manual Journal entry rebuilds Memory, which can immediately change the Home recommendation. Completing TIP7 or TIP9 also writes to the Journal, rebuilds Memory, and allows the next suggestion to adapt.
+The parent record links the session together without duplicating the component scores, progression or check-ins.
 
 ### Offline
 
-`js/coach/recommend.js` is included in the PWA app-shell cache alongside Memory, TIP7 and TIP9. Recommendation selection and execution therefore continue to work from the local golfer state when offline.
+The session composer and builder UI are included in the V3 PWA cache alongside the existing Journal, Memory, Suggests, TIP7 and TIP9 modules.
 
-## What now exists
+## V3.0 core loop
 
-The core V3 loop now works end-to-end:
+The complete V3 coaching loop now exists:
 
 **DO**
-- TIP7 — Body
-- TIP9 — Game
+- TIP7
+- TIP9
+- or a TIP-built multi-block session
 
 ↓
 
 **REMEMBER**
-- Journal — visible history
-- TIP Memory — invisible interpretation
+- one Journal
 
 ↓
 
-**SUGGEST**
-- one Home recommendation
+**UNDERSTAND**
+- TIP Memory
+
+↓
+
+**SUGGEST / COMPOSE**
+- one next action on Home
+- or one coherent session based on time and place
 
 ↓
 
 **DO AGAIN**
-- START launches the recommended TIP7 or TIP9
 
-The remaining major V3.0 milestone is **V3.0-G — Build Today's Session**, where TIP will combine the same body/game activities into a longer session based on available time, practice context and current Memory.
+The primary V3.0 product architecture is now functionally represented in the codebase without reintroducing the V2 dashboard, plans, missions, coaching notes or player-card layers.
