@@ -47,7 +47,7 @@ function entryHTML(entry) {
 export function renderGolfer() {
   const entries = getJournal();
   return `
-    <section><div class="eyebrow">GOLFER</div><h1 class="page-title">Journal.</h1><p class="page-copy">Your golf has a memory. Rounds, practice, TIP7, TIP9 and the things worth remembering live here.</p></section>
+    <section class="page-header"><div class="eyebrow">GOLFER</div><h1 class="page-title">Journal.</h1><p class="page-copy">Your golf has a memory. Rounds, practice, TIP7, TIP9 and the things worth remembering live here.</p></section>
     <section class="section"><button class="primary-button" type="button" data-action="add-entry">+ ADD ENTRY</button></section>
     <section class="section">
       <div class="section-head"><div><div class="eyebrow">YOUR GOLF</div><h2>${entries.length ? `${entries.length} ${entries.length===1?'entry':'entries'}` : 'Nothing here yet'}</h2></div></div>
