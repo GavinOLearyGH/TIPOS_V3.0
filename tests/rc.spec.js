@@ -11,9 +11,10 @@ async function fresh(page) {
   await page.goto('/#/home');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect(page.locator('#welcomeDialog')).toHaveAttribute('open', '');
-  await expect(page.getByText('7 Minute Stretch & Strength')).toBeVisible();
-  await expect(page.getByText('9 Ball Challenge for Swing & Skill')).toBeVisible();
+  const welcome = page.locator('#welcomeDialog');
+  await expect(welcome).toHaveAttribute('open', '');
+  await expect(welcome.getByText('7 Minute Stretch & Strength')).toBeVisible();
+  await expect(welcome.getByText('9 Ball Challenge for Swing & Skill')).toBeVisible();
   await page.locator('#welcomeStartBtn').click();
   await expect(page.locator('[data-action="tip7"]')).toBeVisible();
 }
