@@ -2,6 +2,7 @@ import { startRouter, navigate } from './router.js';
 import { TIPState } from './core/storage.js';
 import { deleteJournalEntry } from './core/journal.js';
 import { detectV2Data, importV2FromThisDevice } from './core/import-v2.js';
+import { rebuildTIPMemory } from './coach/memory.js';
 import { renderEntryForm, saveEntryForm } from './golfer/entry-form.js';
 import { renderHome } from './home/home-view.js';
 import { renderTIP } from './tip/tip-view.js';
@@ -22,6 +23,7 @@ let activeRoute = 'home';
 let toastTimer = null;
 let executionMode = null;
 let executionCleanup = null;
+let memoryScheduled = false;
 
 const renderers = { home:renderHome, tip:renderTIP, golfer:renderGolfer };
 
@@ -30,6 +32,15 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add('show');
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+function scheduleMemoryRebuild(){
+  if(memoryScheduled) return;
+  memoryScheduled=true;
+  queueMicrotask(()=>{
+    memoryScheduled=false;
+    try { rebuildTIPMemory(); } catch(error) { console.warn('TIP memory rebuild failed',error); }
+  });
 }
 
 function endExecution() {
@@ -58,22 +69,14 @@ function returnHomeFromExecution() {
 function launchTIP7() {
   endExecution();
   executionMode = 'tip7';
-  executionCleanup = startTIP7({
-    container:view,
-    onExit:returnHomeFromExecution,
-    onComplete:() => showToast('TIP7 saved to your Journal.')
-  });
+  executionCleanup = startTIP7({ container:view, onExit:returnHomeFromExecution, onComplete:() => showToast('TIP7 saved to your Journal.') });
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
 function launchTIP9() {
   endExecution();
   executionMode = 'tip9';
-  executionCleanup = startTIP9({
-    container:view,
-    onExit:returnHomeFromExecution,
-    onComplete:() => showToast('TIP9 saved to your Journal.')
-  });
+  executionCleanup = startTIP9({ container:view, onExit:returnHomeFromExecution, onComplete:() => showToast('TIP9 saved to your Journal.') });
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
@@ -184,5 +187,10 @@ restoreFile.addEventListener('change', async () => {
   finally { restoreFile.value = ''; }
 });
 
-TIPState.addEventListener('change', () => { if (!executionMode) render(activeRoute); });
+TIPState.addEventListener('change', event => {
+  if(event.detail?.reason !== 'memory:rebuild') scheduleMemoryRebuild();
+  if (!executionMode) render(activeRoute);
+});
+
+rebuildTIPMemory();
 startRouter(route => { if (executionMode) endExecution(); render(route); });
