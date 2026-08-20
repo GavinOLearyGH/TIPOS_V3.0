@@ -1,0 +1,147 @@
+import { TIPState } from '../core/storage.js';
+import { getTIPMemory } from './memory.js';
+import { TIP_TOPICS } from './topics.js';
+import { getTIP7Status } from '../tip7/tip7-engine.js';
+import { TIP9_PRACTICES } from '../tip9/tip9-data.js';
+import { getTIP9PracticeState } from '../tip9/tip9-engine.js';
+
+export const TIP_SUGGEST_VERSION = '3.0-f-1';
+
+const TOPIC_TO_TIP9 = {
+  teeControl:['SK06'],
+  approachPlay:['SK08','SK11'],
+  wedgeDistance:['SK07','SK15'],
+  puttingStartLine:['SK01','SK03','SK05'],
+  puttingPace:['SK02','SK04'],
+  shortGame:['SK14','SK15','SK16','SK17','SK18'],
+  courseManagement:['SK11','SK13'],
+  contact:['SW01','SW03'],
+  tempo:['SW02','SW08'],
+  startDirection:['SW04','SW06'],
+  lowPoint:['SW03','SW01'],
+  faceAwareness:['SW06','SW04'],
+  balance:['SW05','SW07'],
+  transition:['SW08','SW02'],
+  routine:['SK12','SK05'],
+  confidence:['SK12']
+};
+
+function daysSince(value){
+  const time = new Date(value || 0).getTime();
+  return time ? Math.max(0,(Date.now()-time)/86400000) : 9999;
+}
+
+function topicNeedScore(topic){
+  if(!topic || !topic.evidence) return -Infinity;
+  const negative = Math.max(0,-Number(topic.score||0));
+  const confidence = Number(topic.confidence||0)/100;
+  const recency = daysSince(topic.lastObserved) <= 14 ? 1 : daysSince(topic.lastObserved) <= 45 ? .8 : .55;
+  const trendBonus = topic.trend === 'Sliding' ? 2 : topic.trend === 'Improving' ? -.5 : 0;
+  return negative*(.65+.35*confidence)*recency + trendBonus;
+}
+
+function topicReinforceScore(topic){
+  if(!topic || !topic.evidence || Number(topic.score||0) <= 0) return -Infinity;
+  const confidence = Number(topic.confidence||0)/100;
+  const recent = daysSince(topic.lastObserved) <= 30 ? 1 : .7;
+  return Number(topic.score||0)*(.5+.5*confidence)*recent + (topic.trend === 'Improving' ? 1.5 : 0);
+}
+
+function chooseTopic(memory){
+  const known = Object.values(memory?.topics || {}).filter(t => t.evidence > 0 && TIP_TOPICS[t.key]);
+  const needs = known.filter(t => t.score < 0 && (TIP_TOPICS[t.key].group === 'game' || TIP_TOPICS[t.key].group === 'body'))
+    .map(t => ({topic:t,score:topicNeedScore(t)})).sort((a,b)=>b.score-a.score);
+  if(needs[0] && needs[0].score >= .75) return { mode:'improve', topic:needs[0].topic };
+
+  const strengths = known.filter(t => t.score > 0 && TIP_TOPICS[t.key].group === 'game')
+    .map(t => ({topic:t,score:topicReinforceScore(t)})).sort((a,b)=>b.score-a.score);
+  if(strengths[0] && strengths[0].score >= 1.5) return { mode:'reinforce', topic:strengths[0].topic };
+  return null;
+}
+
+function recentPracticePenalty(id,state){
+  const recent = state.tip9.recent || [];
+  const index = recent.findIndex(x => (typeof x === 'string' ? x : x.id) === id);
+  return index < 0 ? 0 : (8-index)*3;
+}
+
+function chooseTIP9ForTopic(topicKey,state){
+  const ids = TOPIC_TO_TIP9[topicKey] || [];
+  const candidates = ids.map(id => TIP9_PRACTICES.find(p=>p.id===id)).filter(Boolean);
+  if(!candidates.length) return null;
+  return candidates.map((practice,index)=>{
+    const ps = getTIP9PracticeState(practice.id,state);
+    const score = (ps.completions||0)*2 + recentPracticePenalty(practice.id,state) + (ps.level-1)*.5 + index*.01;
+    return {practice,score};
+  }).sort((a,b)=>a.score-b.score)[0].practice;
+}
+
+function labelFor(topic){ return TIP_TOPICS[topic?.key]?.label || topic?.label || 'Your Golf'; }
+
+function bodySuggestion(selection,state){
+  const tip7 = getTIP7Status();
+  if(!tip7.canStart || !tip7.nextDay) return null;
+  return {
+    version:TIP_SUGGEST_VERSION,
+    kind:'tip7',
+    mode:selection?.mode || 'maintain',
+    topic:selection?.topic?.key || tip7.nextDay.topics?.[0] || 'mobility',
+    title:tip7.nextDay.theme,
+    label:`TIP7 · Day ${tip7.nextDay.day}`,
+    reason: selection?.topic
+      ? `Your recent Journal points to ${labelFor(selection.topic).toLowerCase()}. Today’s TIP7 keeps the body work moving without breaking the Foundation sequence.`
+      : 'A short body session keeps the habit moving while TIP continues learning your golf.',
+    action:{ type:'tip7' }
+  };
+}
+
+function gameSuggestion(selection,state){
+  const practice = chooseTIP9ForTopic(selection.topic.key,state);
+  if(!practice) return null;
+  const ps = getTIP9PracticeState(practice.id,state);
+  return {
+    version:TIP_SUGGEST_VERSION,
+    kind:'tip9',
+    mode:selection.mode,
+    topic:selection.topic.key,
+    title:practice.name,
+    label:`TIP9 · ${practice.type} · Level ${ps.level}`,
+    reason: selection.mode === 'improve'
+      ? `Your recent Journal keeps pointing to ${labelFor(selection.topic).toLowerCase()}. This is the best available TIP9 to work on it next.`
+      : `${labelFor(selection.topic)} has been showing up positively. Reinforce it with one focused TIP9 rather than adding a new problem to solve.`,
+    action:{ type:'tip9', practiceId:practice.id, contexts:[...practice.contexts] }
+  };
+}
+
+function learningSuggestion(state){
+  const tip7 = getTIP7Status();
+  if(tip7.canStart && Number(state.tip7.lifetime||0) <= Number(state.tip9.lifetime||0)) {
+    return bodySuggestion(null,state);
+  }
+  const practice = TIP9_PRACTICES.find(p=>p.id==='SW02') || TIP9_PRACTICES[0];
+  const ps = getTIP9PracticeState(practice.id,state);
+  return {
+    version:TIP_SUGGEST_VERSION,
+    kind:'tip9', mode:'learn', topic:'tempo', title:practice.name,
+    label:`TIP9 · ${practice.type} · Level ${ps.level}`,
+    reason:'TIP is still building evidence. A simple, repeatable TIP9 gives the Journal something useful to learn from without pretending there is already a clear weakness.',
+    action:{ type:'tip9', practiceId:practice.id, contexts:[...practice.contexts] }
+  };
+}
+
+export function getTIPSuggestion(){
+  const state = TIPState.get();
+  const memory = getTIPMemory();
+  const selection = chooseTopic(memory);
+
+  if(selection){
+    const def = TIP_TOPICS[selection.topic.key];
+    if(def?.group === 'body') return bodySuggestion(selection,state) || learningSuggestion(state);
+    if(def?.group === 'game') return gameSuggestion(selection,state) || learningSuggestion(state);
+  }
+  return learningSuggestion(state);
+}
+
+export function suggestionModeLabel(mode){
+  return ({improve:'IMPROVE',reinforce:'REINFORCE',maintain:'MAINTAIN',learn:'LEARN'})[mode] || 'TIP SUGGESTS';
+}
