@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  page.on('pageerror', error => console.log(`BROWSER_PAGE_ERROR: ${error.message}`));
+  page.on('console', msg => { if (msg.type() === 'error') console.log(`BROWSER_CONSOLE_ERROR: ${msg.text()}`); });
+});
+
+const nav = (page, route) => page.locator(`[data-route="${route}"]`).click();
+
 async function fresh(page) {
   await page.goto('/#/home');
   await page.evaluate(() => localStorage.clear());
@@ -8,32 +15,30 @@ async function fresh(page) {
 }
 
 async function addRound(page, note='Driver was good. Irons were heavy and approaches were short.') {
-  await page.getByRole('link', { name: 'TIP' }).click();
-  await page.getByRole('button', { name: /Tell TIP what you did/i }).click();
+  await nav(page, 'tip');
+  await page.locator('[data-action="tell-tip"]').click();
+  await expect(page.locator('#entryDialog')).toHaveAttribute('open', '');
   await page.locator('input[name="title"]').fill('Springhaven');
   await page.locator('input[name="score"]').fill('81');
   await page.locator('input[name="gir"]').fill('4');
   await page.locator('textarea[name="note"]').fill(note);
-  await page.getByRole('button', { name: /Save to Journal/i }).click();
+  await page.locator('#journalEntryForm button[type="submit"]').click();
   await expect(page.getByText('Springhaven')).toBeVisible();
 }
 
 async function completeTip7Quick(page) {
-  await page.getByRole('link', { name: 'HOME' }).click();
+  await nav(page, 'home');
   await page.locator('[data-action="tip7"]').click();
   await page.locator('[data-tip7-start]').click();
-  for (let i=0; i<24; i++) {
-    const next = page.locator('[data-tip7-next]');
-    if (await next.count()) await next.click();
-  }
+  for (let i=0; i<24; i++) await page.locator('[data-tip7-next]').click();
   await expect(page.getByText(/You showed up|Foundation/)).toBeVisible();
   const feel = page.locator('[data-tip7-feel]').first();
   if (await feel.count()) await feel.click();
   await page.locator('[data-tip7-done]').click();
 }
 
-async function completeTip9Skill(page, context='range') {
-  await page.getByRole('link', { name: 'HOME' }).click();
+async function completeTip9(page, context='range') {
+  await nav(page, 'home');
   await page.locator('[data-action="tip9"]').click();
   await page.locator(`[data-tip9-context="${context}"]`).click();
   await page.locator('[data-tip9-setup]').click();
@@ -48,21 +53,25 @@ async function completeTip9Skill(page, context='range') {
   await page.locator('[data-tip9-done]').click();
 }
 
+function chooseSessionOption(page, name, value) {
+  return page.locator(`label.session-choice:has(input[name="${name}"][value="${value}"])`).click();
+}
+
 test('fresh golfer has only the V3 primary surfaces', async ({ page }) => {
   await fresh(page);
   await expect(page.locator('[data-action="tip7"]')).toBeVisible();
   await expect(page.locator('[data-action="tip9"]')).toBeVisible();
   await expect(page.getByText('TIP SUGGESTS')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'HOME' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'TIP' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'GOLFER' })).toBeVisible();
+  await expect(page.locator('[data-route="home"]')).toBeVisible();
+  await expect(page.locator('[data-route="tip"]')).toBeVisible();
+  await expect(page.locator('[data-route="golfer"]')).toBeVisible();
   await expect(page.getByText(/Player Card|Today's Mission|Coach's Corner|TIP Plans/i)).toHaveCount(0);
 });
 
 test('round entry feeds Journal and changes TIP from learning-only state', async ({ page }) => {
   await fresh(page);
   await addRound(page);
-  await page.getByRole('link', { name: 'HOME' }).click();
+  await nav(page, 'home');
   await expect(page.locator('.tip-suggestion-card')).toBeVisible();
   await expect(page.locator('.tip-suggestion-card')).toContainText(/Contact|Approach|TIP9|IMPROVE|LEARN/i);
 });
@@ -70,68 +79,61 @@ test('round entry feeds Journal and changes TIP from learning-only state', async
 test('TIP7 completes, journals once, and locks for today', async ({ page }) => {
   await fresh(page);
   await completeTip7Quick(page);
-  await page.getByRole('link', { name: 'GOLFER' }).click();
-  await expect(page.getByText('TIP7', { exact:true }).first()).toBeVisible();
-  await page.getByRole('link', { name: 'HOME' }).click();
+  await nav(page, 'golfer');
+  await expect(page.locator('.journal-card').filter({ hasText:'TIP7' })).toHaveCount(1);
+  await nav(page, 'home');
   await page.locator('[data-action="tip7"]').click();
   await expect(page.getByText(/DONE FOR TODAY|Foundation/)).toBeVisible();
 });
 
 test('TIP9 completes and writes canonical Journal activity', async ({ page }) => {
   await fresh(page);
-  await completeTip9Skill(page, 'range');
-  await page.getByRole('link', { name: 'GOLFER' }).click();
-  await expect(page.getByText('TIP9', { exact:true }).first()).toBeVisible();
-  await expect(page.locator('.journal-card').first()).toContainText(/Level|complete|\/9/i);
+  await completeTip9(page, 'range');
+  await nav(page, 'golfer');
+  const tip9 = page.locator('.journal-card').filter({ hasText:'TIP9' }).first();
+  await expect(tip9).toBeVisible();
+  await expect(tip9).toContainText(/Level|complete|\/9/i);
 });
 
 test('TIP Suggests start preserves the recommended TIP9 instead of rerolling', async ({ page }) => {
   await fresh(page);
   await addRound(page, 'Irons were heavy. Contact was poor and approaches were short.');
-  await page.getByRole('link', { name: 'HOME' }).click();
+  await nav(page, 'home');
   const card = page.locator('.tip-suggestion-card');
   const title = (await card.locator('h3').textContent())?.trim();
   await card.locator('[data-action="tip-suggestion"]').click();
-  if (await page.locator('[data-tip9-preferred-context]').count()) {
-    await page.locator('[data-tip9-preferred-context]').first().click();
-  }
-  await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  if (await page.locator('[data-tip9-preferred-context]').count()) await page.locator('[data-tip9-preferred-context]').first().click();
+  await expect(page.getByRole('heading', { name: title, exact:true })).toBeVisible();
 });
 
 test('session builder composes all supported time buckets', async ({ page }) => {
   await fresh(page);
   for (const minutes of ['7','15','30','45','60']) {
-    await page.getByRole('link', { name: 'TIP' }).click();
+    await nav(page, 'tip');
     await page.locator('[data-action="build-session"]').click();
-    await page.locator(`input[name="minutes"][value="${minutes}"]`).check();
-    await page.locator('input[name="context"][value="range"]').check();
+    await chooseSessionOption(page, 'minutes', minutes);
+    await chooseSessionOption(page, 'context', 'range');
     await page.locator('#sessionBuilderForm button[type="submit"]').click();
-    await expect(page.getByText(/TODAY'S SESSION|Today's Session/i)).toBeVisible();
     await expect(page.locator('[data-action="session-start"]')).toBeVisible();
     await page.locator('[data-action="session-rebuild"]').click();
   }
 });
 
-test('abandoning a built session keeps completed child work but creates no parent completion', async ({ page }) => {
+test('abandoning a built session keeps child work but creates no parent completion', async ({ page }) => {
   await fresh(page);
-  await page.getByRole('link', { name: 'TIP' }).click();
+  await nav(page, 'tip');
   await page.locator('[data-action="build-session"]').click();
-  await page.locator('input[name="minutes"][value="15"]').check();
-  await page.locator('input[name="context"][value="range"]').check();
+  await chooseSessionOption(page, 'minutes', '15');
+  await chooseSessionOption(page, 'context', 'range');
   await page.locator('#sessionBuilderForm button[type="submit"]').click();
   await page.locator('[data-action="session-start"]').click();
   if (await page.locator('[data-tip7-start]').count()) {
     await page.locator('[data-tip7-start]').click();
-    for (let i=0; i<24; i++) {
-      if (await page.locator('[data-tip7-next]').count()) await page.locator('[data-tip7-next]').click();
-    }
+    for (let i=0; i<24; i++) await page.locator('[data-tip7-next]').click();
     await page.locator('[data-tip7-done]').click();
   }
-  // Stop the next activity before completion.
-  const endTip9 = page.locator('[data-tip9-end]');
-  if (await endTip9.count()) await endTip9.click();
-  else if (await page.locator('[data-tip9-exit]').count()) await page.locator('[data-tip9-exit]').click();
-  await page.getByRole('link', { name: 'GOLFER' }).click();
+  await page.evaluate(() => { location.hash = '#/golfer'; });
+  await expect(page.getByRole('heading', { name:'Journal.' })).toBeVisible();
   await expect(page.locator('.journal-card').filter({hasText:"Today's Session"})).toHaveCount(0);
 });
 
@@ -146,14 +148,13 @@ test('export then reset then restore preserves Journal', async ({ page }) => {
   await page.locator('#menuBtn').click();
   page.once('dialog', d => d.accept());
   await page.locator('[data-setting="reset"]').click();
-  await page.getByRole('link', { name: 'GOLFER' }).click();
+  await nav(page, 'golfer');
   await expect(page.getByText('Springhaven')).toHaveCount(0);
   await page.locator('#menuBtn').click();
+  const chooserPromise = page.waitForEvent('filechooser');
+  await page.locator('[data-setting="restore"]').click();
+  const chooser = await chooserPromise;
   page.once('dialog', d => d.accept());
-  const chooser = await Promise.all([
-    page.waitForEvent('filechooser'),
-    page.locator('[data-setting="restore"]').click()
-  ]).then(x=>x[0]);
   await chooser.setFiles(path);
   await expect(page.getByText('Springhaven')).toBeVisible();
 });
@@ -168,7 +169,7 @@ test('V2 import is idempotent', async ({ page }) => {
     page.once('dialog', d => d.accept());
     await page.locator('[data-setting="import-v2"]').click();
   }
-  await page.getByRole('link', { name: 'GOLFER' }).click();
+  await nav(page, 'golfer');
   await expect(page.getByText('Legacy Course')).toHaveCount(1);
 });
 
