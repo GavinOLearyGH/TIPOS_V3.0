@@ -1,7 +1,7 @@
 import { normalizeTopic } from './topics.js';
 
-const POSITIVE=/\b(good|great|solid|better|improved|working|confident|comfortable|consistent|looser|strong|right|felt good|in play|hit well)\b/i;
-const NEGATIVE=/\b(bad|poor|worse|struggle|struggled|heavy|thin|fat|short|long|left|right|tight|tighter|hard|missed|inconsistent|penalty|three putt|3 putt|keep working)\b/i;
+const POSITIVE=/\b(good|great|solid|better|improved|working|confident|comfortable|consistent|looser|strong|felt good|in play|hit well)\b/i;
+const NEGATIVE=/\b(bad|poor|worse|struggle|struggled|heavy|thin|fat|short|long|left|right|tight|tighter|hard|missed|inconsistent|penalty|three putt|3 putt|keep working|rushed)\b/i;
 
 const TEXT_RULES=[
   [/\b(driver|tee ball|fairway|off the tee)\b/i,'teeControl'],
@@ -32,6 +32,13 @@ const TEXT_RULES=[
   [/\b(equipment|club|shaft|grip|loft|lie|putter|driver change)\b/i,'equipment']
 ];
 
+function sentimentFor(text=''){
+  const positive=POSITIVE.test(text), negative=NEGATIVE.test(text);
+  if(positive&&!negative) return 1;
+  if(negative&&!positive) return -1;
+  return 0;
+}
+
 function pushSignal(list,topic,signal,weight,source,note,entry){
   const key=normalizeTopic(topic);
   if(!key) return;
@@ -45,8 +52,7 @@ function resultSignals(entry,list){
       const score=Number(entry.result.score);
       pushSignal(list,topic,score>=7?1:-1,score>=7?3:2,'tip9-score',`${score}/9`,entry);
     } else if(entry.result?.feel){
-      const good=/felt good/i.test(entry.result.feel);
-      pushSignal(list,topic,good?1:-1,2,'tip9-feel',entry.result.feel,entry);
+      pushSignal(list,topic,/felt good/i.test(entry.result.feel)?1:-1,2,'tip9-feel',entry.result.feel,entry);
     }
   }
   if(entry.type==='tip7'){
@@ -62,8 +68,15 @@ function resultSignals(entry,list){
 function metricSignals(entry,list){
   if(entry.type!=='round') return;
   const m=entry.metrics||{};
+  if(Number.isFinite(Number(m.fairways))){
+    const fw=Number(m.fairways);
+    if(fw>=10) pushSignal(list,'teeControl',1,2,'round-metric',`${fw} fairways`,entry);
+    else if(fw<=6) pushSignal(list,'teeControl',-1,2,'round-metric',`${fw} fairways`,entry);
+  }
   if(Number.isFinite(Number(m.penalties))){
-    pushSignal(list,'teeControl',Number(m.penalties)===0?1:-1,2,'round-metric',`${m.penalties} penalties`,entry);
+    const p=Number(m.penalties);
+    if(p===0) pushSignal(list,'courseManagement',1,1,'round-metric','0 penalties',entry);
+    else if(p>=2) pushSignal(list,'courseManagement',-1,2,'round-metric',`${p} penalties`,entry);
   }
   if(Number.isFinite(Number(m.gir))){
     const gir=Number(m.gir);
@@ -81,16 +94,19 @@ export function signalsFromEntry(entry){
   const list=[];
   const note=String(entry.reflection?.text||'');
   const explicit=(entry.topics||[]).map(normalizeTopic).filter(Boolean);
-  const sentiment=POSITIVE.test(note)&&!NEGATIVE.test(note)?1:NEGATIVE.test(note)&&!POSITIVE.test(note)?-1:0;
+  const clauses=note.split(/[.!?;\n]+|\bbut\b|\bwhile\b|\bhowever\b/i).map(x=>x.trim()).filter(Boolean);
 
-  for(const topic of explicit){
-    if(sentiment) pushSignal(list,topic,sentiment,2,'explicit-topic',note,entry);
+  for(const clause of clauses){
+    const signal=sentimentFor(clause);
+    if(!signal) continue;
+    for(const [rule,topic] of TEXT_RULES){
+      if(rule.test(clause)) pushSignal(list,topic,signal,1,'journal-text',clause,entry);
+    }
   }
 
-  for(const [rule,topic] of TEXT_RULES){
-    if(!rule.test(note)) continue;
-    const localSignal=NEGATIVE.test(note)?-1:POSITIVE.test(note)?1:0;
-    if(localSignal) pushSignal(list,topic,localSignal,1,'journal-text',note,entry);
+  const wholeSentiment=sentimentFor(note);
+  if(wholeSentiment){
+    for(const topic of explicit) pushSignal(list,topic,wholeSentiment,2,'explicit-topic',note,entry);
   }
 
   resultSignals(entry,list);
