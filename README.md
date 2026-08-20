@@ -34,64 +34,99 @@ The golfer sees only three primary places:
 - **V3.0-A — Foundation:** shell, navigation, shared state, storage, PWA. ✓
 - **V3.0-B — Journal:** canonical entries, capture, CRUD, backup/restore and V2 history import. ✓
 - **V3.0-C — TIP7:** native TIP7 engine with shared progress and Journal completion. ✓
-- **V3.0-D — TIP9:** native TIP9 engine with Journal completion.
+- **V3.0-D — TIP9:** native TIP9 engine with shared progress and Journal completion. ✓
 - **V3.0-E — TIP Memory:** Journal → signals → topics → memory.
 - **V3.0-F — TIP Suggests:** memory → one recommended action.
 - **V3.0-G — Build Today's Session:** compose TIP7/TIP9/custom activities from time, context and memory.
 
-## Current milestone — V3.0-C TIP7
+## Current milestone — V3.0-D TIP9
 
-TIP7 is now a native execution engine inside The Irish Par rather than a linked or embedded standalone application.
+TIP9 is now the native GAME-side execution engine inside The Irish Par.
 
-### Foundation Level
+### Practice model
 
-Level 1 preserves the seven-day Foundation structure:
+The V3 library preserves the 26 programmed practice families from the standalone TIP9 prototype:
 
-1. Stretch — OPEN
-2. Strength — STABLE
-3. Stretch — ROTATE
-4. Strength — BASE
-5. Stretch — RESTORE
-6. Strength — CONTROL
-7. Stretch + Strength — COMPLETE
+- 8 Swing practices
+- 18 Skill practices
+- five contexts: Range, Hitting Bay, Putting Green, Short Game and No Ball
+- three progression levels per practice
+- No Ball variants for rehearsal-compatible Swing work
 
-Each circuit contains 12 movements using 30-second work intervals and 10-second prepare/changeover intervals. The guided execution screen includes exercise instructions, cues, progress, pause, previous/next controls, sound cues and supported device vibration.
+The practice curriculum remains data-driven in `js/tip9/tip9-data.js` rather than being embedded in the screen logic.
+
+### 3 × 3 execution
+
+A TIP9 is still nine balls or nine No Ball reps in three blocks of three.
+
+For Swing work, each 0–3 block result produces an adaptive response:
+
+- 0/3 — Reset and simplify
+- 1/3 — Reinforce
+- 2/3 — Progress
+- 3/3 — Progress toward normal golf shots
+
+Swing completion remains `Felt Good / Keep Working` rather than foregrounding a 0–9 score.
+
+Skill work remains scored execution. A score of 7/9 or better unlocks the next level until Level 3.
+
+### Context-first front door
+
+TIP9 begins by asking where the golfer is practicing. Only practices valid for that context are eligible.
+
+Until V3.0-F adds Journal-driven coaching priority, the V3.0-D recommendation is deterministic and progression-aware: it favors eligible practices that have been used less recently and less frequently rather than choosing randomly. `Another practice` and Browse remain available.
 
 ### Shared progression
 
-TIP7 progress now lives inside `TIP_V3_STATE.tip7` rather than a standalone `tip7_v02` local-storage object. V3 tracks:
+TIP9 no longer owns a `tip9StateV2` local-storage object. Progress lives inside `TIP_V3_STATE.tip9`:
 
-- completed Foundation days
-- completion dates
-- current streak
-- best streak
-- lifetime TIP7 completions
-- post-circuit feel check-ins
-- last completion time
-
-The next Foundation day unlocks on the next calendar day. Completed work is retained even if the streak later breaks.
+- per-practice level
+- best result
+- latest result
+- latest Swing feel
+- completion count
+- recent practice/context history
+- lifetime TIP9 completions
 
 ### Journal integration
 
-Finishing a circuit immediately creates one canonical Journal entry with:
+Every completed TIP9 immediately creates one canonical Journal entry with:
 
-- source `tip7`
-- Foundation level/day
-- Stretch/Strength dimension
-- relevant body topics
-- completion result
-- guided circuit duration
+- source `tip9`
+- practice ID and name
+- Swing or Skill dimension
+- context
+- level
+- 3 × 3 results
+- relevant coaching topics
+- Skill score or Swing completion
+- any unlocked next level
 
-The optional post-circuit check-in then updates that same Journal entry rather than creating a second reflection record.
+For Swing practices, the optional `Felt Good / Keep Working` response updates the same Journal record rather than creating a second reflection.
+
+TIP7 and TIP9 Journal records are automatic system activity and are not exposed with ordinary manual Edit/Delete controls.
 
 ### V3 execution mode
 
-When TIP7 starts, the normal Home/TIP/Golfer navigation is temporarily hidden so the workout owns the screen. Exiting or completing TIP7 returns the golfer to the normal V3 shell. State changes during an active circuit do not cause the shell to rerender over the workout.
+TIP7 and TIP9 now use the same execution lifecycle. While either engine is active, the normal Home/TIP/Golfer shell is hidden; exiting returns to Home. Execution handlers are scoped and cleaned up on exit so repeated launches do not accumulate duplicate event listeners.
 
 ### Offline
 
-The V3 service worker now includes the TIP7 programming, engine, view and execution stylesheet in the app-shell cache, so an already installed/cached V3 golfer can run TIP7 offline.
+The V3 PWA cache now includes both execution engines and their programming, allowing the already installed/cached body and game tools to run without connectivity.
 
-## Journal / portability from V3.0-B
+## What now exists
 
-Manual Round, Practice, Lesson, Equipment and Note entries remain available. Export/Restore operate on the entire shared V3 state, including TIP7 progress. The conservative TIP OS V2 history importer also remains available from Settings.
+The first half of the V3 coaching loop is real:
+
+**DO**
+
+- TIP7 — Body
+- TIP9 — Game
+
+↓
+
+**REMEMBER**
+
+- one shared Journal
+
+The next milestone, **V3.0-E TIP Memory**, begins the intelligence layer: Journal evidence will be translated into normalized topics, positive/negative signals, confidence and trends without adding another golfer-facing dashboard.
