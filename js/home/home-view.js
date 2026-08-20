@@ -23,40 +23,43 @@ export function renderHome() {
   const suggestion = getTIPSuggestion();
 
   return `
-    <section class="home-products">
-      <div class="product-grid">
-        <button class="card card-button product-card" type="button" data-action="tip7">
-          <div class="eyebrow">BODY</div>
-          <div class="product-number">TIP<b>7</b></div>
-          <p class="product-description">7 Minute Stretch &amp; Strength</p>
-          <div class="product-status">${esc(tip7Status)}</div>
-        </button>
-        <button class="card card-button product-card" type="button" data-action="tip9">
-          <div class="eyebrow">GAME</div>
-          <div class="product-number">TIP<b>9</b></div>
-          <p class="product-description">9 Ball Challenge for Swing &amp; Skill</p>
-          <div class="product-status">${esc(tip9Status)}</div>
-        </button>
-      </div>
-    </section>
+    <section class="home-core-list" aria-label="The Irish Par">
+      <button class="home-core-row" type="button" data-action="tip7">
+        <div class="home-core-name">TIP7</div>
+        <div class="home-core-content">
+          <div class="home-core-description">7 Minute Stretch &amp; Strength</div>
+          <div class="home-core-status">${esc(tip7Status)}</div>
+        </div>
+        <span class="home-core-arrow" aria-hidden="true">›</span>
+      </button>
 
-    <section class="section">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">TIP SUGGESTS</div>
-          <h2>${esc(memoryCopy)}</h2>
+      <button class="home-core-row" type="button" data-action="tip9">
+        <div class="home-core-name">TIP9</div>
+        <div class="home-core-content">
+          <div class="home-core-description">9 Ball Challenge for Swing &amp; Skill</div>
+          <div class="home-core-status">${esc(tip9Status)}</div>
         </div>
-      </div>
-      <article class="card card-accent tip-suggestion-card">
-        <div class="card-top">
-          <div>
-            <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
-            <h3>${esc(suggestion.title)}</h3>
+        <span class="home-core-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <article class="home-core-row home-core-tip">
+        <a class="home-core-tip-link" href="#/tip" aria-label="Open TIP">
+          <div class="home-core-name">TIP</div>
+          <div class="home-core-content">
+            <div class="home-core-description home-core-tip-description">Tell TIP about your golf. Let TIP help with what comes next.</div>
+            <div class="home-core-status">${esc(memoryCopy)}</div>
           </div>
-          <small>${esc(suggestion.label)}</small>
+          <span class="home-core-arrow" aria-hidden="true">›</span>
+        </a>
+        <div class="home-tip-suggestion">
+          <div class="home-tip-suggestion-head">
+            <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
+            <small>${esc(suggestion.label)}</small>
+          </div>
+          <h2>${esc(suggestion.title)}</h2>
+          <p>${esc(suggestion.reason)}</p>
+          <button class="primary-button" type="button" data-action="tip-suggestion">START</button>
         </div>
-        <p>${esc(suggestion.reason)}</p>
-        <button class="primary-button tip-suggestion-start" type="button" data-action="tip-suggestion">START</button>
       </article>
     </section>
   `;
