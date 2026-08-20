@@ -33,51 +33,65 @@ The golfer sees only three primary places:
 
 - **V3.0-A — Foundation:** shell, navigation, shared state, storage, PWA. ✓
 - **V3.0-B — Journal:** canonical entries, capture, CRUD, backup/restore and V2 history import. ✓
-- **V3.0-C — TIP7:** native TIP7 engine with Journal completion.
+- **V3.0-C — TIP7:** native TIP7 engine with shared progress and Journal completion. ✓
 - **V3.0-D — TIP9:** native TIP9 engine with Journal completion.
 - **V3.0-E — TIP Memory:** Journal → signals → topics → memory.
 - **V3.0-F — TIP Suggests:** memory → one recommended action.
 - **V3.0-G — Build Today's Session:** compose TIP7/TIP9/custom activities from time, context and memory.
 
-## Current milestone — V3.0-B Journal
+## Current milestone — V3.0-C TIP7
 
-The Journal is now functional rather than a placeholder.
+TIP7 is now a native execution engine inside The Irish Par rather than a linked or embedded standalone application.
 
-### Manual entries
+### Foundation Level
 
-The golfer can add:
+Level 1 preserves the seven-day Foundation structure:
 
-- Round
-- Practice
-- Lesson
-- Equipment
-- Note
+1. Stretch — OPEN
+2. Strength — STABLE
+3. Stretch — ROTATE
+4. Strength — BASE
+5. Stretch — RESTORE
+6. Strength — CONTROL
+7. Stretch + Strength — COMPLETE
 
-Rounds can capture score, fairways, GIR, putts, up-and-downs and penalties. Practice can capture time, balls/reps and focus topics. All entry types support a short reflection so the golfer can simply tell TIP what is worth remembering.
+Each circuit contains 12 movements using 30-second work intervals and 10-second prepare/changeover intervals. The guided execution screen includes exercise instructions, cues, progress, pause, previous/next controls, sound cues and supported device vibration.
 
-Entries can be edited or deleted from the Journal timeline.
+### Shared progression
 
-### Shared state
+TIP7 progress now lives inside `TIP_V3_STATE.tip7` rather than a standalone `tip7_v02` local-storage object. V3 tracks:
 
-All Journal entries live in `TIP_V3_STATE`. TIP7 and TIP9 will write to the same schema in later milestones rather than maintaining separate histories.
+- completed Foundation days
+- completion dates
+- current streak
+- best streak
+- lifetime TIP7 completions
+- post-circuit feel check-ins
+- last completion time
 
-### Backup and restore
+The next Foundation day unlocks on the next calendar day. Completed work is retained even if the streak later breaks.
 
-Settings now supports:
+### Journal integration
 
-- Export Golfer — downloads the complete V3 state as JSON.
-- Restore Golfer — validates and replaces the local V3 golfer from a prior export.
-- Reset Golfer.
+Finishing a circuit immediately creates one canonical Journal entry with:
 
-### TIP OS V2 import
+- source `tip7`
+- Foundation level/day
+- Stretch/Strength dimension
+- relevant body topics
+- completion result
+- guided circuit duration
 
-Because the GitHub Pages applications share an origin, V3 can detect legacy V2 local-storage keys on the same browser/device. The V3.0-B importer conservatively brings across:
+The optional post-circuit check-in then updates that same Journal entry rather than creating a second reflection record.
 
-- historical rounds → Round Journal entries
-- historical sessions → Practice Journal entries
-- meaningful notebook entries → Note/Equipment Journal entries
-- season goal and handicap where available
+### V3 execution mode
 
-It intentionally does **not** migrate V2 plans, XP, identities, journeys, missions, badges or UI state. Re-running the importer preserves existing V3 entries and avoids importing the same historical record twice.
+When TIP7 starts, the normal Home/TIP/Golfer navigation is temporarily hidden so the workout owns the screen. Exiting or completing TIP7 returns the golfer to the normal V3 shell. State changes during an active circuit do not cause the shell to rerender over the workout.
 
-Legacy V2 memory is detected but not converted yet; V3.0-E will own the new memory model.
+### Offline
+
+The V3 service worker now includes the TIP7 programming, engine, view and execution stylesheet in the app-shell cache, so an already installed/cached V3 golfer can run TIP7 offline.
+
+## Journal / portability from V3.0-B
+
+Manual Round, Practice, Lesson, Equipment and Note entries remain available. Export/Restore operate on the entire shared V3 state, including TIP7 progress. The conservative TIP OS V2 history importer also remains available from Settings.
