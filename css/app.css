@@ -75,18 +75,82 @@
 }
 .nav-item.active { color: var(--tip-text); background: var(--tip-panel); }
 .nav-icon { font-size: 21px; line-height: 1; }
-.nav-tip-mark {
-  display: grid;
-  place-items: center;
-  min-width: 34px;
-  height: 24px;
-  border-radius: 999px;
-  color: #102016;
-  background: var(--tip-accent);
-  font-size: 11px;
+.nav-item-tip { background: transparent!important; }
+.nav-tip-logo {
+  display: inline-block;
+  color: var(--tip-faint);
+  font-size: 24px;
+  line-height: 1;
   font-weight: 950;
-  letter-spacing: -.02em;
+  letter-spacing: -.07em;
+  transform: translateY(1px);
 }
+.nav-item-tip.active .nav-tip-logo { color: var(--tip-accent); }
+
+.welcome-dialog {
+  width: min(100%, var(--tip-max-width));
+  max-width: var(--tip-max-width);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  color: var(--tip-text);
+  background: var(--tip-bg);
+}
+.welcome-dialog::backdrop { background: var(--tip-bg); }
+.welcome-inner {
+  min-height: 100dvh;
+  padding: calc(42px + var(--tip-safe-top)) 28px calc(30px + var(--tip-safe-bottom));
+  display: flex;
+  flex-direction: column;
+}
+.welcome-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: clamp(54px,12vh,96px);
+}
+.welcome-brand span {
+  color: var(--tip-accent);
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: -.06em;
+}
+.welcome-brand small {
+  color: var(--tip-muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .16em;
+}
+.welcome-inner h1 {
+  margin: 8px 0 34px;
+  max-width: 360px;
+  font-size: clamp(46px,13vw,66px);
+  line-height: .93;
+  letter-spacing: -.065em;
+}
+.welcome-products { display: grid; gap: 12px; }
+.welcome-product {
+  padding: 16px 0;
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 14px;
+  align-items: start;
+  border-top: 1px solid var(--tip-line);
+}
+.welcome-product strong {
+  color: var(--tip-accent);
+  font-size: 19px;
+  letter-spacing: -.035em;
+}
+.welcome-product span {
+  color: var(--tip-text);
+  font-size: 17px;
+  line-height: 1.35;
+}
+.welcome-product.welcome-tip span { color: var(--tip-muted); }
+.welcome-start { margin-top: auto; }
 
 .sheet-dialog {
   width: min(calc(100% - 28px), 520px);

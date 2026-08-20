@@ -11,7 +11,12 @@ async function fresh(page) {
   await page.goto('/#/home');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect(page.getByText('Build your golfer.')).toBeVisible();
+  const welcome = page.locator('#welcomeDialog');
+  await expect(welcome).toHaveAttribute('open', '');
+  await expect(welcome.getByText('7 Minute Stretch & Strength')).toBeVisible();
+  await expect(welcome.getByText('9 Ball Challenge for Swing & Skill')).toBeVisible();
+  await page.locator('#welcomeStartBtn').click();
+  await expect(page.locator('[data-action="tip7"]')).toBeVisible();
 }
 
 async function addRound(page, note='Driver was good. Irons were heavy and approaches were short.') {
@@ -57,13 +62,28 @@ function chooseSessionOption(page, name, value) {
   return page.locator(`label.session-choice:has(input[name="${name}"][value="${value}"])`).click();
 }
 
+test('first-run welcome sets the simple TIP7 TIP9 TIP tone', async ({ page }) => {
+  await page.goto('/#/home');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const welcome = page.locator('#welcomeDialog');
+  await expect(welcome).toHaveAttribute('open', '');
+  await expect(welcome).toContainText('Build your golfer.');
+  await expect(welcome).toContainText('7 Minute Stretch & Strength');
+  await expect(welcome).toContainText('9 Ball Challenge for Swing & Skill');
+  await expect(welcome).not.toContainText(/PLAY.*PRACTICE.*REMEMBER.*IMPROVE/i);
+  await page.locator('#welcomeStartBtn').click();
+  await page.reload();
+  await expect(page.locator('#welcomeDialog')).not.toHaveAttribute('open', '');
+});
+
 test('fresh golfer has only the V3 primary surfaces', async ({ page }) => {
   await fresh(page);
-  await expect(page.locator('[data-action="tip7"]')).toBeVisible();
-  await expect(page.locator('[data-action="tip9"]')).toBeVisible();
+  await expect(page.locator('[data-action="tip7"]')).toContainText('7 Minute Stretch & Strength');
+  await expect(page.locator('[data-action="tip9"]')).toContainText('9 Ball Challenge for Swing & Skill');
   await expect(page.getByText('TIP SUGGESTS')).toBeVisible();
   await expect(page.locator('[data-route="home"]')).toBeVisible();
-  await expect(page.locator('[data-route="tip"]')).toBeVisible();
+  await expect(page.locator('[data-route="tip"] .nav-tip-logo')).toHaveText('TIP');
   await expect(page.locator('[data-route="golfer"]')).toBeVisible();
   await expect(page.getByText(/Player Card|Today's Mission|Coach's Corner|TIP Plans/i)).toHaveCount(0);
 });
@@ -148,6 +168,7 @@ test('export then reset then restore preserves Journal', async ({ page }) => {
   await page.locator('#menuBtn').click();
   page.once('dialog', d => d.accept());
   await page.locator('[data-setting="reset"]').click();
+  await page.locator('#welcomeStartBtn').click();
   await nav(page, 'golfer');
   await expect(page.getByText('Springhaven')).toHaveCount(0);
   await page.locator('#menuBtn').click();
@@ -179,7 +200,7 @@ test('cached app shell launches offline after first load', async ({ page, contex
   await page.waitForTimeout(500);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByText('Build your golfer.')).toBeVisible();
+  await expect(page.locator('[data-action="tip7"]')).toBeVisible();
   await context.setOffline(false);
 });
 

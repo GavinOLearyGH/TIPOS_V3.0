@@ -17,7 +17,7 @@ export function createDefaultState() {
       level:1, day:1, completed:[], dates:{}, feel:{}, currentStreak:0, bestStreak:0, lifetime:0, lastCompletedAt:null
     },
     tip9: { practices:{}, lifetime:0, recent:[] },
-    preferences: { sound:true, vibration:true },
+    preferences: { sound:true, vibration:true, welcomeSeen:false },
     meta: {
       createdAt:now, updatedAt:now, lastBackup:null, lastRestore:null, v2ImportedAt:null, v2ImportCount:0
     }
@@ -64,6 +64,7 @@ export function normalizeState(input) {
   state.preferences = isObject(state.preferences) ? state.preferences : defaults.preferences;
   state.preferences.sound = state.preferences.sound !== false;
   state.preferences.vibration = state.preferences.vibration !== false;
+  state.preferences.welcomeSeen = state.preferences.welcomeSeen === true;
   state.meta = isObject(state.meta) ? state.meta : defaults.meta;
   state.meta.createdAt = validIso(state.meta.createdAt, defaults.meta.createdAt);
   state.meta.updatedAt = new Date().toISOString();

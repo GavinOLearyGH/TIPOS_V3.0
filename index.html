@@ -22,10 +22,25 @@
     <main id="view" class="main" tabindex="-1"></main>
     <nav class="bottom-nav" aria-label="Primary navigation">
       <a href="#/home" data-route="home" class="nav-item"><span class="nav-icon" aria-hidden="true">⌂</span><span>HOME</span></a>
-      <a href="#/tip" data-route="tip" class="nav-item nav-item-tip"><span class="nav-tip-mark" aria-hidden="true">TIP</span><span>TIP</span></a>
+      <a href="#/tip" data-route="tip" class="nav-item nav-item-tip" aria-label="TIP"><span class="nav-tip-logo" aria-hidden="true">TIP</span></a>
       <a href="#/golfer" data-route="golfer" class="nav-item"><span class="nav-icon" aria-hidden="true">◉</span><span>GOLFER</span></a>
     </nav>
   </div>
+
+  <dialog id="welcomeDialog" class="welcome-dialog">
+    <div class="welcome-inner">
+      <div class="welcome-brand"><span>TIP</span><small>THE IRISH PAR</small></div>
+      <div class="eyebrow">THE IRISH PAR</div>
+      <h1>Build your golfer.</h1>
+      <div class="welcome-products">
+        <div class="welcome-product"><strong>TIP7</strong><span>7 Minute Stretch &amp; Strength</span></div>
+        <div class="welcome-product"><strong>TIP9</strong><span>9 Ball Challenge for Swing &amp; Skill</span></div>
+        <div class="welcome-product welcome-tip"><strong>TIP</strong><span>Tell TIP about your golf. Let TIP help with what comes next.</span></div>
+      </div>
+      <button id="welcomeStartBtn" class="primary-button welcome-start" type="button">GET STARTED</button>
+    </div>
+  </dialog>
+
   <dialog id="menuDialog" class="sheet-dialog">
     <div class="sheet-head"><div><div class="eyebrow">THE IRISH PAR</div><h2>Settings</h2></div><button id="closeMenuBtn" class="icon-button" type="button" aria-label="Close menu">×</button></div>
     <div class="settings-list">
@@ -35,7 +50,7 @@
       <button type="button" data-setting="import-v2">Import TIP OS V2</button>
       <button type="button" data-setting="reset">Reset Golfer</button>
     </div>
-    <p class="version-note">TIPOS V3.0 · Release Candidate</p>
+    <p class="version-note">TIPOS V3.1 · Polish Preview</p>
   </dialog>
   <dialog id="entryDialog" class="sheet-dialog entry-dialog"><div id="entryDialogBody"></div></dialog>
   <input id="restoreFile" type="file" accept="application/json,.json" hidden />
