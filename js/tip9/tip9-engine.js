@@ -4,7 +4,7 @@ import { TIP9_PRACTICES } from './tip9-data.js';
 
 const TOPIC_MAP={
 SW01:['contact','lowPoint'],SW02:['tempo'],SW03:['lowPoint','contact'],SW04:['startDirection'],SW05:['balance'],SW06:['faceAwareness','startDirection'],SW07:['rotation','balance'],SW08:['transition','tempo'],
-SK01:['puttingStartLine'],SK02:['puttingPace'],SK03:['puttingStartLine'],SK04:['puttingPace'],SK05:['puttingStartLine','routine'],SK06:['teeControl'],SK07:['wedgeDistance'],SK08:['approachPlay'],SK09:['trajectory'],SK10:['curveAwareness'],SK11:['approachPlay','courseManagement'],SK12:['routine','confidence'],SK13:['courseManagement'],SK14:['shortGame'],SK15:['shortGame','wedgeDistance'],SK16:['bunker','shortGame'],SK17:['shortGame'],SK18:['shortGame']
+SK01:['puttingStartLine'],SK02:['puttingPace'],SK03:['puttingStartLine'],SK04:['puttingPace'],SK05:['puttingStartLine','routine'],SK06:['teeControl'],SK07:['wedgeDistance'],SK08:['approachPlay'],SK09:['approachPlay','courseManagement'],SK10:['faceAwareness','startDirection'],SK11:['approachPlay','courseManagement'],SK12:['routine','confidence'],SK13:['courseManagement'],SK14:['shortGame'],SK15:['shortGame','wedgeDistance'],SK16:['shortGame'],SK17:['shortGame'],SK18:['shortGame']
 };
 
 export function getTIP9Practice(id){ return TIP9_PRACTICES.find(p=>p.id===id)||null; }
@@ -49,7 +49,9 @@ export function swingResponse(score){
 
 export function completeTIP9({practiceId,context,results}){
   const practice=getTIP9Practice(practiceId); if(!practice) throw new Error('TIP9 practice not found.');
-  const score=(results||[]).reduce((a,b)=>a+Number(b||0),0); let unlocked=false; let level=1;
+  const safeResults=Array.isArray(results)?results.map(Number).filter(n=>Number.isFinite(n)&&n>=0&&n<=3).slice(0,3):[];
+  if(safeResults.length!==3) throw new Error('TIP9 completion requires three scored blocks.');
+  const score=safeResults.reduce((a,b)=>a+b,0); let unlocked=false; let level=1;
   const at=new Date().toISOString();
   TIPState.update(state=>{
     const current={level:1,best:0,last:null,feel:null,completions:0,lastAt:null,...(state.tip9.practices[practiceId]||{})};
@@ -59,7 +61,7 @@ export function completeTIP9({practiceId,context,results}){
     state.tip9.recent=[{id:practiceId,context,at},...(state.tip9.recent||[]).filter(x=>(typeof x==='string'?x:x.id)!==practiceId)].slice(0,20);
     return state;
   },'tip9:complete');
-  const entry=addJournalEntry({type:'tip9',source:'tip9',title:practice.name,dimensions:[practice.type.toLowerCase()],topics:TOPIC_MAP[practiceId]||[],context:{practiceContext:context},result:{practiceId,practiceType:practice.type,score,outOf:9,level:level-(unlocked?1:0),unlockedLevel:unlocked?level:null,feel:''},activity:{kind:'tip9',practiceId,context,results:[...results],units:context==='noball'?'reps':'balls'},note:''});
+  const entry=addJournalEntry({type:'tip9',source:'tip9',title:practice.name,dimensions:[practice.type.toLowerCase()],topics:TOPIC_MAP[practiceId]||[],context:{practiceContext:context},result:{practiceId,practiceType:practice.type,score,outOf:9,level:level-(unlocked?1:0),unlockedLevel:unlocked?level:null,feel:''},activity:{kind:'tip9',practiceId,context,results:safeResults,units:context==='noball'?'reps':'balls'},note:''});
   return {entry,score,unlocked,newLevel:level,practice};
 }
 
