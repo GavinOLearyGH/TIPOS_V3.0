@@ -17,7 +17,7 @@ const TOPICS = {
 };
 
 function esc(value = '') {
-  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 }
 
 function localInputDate(iso) {
@@ -31,8 +31,8 @@ function numberField(name, label, value = '', min = 0) {
   return `<label class="field"><span>${label}</span><input name="${name}" type="number" inputmode="numeric" min="${min}" value="${value ?? ''}"></label>`;
 }
 
-function typeFields(type, entry = {}) {
-  const m = entry.metrics || {};
+function typeFields(type, entry = null) {
+  const m = entry?.metrics || {};
   if (type === 'round') return `
     <div class="metric-grid">
       ${numberField('score','Score',m.score)}
