@@ -1,6 +1,6 @@
 import { TIPState } from '../core/storage.js';
 import { addJournalEntry, getJournal, updateJournalEntry } from '../core/journal.js';
-import { TIP7_DAYS } from './tip7-data.js';
+import { TIP7_DAYS, TIP7_WORK_SECONDS, TIP7_PREP_SECONDS } from './tip7-data.js';
 
 export function localDay(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -46,12 +46,8 @@ export function getTIP7Status() {
 }
 
 function existingJournalEntry(dayIndex) {
-  const date = TIPState.get().tip7.dates?.[dayIndex];
-  if (!date) return null;
   return getJournal().find(entry =>
-    entry.source === 'tip7' &&
-    Number(entry.activity?.dayIndex) === Number(dayIndex) &&
-    String(entry.createdAt || '').slice(0,10) === date
+    entry.source === 'tip7' && Number(entry.activity?.dayIndex) === Number(dayIndex)
   ) || null;
 }
 
@@ -78,6 +74,7 @@ export function completeTIP7Day(dayIndex) {
   }, 'tip7:complete');
 
   if (newlyCompleted) {
+    const durationSeconds = (day.exercises.length * TIP7_WORK_SECONDS) + ((day.exercises.length - 1) * TIP7_PREP_SECONDS);
     return addJournalEntry({
       type:'tip7',
       source:'tip7',
@@ -85,7 +82,7 @@ export function completeTIP7Day(dayIndex) {
       dimensions: day.dimension.includes('STRETCH') && day.dimension.includes('STRENGTH') ? ['stretch','strength'] : [day.dimension.toLowerCase()],
       topics:day.topics,
       result:{ completed:true, level:1, day:day.day, feel:'' },
-      activity:{ kind:'tip7', level:1, day:day.day, dayIndex, theme:day.theme, durationSeconds:TIP7_DAYS[dayIndex].exercises.length * 30 },
+      activity:{ kind:'tip7', level:1, day:day.day, dayIndex, theme:day.theme, durationSeconds },
       note:''
     });
   }
