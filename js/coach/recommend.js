@@ -47,13 +47,18 @@ function topicReinforceScore(topic){
   return Number(topic.score||0)*(.5+.5*confidence)*recent + (topic.trend === 'Improving' ? 1.5 : 0);
 }
 
+function actionableTopic(topic){
+  const group = TIP_TOPICS[topic?.key]?.group;
+  return group === 'body' || Boolean(TOPIC_TO_TIP9[topic?.key]);
+}
+
 function chooseTopic(memory){
-  const known = Object.values(memory?.topics || {}).filter(t => t.evidence > 0 && TIP_TOPICS[t.key]);
-  const needs = known.filter(t => t.score < 0 && (TIP_TOPICS[t.key].group === 'game' || TIP_TOPICS[t.key].group === 'body'))
+  const known = Object.values(memory?.topics || {}).filter(t => t.evidence > 0 && TIP_TOPICS[t.key] && actionableTopic(t));
+  const needs = known.filter(t => t.score < 0)
     .map(t => ({topic:t,score:topicNeedScore(t)})).sort((a,b)=>b.score-a.score);
   if(needs[0] && needs[0].score >= .75) return { mode:'improve', topic:needs[0].topic };
 
-  const strengths = known.filter(t => t.score > 0 && TIP_TOPICS[t.key].group === 'game')
+  const strengths = known.filter(t => t.score > 0 && Boolean(TOPIC_TO_TIP9[t.key]))
     .map(t => ({topic:t,score:topicReinforceScore(t)})).sort((a,b)=>b.score-a.score);
   if(strengths[0] && strengths[0].score >= 1.5) return { mode:'reinforce', topic:strengths[0].topic };
   return null;
@@ -137,7 +142,7 @@ export function getTIPSuggestion(){
   if(selection){
     const def = TIP_TOPICS[selection.topic.key];
     if(def?.group === 'body') return bodySuggestion(selection,state) || learningSuggestion(state);
-    if(def?.group === 'game') return gameSuggestion(selection,state) || learningSuggestion(state);
+    if(TOPIC_TO_TIP9[selection.topic.key]) return gameSuggestion(selection,state) || learningSuggestion(state);
   }
   return learningSuggestion(state);
 }
