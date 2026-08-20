@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tip-v3-journal-1';
+const CACHE_NAME = 'tip-v3-tip7-1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const APP_SHELL = [
   './css/tokens.css',
   './css/app.css',
   './css/components.css',
+  './css/execution.css',
   './js/app.js',
   './js/router.js',
   './js/core/state.js',
@@ -16,6 +17,9 @@ const APP_SHELL = [
   './js/tip/tip-view.js',
   './js/golfer/journal-view.js',
   './js/golfer/entry-form.js',
+  './js/tip7/tip7-data.js',
+  './js/tip7/tip7-engine.js',
+  './js/tip7/tip7-view.js',
   './pwa-register.js'
 ];
 
