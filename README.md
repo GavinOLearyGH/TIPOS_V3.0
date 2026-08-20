@@ -17,116 +17,139 @@ The golfer sees only three primary places:
 - **TIP** — the coach that learns from Journal evidence and recommends one useful next action.
 - **Journal** — the single source of truth for rounds, practice, TIP7, TIP9, lessons, equipment and notes.
 
-## Architecture principles
-
-1. Home is for doing.
-2. TIP is for talking and coaching.
-3. Golfer is the Journal.
-4. Every meaningful activity becomes a Journal entry.
-5. TIP recommends one thing, not ten.
-6. Complexity belongs behind the interface.
-7. TIP7 and TIP9 remain focused execution engines inside one shared application state.
-8. Storage sits behind a provider boundary so Local Golfer can later become or sync with TIP Cloud.
-9. V3 does not inherit V2 UI debt, plans, XP, identities, missions or coaching dashboards.
-
 ## Build phases
 
 - **V3.0-A — Foundation:** shell, navigation, shared state, storage, PWA. ✓
 - **V3.0-B — Journal:** canonical entries, capture, CRUD, backup/restore and V2 history import. ✓
 - **V3.0-C — TIP7:** native TIP7 engine with shared progress and Journal completion. ✓
 - **V3.0-D — TIP9:** native TIP9 engine with shared progress and Journal completion. ✓
-- **V3.0-E — TIP Memory:** Journal → signals → topics → memory.
+- **V3.0-E — TIP Memory:** Journal → signals → topics → memory. ✓
 - **V3.0-F — TIP Suggests:** memory → one recommended action.
 - **V3.0-G — Build Today's Session:** compose TIP7/TIP9/custom activities from time, context and memory.
 
-## Current milestone — V3.0-D TIP9
+## Current milestone — V3.0-E TIP Memory
 
-TIP9 is now the native GAME-side execution engine inside The Irish Par.
+TIP Memory is an internal coaching layer. It does not create another golfer-facing dashboard. The Journal remains the single source of truth; Memory is derived state that can be rebuilt from Journal history at any time.
 
-### Practice model
+### Canonical topic vocabulary
 
-The V3 library preserves the 26 programmed practice families from the standalone TIP9 prototype:
+V3.0-E starts deliberately smaller than the V2 coaching ontology.
 
-- 8 Swing practices
-- 18 Skill practices
-- five contexts: Range, Hitting Bay, Putting Green, Short Game and No Ball
-- three progression levels per practice
-- No Ball variants for rehearsal-compatible Swing work
+**Game / Skill**
+- Tee Control
+- Approach Play
+- Wedge Distance
+- Putting Start Line
+- Putting Pace
+- Short Game
+- Course Management
 
-The practice curriculum remains data-driven in `js/tip9/tip9-data.js` rather than being embedded in the screen logic.
+**Game / Swing**
+- Contact
+- Tempo
+- Start Direction
+- Low Point
+- Face Awareness
+- Balance
+- Transition
 
-### 3 × 3 execution
+**Body / Stretch**
+- Mobility
+- Rotation
+- Hips
+- Thoracic Rotation
+- Shoulders
 
-A TIP9 is still nine balls or nine No Ball reps in three blocks of three.
+**Body / Strength**
+- Stability
+- Core
+- Lower Body
+- Golf Posture
 
-For Swing work, each 0–3 block result produces an adaptive response:
+**Mind / other**
+- Routine
+- Confidence
+- Equipment
 
-- 0/3 — Reset and simplify
-- 1/3 — Reinforce
-- 2/3 — Progress
-- 3/3 — Progress toward normal golf shots
+### Signal extraction
 
-Swing completion remains `Felt Good / Keep Working` rather than foregrounding a 0–9 score.
+The Memory layer reads evidence from the existing Journal rather than asking the golfer to maintain another coaching model.
 
-Skill work remains scored execution. A score of 7/9 or better unlocks the next level until Level 3.
+Signals currently come from:
 
-### Context-first front door
+- explicit Journal topics
+- simple positive/negative reflection language
+- mixed reflections evaluated clause-by-clause
+- round metrics such as Fairways, GIR, Putts and Penalties
+- TIP7 completion/check-in outcomes
+- TIP9 Skill scores
+- TIP9 Swing `Felt Good / Keep Working` outcomes
 
-TIP9 begins by asking where the golfer is practicing. Only practices valid for that context are eligible.
+For example, a note such as:
 
-Until V3.0-F adds Journal-driven coaching priority, the V3.0-D recommendation is deterministic and progression-aware: it favors eligible practices that have been used less recently and less frequently rather than choosing randomly. `Another practice` and Browse remain available.
+> Driver was good, but the irons were heavy and most approaches were short.
 
-### Shared progression
+can produce positive Tee Control evidence and negative Approach/Contact evidence from the same entry.
 
-TIP9 no longer owns a `tip9StateV2` local-storage object. Progress lives inside `TIP_V3_STATE.tip9`:
+### Rebuildable memory
 
-- per-practice level
-- best result
-- latest result
-- latest Swing feel
-- completion count
-- recent practice/context history
-- lifetime TIP9 completions
+Memory is recalculated from Journal history whenever shared state changes. Editing or deleting a manual Journal entry therefore changes TIP's understanding rather than leaving stale coaching evidence behind.
 
-### Journal integration
+The derived state lives at:
 
-Every completed TIP9 immediately creates one canonical Journal entry with:
+`TIP_V3_STATE.memory`
 
-- source `tip9`
-- practice ID and name
-- Swing or Skill dimension
-- context
-- level
-- 3 × 3 results
-- relevant coaching topics
-- Skill score or Swing completion
-- any unlocked next level
+Each known topic stores:
 
-For Swing practices, the optional `Felt Good / Keep Working` response updates the same Journal record rather than creating a second reflection.
+- positive evidence
+- negative evidence
+- net score
+- confidence
+- trend
+- current state
+- last observed date
+- recent evidence history
 
-TIP7 and TIP9 Journal records are automatic system activity and are not exposed with ordinary manual Edit/Delete controls.
+The memory summary stores the current strongest need, strongest positive area, total weighted evidence and recent signals.
 
-### V3 execution mode
+### Recency and protected reads
 
-TIP7 and TIP9 now use the same execution lifecycle. While either engine is active, the normal Home/TIP/Golfer shell is hidden; exiting returns to Home. Execution handlers are scoped and cleaned up on exit so repeated launches do not accumulate duplicate event listeners.
+Recent evidence matters more than old evidence. Signals decay gradually as they age so last week's golf carries more coaching weight than last year's golf.
+
+An established positive pattern is also protected from being erased by one isolated bad observation. Negative evidence still counts, but its immediate impact is reduced when TIP has substantial prior evidence that the area is a real strength.
+
+### Confidence language
+
+The golfer does not see confidence percentages or topic scores. Home only exposes a lightweight coaching-state sentence:
+
+- `I'm learning your golf.`
+- `I'm starting to see the first signals.`
+- `I'm starting to see patterns.`
+- `I've seen enough to coach with more confidence.`
+
+V3.0-F will use the underlying priority and strength data to replace the current Memory card with one actual recommended action.
 
 ### Offline
 
-The V3 PWA cache now includes both execution engines and their programming, allowing the already installed/cached body and game tools to run without connectivity.
+The TIP Memory topic registry, signal extractor and memory engine are included in the V3 PWA app-shell cache. The derived coaching model can therefore update from local Journal activity without connectivity.
 
 ## What now exists
 
-The first half of the V3 coaching loop is real:
+The first three parts of the coaching loop are now structurally present:
 
 **DO**
-
 - TIP7 — Body
 - TIP9 — Game
 
 ↓
 
 **REMEMBER**
+- Journal — visible history
+- TIP Memory — invisible interpretation
 
-- one shared Journal
+↓
 
-The next milestone, **V3.0-E TIP Memory**, begins the intelligence layer: Journal evidence will be translated into normalized topics, positive/negative signals, confidence and trends without adding another golfer-facing dashboard.
+**SUGGEST**
+- next milestone: V3.0-F
+
+The important product constraint remains: complexity belongs behind the interface. The golfer still sees only Home, TIP and Golfer.
