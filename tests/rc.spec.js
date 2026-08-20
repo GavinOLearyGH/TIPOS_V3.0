@@ -104,7 +104,7 @@ test('TIP7 completes, journals once, and locks for today', async ({ page }) => {
   await fresh(page);
   await completeTip7Quick(page);
   await nav(page, 'golfer');
-  await expect(page.locator('.journal-card').filter({ hasText:'TIP7' })).toHaveCount(1);
+  await expect(page.locator('.journal-row').filter({ hasText:'TIP7' })).toHaveCount(1);
   await nav(page, 'home');
   await page.locator('[data-action="tip7"]').click();
   await expect(page.getByText(/DONE FOR TODAY|Foundation/)).toBeVisible();
@@ -114,7 +114,7 @@ test('TIP9 completes and writes canonical Journal activity', async ({ page }) =>
   await fresh(page);
   await completeTip9(page, 'range');
   await nav(page, 'golfer');
-  const tip9 = page.locator('.journal-card').filter({ hasText:'TIP9' }).first();
+  const tip9 = page.locator('.journal-row').filter({ hasText:'TIP9' }).first();
   await expect(tip9).toBeVisible();
   await expect(tip9).toContainText(/Level|complete|\/9/i);
 });
@@ -158,7 +158,7 @@ test('abandoning a built session keeps child work but creates no parent completi
   }
   await page.evaluate(() => { location.hash = '#/golfer'; });
   await expect(page.getByRole('heading', { name:'Journal.' })).toBeVisible();
-  await expect(page.locator('.journal-card').filter({hasText:"Today's Session"})).toHaveCount(0);
+  await expect(page.locator('.journal-row').filter({hasText:"Today's Session"})).toHaveCount(0);
 });
 
 test('export then reset then restore preserves Journal', async ({ page }) => {
