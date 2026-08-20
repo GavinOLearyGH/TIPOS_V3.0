@@ -16,12 +16,8 @@ export function renderTIP() {
       <button class="card card-button" type="button" data-action="build-session">
         <div class="eyebrow">TODAY'S WORK</div>
         <h2>Have TIP build today's session</h2>
-        <p>Time + context + what TIP knows about your golf.</p>
+        <p>Time + place + what TIP knows about your golf.</p>
       </button>
-    </section>
-
-    <section class="section">
-      <div class="empty-state">Entry capture arrives in V3.0-B. Session composition arrives after TIP7, TIP9 and Memory are integrated.</div>
     </section>
   `;
 }
