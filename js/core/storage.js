@@ -44,23 +44,55 @@ export class TIPStateStore extends EventTarget {
     result.meta.updatedAt = new Date().toISOString();
     this.state = normalizeState(result);
     this.provider.write(this.state);
-    this.dispatchEvent(new CustomEvent('change', { detail: { reason, state: this.get() } }));
+    this.emit(reason);
+    return this.get();
+  }
+
+  replace(incoming, reason = 'state:replace') {
+    if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+      throw new Error('Invalid golfer file.');
+    }
+    this.state = normalizeState(incoming);
+    this.provider.write(this.state);
+    this.emit(reason);
     return this.get();
   }
 
   reset() {
     this.state = createDefaultState();
     this.provider.write(this.state);
-    this.dispatchEvent(new CustomEvent('change', { detail: { reason: 'state:reset', state: this.get() } }));
+    this.emit('state:reset');
     return this.get();
   }
 
   exportSnapshot() {
-    const snapshot = this.get();
-    snapshot.meta.lastBackup = new Date().toISOString();
-    this.state.meta.lastBackup = snapshot.meta.lastBackup;
+    const backedUpAt = new Date().toISOString();
+    this.state.meta.lastBackup = backedUpAt;
+    this.state.meta.updatedAt = backedUpAt;
     this.provider.write(this.state);
-    return JSON.stringify(snapshot, null, 2);
+    return JSON.stringify(this.get(), null, 2);
+  }
+
+  restoreSnapshot(text) {
+    let parsed;
+    try {
+      parsed = typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      throw new Error('That file is not valid JSON.');
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('That file does not contain a valid golfer.');
+    }
+    if (!Array.isArray(parsed.journal) && parsed.version === '3.0') {
+      throw new Error('The V3 golfer file is missing its Journal.');
+    }
+    const restored = normalizeState(parsed);
+    restored.meta.lastRestore = new Date().toISOString();
+    return this.replace(restored, 'state:restore');
+  }
+
+  emit(reason) {
+    this.dispatchEvent(new CustomEvent('change', { detail: { reason, state: this.get() } }));
   }
 }
 
