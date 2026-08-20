@@ -1,0 +1,11 @@
+{
+  "name": "The Irish Par",
+  "short_name": "TIP",
+  "description": "Build your golfer with TIP7, TIP9 and a journal that remembers.",
+  "start_url": "./#/home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1914",
+  "theme_color": "#0c1914",
+  "orientation": "portrait-primary"
+}
