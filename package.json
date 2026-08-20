@@ -1,0 +1,10 @@
+{
+  "name": "tipos-v3-release-validation",
+  "private": true,
+  "scripts": {
+    "test:rc": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
