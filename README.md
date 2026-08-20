@@ -6,7 +6,7 @@
 
 The golfer sees only three primary places:
 
-- **Home** — do something now: TIP7, TIP9, or TIP's suggestion.
+- **Home** — TIP7, TIP9, or TIP's suggestion.
 - **TIP** — tell TIP what happened or have TIP build today's session.
 - **Golfer** — the Journal; the single visible history of the golfer.
 
@@ -14,38 +14,90 @@ The golfer sees only three primary places:
 
 - **TIP7** — seven minutes for the golf body: Stretch + Strength.
 - **TIP9** — nine balls/reps for the golf game: Swing + Skill.
-- **TIP** — the coach that learns from Journal evidence and recommends one useful next action.
-- **Journal** — the single source of truth for rounds, practice, TIP7, TIP9, lessons, equipment and notes.
+- **TIP** — the coach that learns from Journal evidence and recommends or composes useful work.
+- **Journal** — the single source of truth for rounds, practice, TIP7, TIP9, lessons, equipment, notes and completed built sessions.
 
-The original four dimensions remain inside the system, but the golfer-facing model is simplified:
+## V3.0 release candidate
 
-- **BODY** → Stretch + Strength
-- **GAME** → Swing + Skill
+The A–G build sequence is complete and the codebase has entered a hardening pass before release consolidation.
 
-## Architecture principles
+Completed milestones:
 
-1. Home is for doing.
-2. TIP is for talking and coaching.
-3. Golfer is the Journal.
-4. Every meaningful activity becomes a Journal entry.
-5. TIP recommends one thing, not ten.
-6. Complexity belongs behind the interface.
-7. TIP7 and TIP9 remain focused execution engines inside one shared application state.
-8. The app talks to storage through a provider boundary so local storage can later be replaced or supplemented by TIP Cloud.
-9. V3 does not inherit V2 UI debt, plans, XP, identities, missions or coaching dashboards.
+- **Foundation** — shell, navigation, shared state, storage and PWA.
+- **Journal** — canonical entries, manual capture, CRUD, backup/restore and conservative V2 history import.
+- **TIP7** — native body execution with shared progression and automatic Journal completion.
+- **TIP9** — native game execution with shared progression and automatic Journal completion.
+- **TIP Memory** — Journal → signals → normalized topics → confidence/trends/priorities.
+- **TIP Suggests** — Memory → one next action on Home.
+- **Build Today's Session** — time + place + Memory → composed TIP7/TIP9 session.
 
-## Build phases
+## Core architecture
 
-- **V3.0-A — Foundation:** shell, navigation, shared state, storage, PWA.
-- **V3.0-B — Journal:** canonical entries, round/practice/note capture, backup/restore.
-- **V3.0-C — TIP7:** native TIP7 engine with Journal completion.
-- **V3.0-D — TIP9:** native TIP9 engine with Journal completion.
-- **V3.0-E — TIP Memory:** Journal → signals → topics → memory.
-- **V3.0-F — TIP Suggests:** memory → one recommended action.
-- **V3.0-G — Build Today's Session:** compose TIP7/TIP9/custom activities from time, context and memory.
+### One golfer
 
-## Current milestone
+All persistent V3 data lives behind `TIP_V3_STATE`. TIP7 and TIP9 do not own separate local-storage databases.
 
-`V3.0-A: Foundation`
+### One visible history
 
-The first implementation establishes the clean shell and shared state model before any source engine is migrated.
+The Journal is the source of truth for completed golf activity. TIP Memory is derived from Journal evidence and can be rebuilt.
+
+### Native execution blocks
+
+A built session is an ordered sequence of the existing TIP7 and TIP9 engines. It does not create a third drill engine or duplicate component progression.
+
+### One recommendation
+
+Home shows one TIP suggestion rather than a dashboard of weaknesses, plans or coaching scores.
+
+## Release hardening completed
+
+The release-candidate pass includes:
+
+- stricter V3 snapshot validation before restore
+- defensive state normalization
+- explicit storage-write failure handling
+- Memory rebuilds limited to Journal/restore/import/reset changes
+- composed-session navigation and abort cleanup
+- transient session-plan cleanup
+- canonical TIP9 topic mappings so practice evidence is not silently dropped by Memory
+- TIP9 completion validation requiring all three scored blocks
+- corrected V2 import deduplication counts
+- release-candidate PWA cache versioning
+- removal of milestone-only version labeling from the golfer-facing shell
+
+## Current coaching loop
+
+**DO**
+- TIP7
+- TIP9
+- or a TIP-built multi-block session
+
+↓
+
+**REMEMBER**
+- one Journal
+
+↓
+
+**UNDERSTAND**
+- TIP Memory
+
+↓
+
+**SUGGEST / COMPOSE**
+- one next action on Home
+- or one coherent session based on time and place
+
+↓
+
+**DO AGAIN**
+
+## Release scope
+
+V3.0 intentionally does **not** restore the V2 dashboard, Today's Mission, TIP Plans, Coaching Notes, Coach's Corner, player-card/XP/identity layers or a separate Smart Journal UI.
+
+The release remains intentionally small:
+
+**HOME | TIP | GOLFER**
+
+Complexity stays behind the interface.
