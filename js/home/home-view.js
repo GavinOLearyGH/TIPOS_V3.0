@@ -1,5 +1,6 @@
 import { TIPState } from '../core/storage.js';
 import { getTIP7Status } from '../tip7/tip7-engine.js';
+import { memoryConfidenceCopy } from '../coach/memory.js';
 
 export function renderHome() {
   const state = TIPState.get();
@@ -14,6 +15,8 @@ export function renderHome() {
   const tip9Copy = state.tip9.lifetime
     ? `${state.tip9.lifetime} completed${recentTip9?.context ? ` · Last: ${String(recentTip9.context).replace('noball','No Ball')}` : ''}`
     : 'Nine balls · Swing + Skill';
+  const memoryCopy = memoryConfidenceCopy(state.memory);
+  const evidence = Number(state.memory?.summary?.totalEvidence || 0);
 
   return `
     <section>
@@ -41,12 +44,12 @@ export function renderHome() {
       <div class="section-head">
         <div>
           <div class="eyebrow">TIP SUGGESTS</div>
-          <h2>${hasJournal ? 'TIP is learning from your Journal.' : 'TIP is learning your golf.'}</h2>
+          <h2>${memoryCopy}</h2>
         </div>
       </div>
       <article class="card card-accent">
-        <div class="card-top"><div><span class="pill">FOUNDATION</span><h3>${hasJournal ? 'Recommendation engine arrives in V3.0-F.' : 'Give TIP something to remember.'}</h3></div></div>
-        <p>${hasJournal ? 'Your Journal already includes manual entries, TIP7 and TIP9 activity. The coaching layer will turn that evidence into one useful next action.' : 'Record a round, practice, complete TIP7 or complete TIP9 and the Journal will begin building your golf history.'}</p>
+        <div class="card-top"><div><span class="pill">MEMORY</span><h3>${hasJournal ? 'TIP is quietly building your golf memory.' : 'Give TIP something to remember.'}</h3></div></div>
+        <p>${hasJournal ? `${evidence} weighted memory signal${evidence===1?'':'s'} are currently shaping TIP’s read. V3.0-F will turn that memory into one useful next action.` : 'Record a round, practice, complete TIP7 or complete TIP9 and TIP will start learning from what happened.'}</p>
       </article>
     </section>
   `;
