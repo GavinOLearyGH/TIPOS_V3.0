@@ -20,7 +20,9 @@ export function renderHome() {
     ? `${state.tip9.lifetime} COMPLETE${recentTip9?.context ? ` · ${String(recentTip9.context).replace('noball','NO BALL').toUpperCase()}` : ''}`
     : 'READY';
   const memoryCopy = memoryConfidenceCopy(state.memory);
-  const suggestion = getTIPSuggestion();
+  const totalEvidence = Number(state.memory?.summary?.totalEvidence || 0);
+  const hasCoachingEvidence = totalEvidence > 0;
+  const suggestion = hasCoachingEvidence ? getTIPSuggestion() : null;
 
   return `
     <section class="home-core-list" aria-label="The Irish Par">
@@ -42,25 +44,35 @@ export function renderHome() {
         <span class="home-core-arrow" aria-hidden="true">›</span>
       </button>
 
-      <article class="home-core-row home-core-tip">
-        <a class="home-core-tip-link" href="#/tip" aria-label="Open TIP">
-          <div class="home-core-name">TIP</div>
-          <div class="home-core-content">
-            <div class="home-core-description home-core-tip-description">Tell TIP about your golf. Let TIP help with what comes next.</div>
-            <div class="home-core-status">${esc(memoryCopy)}</div>
+      <a class="home-core-row home-core-tip" href="#/tip" aria-label="Open TIP">
+        <div class="home-core-name">TIP</div>
+        <div class="home-core-content">
+          <div class="home-core-description home-core-tip-description">Tell TIP about your golf. Let TIP help with what comes next.</div>
+        </div>
+        <span class="home-core-arrow" aria-hidden="true">›</span>
+      </a>
+    </section>
+
+    ${hasCoachingEvidence ? `
+      <section class="home-suggests section">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">TIP SUGGESTS</div>
+            <h2>${esc(memoryCopy)}</h2>
           </div>
-          <span class="home-core-arrow" aria-hidden="true">›</span>
-        </a>
-        <div class="home-tip-suggestion">
-          <div class="home-tip-suggestion-head">
-            <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
+        </div>
+        <article class="card card-accent tip-suggestion-card">
+          <div class="card-top">
+            <div>
+              <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
+              <h3>${esc(suggestion.title)}</h3>
+            </div>
             <small>${esc(suggestion.label)}</small>
           </div>
-          <h2>${esc(suggestion.title)}</h2>
           <p>${esc(suggestion.reason)}</p>
-          <button class="primary-button" type="button" data-action="tip-suggestion">START</button>
-        </div>
-      </article>
-    </section>
+          <button class="primary-button tip-suggestion-start" type="button" data-action="tip-suggestion">START</button>
+        </article>
+      </section>
+    ` : ''}
   `;
 }
