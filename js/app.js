@@ -1,5 +1,8 @@
 import { startRouter, navigate } from './router.js';
 import { TIPState } from './core/storage.js';
+import { deleteJournalEntry } from './core/journal.js';
+import { detectV2Data, importV2FromThisDevice } from './core/import-v2.js';
+import { renderEntryForm, saveEntryForm } from './golfer/entry-form.js';
 import { renderHome } from './home/home-view.js';
 import { renderTIP } from './tip/tip-view.js';
 import { renderGolfer } from './golfer/journal-view.js';
@@ -8,42 +11,48 @@ const view = document.getElementById('view');
 const menuDialog = document.getElementById('menuDialog');
 const menuBtn = document.getElementById('menuBtn');
 const closeMenuBtn = document.getElementById('closeMenuBtn');
+const entryDialog = document.getElementById('entryDialog');
+const entryDialogBody = document.getElementById('entryDialogBody');
+const restoreFile = document.getElementById('restoreFile');
 const toast = document.getElementById('toast');
 
 let activeRoute = 'home';
 let toastTimer = null;
 
-const renderers = {
-  home: renderHome,
-  tip: renderTIP,
-  golfer: renderGolfer
-};
+const renderers = { home:renderHome, tip:renderTIP, golfer:renderGolfer };
 
 function showToast(message) {
   clearTimeout(toastTimer);
   toast.textContent = message;
   toast.classList.add('show');
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
 
 function render(route = activeRoute) {
   activeRoute = renderers[route] ? route : 'home';
   view.innerHTML = renderers[activeRoute]();
-  document.querySelectorAll('[data-route]').forEach(link => {
-    link.classList.toggle('active', link.dataset.route === activeRoute);
-  });
-  view.focus({ preventScroll: true });
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  document.querySelectorAll('[data-route]').forEach(link => link.classList.toggle('active', link.dataset.route === activeRoute));
+  view.focus({ preventScroll:true });
+  window.scrollTo({ top:0, behavior:'instant' });
+}
+
+function openEntry(entryId = null, type = null) {
+  entryDialogBody.innerHTML = renderEntryForm(entryId, type);
+  entryDialog.showModal();
+}
+
+function closeEntry() {
+  if (entryDialog.open) entryDialog.close();
+  entryDialogBody.innerHTML = '';
 }
 
 function downloadSnapshot() {
   const json = TIPState.exportSnapshot();
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([json], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0, 10);
   anchor.href = url;
-  anchor.download = `the-irish-par-golfer-${stamp}.json`;
+  anchor.download = `the-irish-par-golfer-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
@@ -51,42 +60,66 @@ function downloadSnapshot() {
   showToast('Golfer exported.');
 }
 
-function handleAction(action) {
+function handleAction(target) {
+  const action = target.dataset.action;
   switch (action) {
-    case 'tip7':
-      showToast('TIP7 integration arrives in V3.0-C.');
-      break;
-    case 'tip9':
-      showToast('TIP9 integration arrives in V3.0-D.');
-      break;
+    case 'tip7': showToast('TIP7 integration arrives in V3.0-C.'); break;
+    case 'tip9': showToast('TIP9 integration arrives in V3.0-D.'); break;
     case 'tell-tip':
     case 'add-entry':
-      navigate('tip');
-      showToast('Journal entry flows arrive in V3.0-B.');
+      openEntry(null, 'round');
       break;
-    case 'build-session':
-      showToast('Session composition comes after TIP7, TIP9 and Memory.');
+    case 'edit-entry':
+      openEntry(target.dataset.entryId);
       break;
-    default:
+    case 'delete-entry':
+      if (confirm('Delete this Journal entry?')) {
+        deleteJournalEntry(target.dataset.entryId);
+        showToast('Journal entry deleted.');
+      }
       break;
+    case 'build-session': showToast('Session composition comes after TIP7, TIP9 and Memory.'); break;
+    default: break;
   }
 }
 
 view.addEventListener('click', event => {
   const target = event.target.closest('[data-action]');
-  if (target) handleAction(target.dataset.action);
+  if (target) handleAction(target);
+});
+
+entryDialog.addEventListener('click', event => {
+  if (event.target === entryDialog || event.target.closest('[data-entry-close]')) {
+    closeEntry();
+    return;
+  }
+  const typeButton = event.target.closest('[data-entry-type-choice]');
+  if (typeButton) {
+    entryDialogBody.innerHTML = renderEntryForm(null, typeButton.dataset.entryTypeChoice);
+  }
+});
+
+entryDialog.addEventListener('submit', event => {
+  if (event.target.id !== 'journalEntryForm') return;
+  event.preventDefault();
+  try {
+    const wasEdit = !!event.target.dataset.entryId;
+    saveEntryForm(event.target);
+    closeEntry();
+    navigate('golfer');
+    showToast(wasEdit ? 'Journal entry updated.' : 'Added to your Journal.');
+  } catch (error) {
+    showToast(error.message || 'Could not save that entry.');
+  }
 });
 
 menuBtn.addEventListener('click', () => menuDialog.showModal());
 closeMenuBtn.addEventListener('click', () => menuDialog.close());
-menuDialog.addEventListener('click', event => {
-  if (event.target === menuDialog) menuDialog.close();
-});
+menuDialog.addEventListener('click', event => { if (event.target === menuDialog) menuDialog.close(); });
 
 menuDialog.querySelector('.settings-list').addEventListener('click', event => {
   const button = event.target.closest('[data-setting]');
-  if (!button || button.disabled) return;
-
+  if (!button) return;
   switch (button.dataset.setting) {
     case 'about':
       menuDialog.close();
@@ -96,6 +129,29 @@ menuDialog.querySelector('.settings-list').addEventListener('click', event => {
       downloadSnapshot();
       menuDialog.close();
       break;
+    case 'restore':
+      menuDialog.close();
+      restoreFile.click();
+      break;
+    case 'import-v2': {
+      const found = detectV2Data();
+      menuDialog.close();
+      if (!found.available) {
+        showToast('No TIP OS V2 data found on this device.');
+        break;
+      }
+      const total = found.counts.rounds + found.counts.sessions + found.counts.notes;
+      if (confirm(`Import available TIP OS V2 history into this Journal? About ${total} historical records were found. Existing V3 entries will be kept.`)) {
+        try {
+          const result = importV2FromThisDevice();
+          navigate('golfer');
+          showToast(`V2 import complete: ${result.imported} records processed.`);
+        } catch (error) {
+          showToast(error.message || 'V2 import failed.');
+        }
+      }
+      break;
+    }
     case 'reset':
       if (confirm('Reset this V3 golfer? This clears the shared V3 state on this device.')) {
         TIPState.reset();
@@ -104,11 +160,25 @@ menuDialog.querySelector('.settings-list').addEventListener('click', event => {
         showToast('Golfer reset.');
       }
       break;
-    default:
-      break;
+    default: break;
+  }
+});
+
+restoreFile.addEventListener('change', async () => {
+  const file = restoreFile.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    if (!confirm('Restore this golfer file? The current V3 golfer on this device will be replaced.')) return;
+    TIPState.restoreSnapshot(text);
+    navigate('golfer');
+    showToast('Golfer restored.');
+  } catch (error) {
+    showToast(error.message || 'Could not restore that golfer file.');
+  } finally {
+    restoreFile.value = '';
   }
 });
 
 TIPState.addEventListener('change', () => render(activeRoute));
-
 startRouter(render);
