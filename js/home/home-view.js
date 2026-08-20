@@ -25,7 +25,12 @@ export function renderHome() {
   const suggestion = hasCoachingEvidence ? getTIPSuggestion() : null;
 
   return `
-    <section class="home-core-list" aria-label="The Irish Par">
+    <section class="page-header">
+      <div class="eyebrow">TODAY</div>
+      <h1 class="page-title">What are you working on?</h1>
+    </section>
+
+    <section class="home-core-list section" aria-label="The Irish Par">
       <button class="home-core-row" type="button" data-action="tip7">
         <div class="home-core-name">TIP7</div>
         <div class="home-core-content">
