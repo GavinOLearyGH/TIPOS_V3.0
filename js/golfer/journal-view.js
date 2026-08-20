@@ -1,9 +1,7 @@
-import { getRecentJournal } from '../core/journal.js';
+import { getJournal } from '../core/journal.js';
 
 function esc(value = '') {
-  return String(value).replace(/[&<>"']/g, char => ({
-    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-  })[char]);
+  return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]);
 }
 
 function prettyDate(value) {
@@ -12,24 +10,43 @@ function prettyDate(value) {
   return date.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
 }
 
+function metricLine(entry) {
+  const m = entry.metrics || {};
+  const parts = [];
+  if (m.score != null) parts.push(`<strong>${esc(m.score)}</strong> score`);
+  if (m.fairways != null) parts.push(`${esc(m.fairways)} FW`);
+  if (m.gir != null) parts.push(`${esc(m.gir)} GIR`);
+  if (m.putts != null) parts.push(`${esc(m.putts)} putts`);
+  if (m.penalties != null) parts.push(`${esc(m.penalties)} penalties`);
+  if (m.duration != null) parts.push(`${esc(m.duration)} min`);
+  if (m.balls != null) parts.push(`${esc(m.balls)} balls/reps`);
+  return parts.length ? `<div class="journal-metrics">${parts.join('<span>·</span>')}</div>` : '';
+}
+
 function entryHTML(entry) {
   const note = entry.reflection?.text || '';
+  const imported = entry.source === 'v2-import' ? '<span class="source-pill">V2</span>' : '';
   return `
-    <article class="card">
+    <article class="card journal-card">
       <div class="card-top">
         <div>
-          <div class="eyebrow">${esc(entry.type)}</div>
+          <div class="eyebrow">${esc(entry.type)} ${imported}</div>
           <h3>${esc(entry.title)}</h3>
         </div>
         <small>${esc(prettyDate(entry.createdAt))}</small>
       </div>
-      ${note ? `<p>${esc(note)}</p>` : ''}
-    </article>
-  `;
+      ${metricLine(entry)}
+      ${note ? `<p class="journal-note">${esc(note)}</p>` : ''}
+      ${entry.topics?.length ? `<div class="journal-tags">${entry.topics.map(t => `<span>${esc(t.replace(/([A-Z])/g,' $1'))}</span>`).join('')}</div>` : ''}
+      <div class="journal-actions">
+        <button type="button" data-action="edit-entry" data-entry-id="${esc(entry.id)}">Edit</button>
+        <button type="button" data-action="delete-entry" data-entry-id="${esc(entry.id)}">Delete</button>
+      </div>
+    </article>`;
 }
 
 export function renderGolfer() {
-  const entries = getRecentJournal(10);
+  const entries = getJournal();
   return `
     <section>
       <div class="eyebrow">GOLFER</div>
@@ -43,12 +60,8 @@ export function renderGolfer() {
 
     <section class="section">
       <div class="section-head">
-        <div>
-          <div class="eyebrow">YOUR GOLF</div>
-          <h2>${entries.length ? 'Recent entries' : 'Nothing here yet'}</h2>
-        </div>
+        <div><div class="eyebrow">YOUR GOLF</div><h2>${entries.length ? `${entries.length} ${entries.length===1?'entry':'entries'}` : 'Nothing here yet'}</h2></div>
       </div>
-      ${entries.length ? `<div class="journal-preview">${entries.map(entryHTML).join('')}</div>` : `<div class="empty-state">The Journal is intentionally empty. V3.0-B adds round, practice and note entry flows; TIP7 and TIP9 will then write here automatically.</div>`}
-    </section>
-  `;
+      ${entries.length ? `<div class="journal-preview">${entries.map(entryHTML).join('')}</div>` : `<div class="empty-state"><strong>Start with what happened.</strong><p>Add a round, practice, lesson, equipment change or simple note. TIP7 and TIP9 will write here automatically in the next milestones.</p></div>`}
+    </section>`;
 }
