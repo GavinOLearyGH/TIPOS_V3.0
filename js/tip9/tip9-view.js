@@ -6,15 +6,20 @@ function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;',
 function unit(context){return context==='noball'?'REPS':'BALLS';}
 function renderBalls(results=[]){let html='';for(let i=0;i<9;i++){let status='';for(let j=0;j<results.length;j++)if(i>=j*3&&i<j*3+3)status=(i-j*3)<results[j]?'good':'miss';html+=`<div class="tip9-ball ${status}">${status==='good'?'✓':status==='miss'?'×':''}</div>`;}return html;}
 
+const CONTEXT_META={
+  range:['Range','Full flight · Targets · Turf'],bay:['Hitting Bay','Net · Simulator · Launch monitor'],green:['Putting Green','Start line · Speed · Scoring'],short:['Short Game','Chip · Pitch · Bunker'],noball:['No Ball','Rehearsals · Motion · Feel']
+};
+function contextButtons(contexts,ObjectAttr='data-tip9-context'){
+  return contexts.map(key=>{const meta=CONTEXT_META[key]||[TIP9_CONTEXTS[key]||key,''];return `<button ${ObjectAttr}="${esc(key)}"><strong>${esc(meta[0])}</strong><span>${esc(meta[1])}</span></button>`;}).join('');
+}
+
 function contextHTML(){
   const state=TIPState.get();
-  return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">QUICK PRACTICE</div><h1 class="page-title">Nine balls.<br>One purpose.</h1><p class="page-copy">Choose where you are. TIP9 will give you a focused Swing or Skill practice that works there.</p><div class="tip9-contexts">
-    <button data-tip9-context="range"><strong>Range</strong><span>Full flight · Targets · Turf</span></button>
-    <button data-tip9-context="bay"><strong>Hitting Bay</strong><span>Net · Simulator · Launch monitor</span></button>
-    <button data-tip9-context="green"><strong>Putting Green</strong><span>Start line · Speed · Scoring</span></button>
-    <button data-tip9-context="short"><strong>Short Game</strong><span>Chip · Pitch · Bunker</span></button>
-    <button data-tip9-context="noball"><strong>No Ball</strong><span>Rehearsals · Motion · Feel</span></button>
-  </div><div class="card-meta">${state.tip9.lifetime||0} TIP9${state.tip9.lifetime===1?'':'s'} completed</div><button class="text-button" data-tip9-browse>Browse all practices</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;
+  return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">QUICK PRACTICE</div><h1 class="page-title">Nine balls.<br>One purpose.</h1><p class="page-copy">Choose where you are. TIP9 will give you a focused Swing or Skill practice that works there.</p><div class="tip9-contexts">${contextButtons(['range','bay','green','short','noball'])}</div><div class="card-meta">${state.tip9.lifetime||0} TIP9${state.tip9.lifetime===1?'':'s'} completed</div><button class="text-button" data-tip9-browse>Browse all practices</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;
+}
+
+function preferredContextHTML(practice){
+  return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">TIP SUGGESTED · ${esc(practice.type)}</div><h1 class="page-title">${esc(practice.name)}</h1><p class="page-copy">${esc(practice.desc)}</p><article class="card card-accent"><span class="eyebrow">ONE QUESTION</span><h3>Where are you practicing?</h3><p>TIP will keep the recommended work and adapt it to the place you have available.</p></article><div class="tip9-contexts">${contextButtons(practice.contexts,'data-tip9-preferred-context')}</div><button class="text-button" data-tip9-normal-home>Choose a different TIP9 instead</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;
 }
 
 function recommendationHTML(context,practice){
@@ -29,13 +34,21 @@ function libraryHTML(context=null,filter='all'){
 
 function setupHTML(context,practice){const data=getTIP9Data(practice,context),ps=getTIP9PracticeState(practice.id);return `<section class="tip9-overview"><div class="eyebrow">${practice.type} · ${esc(TIP9_CONTEXTS[context])}</div><h1 class="page-title">${esc(practice.name)}</h1><p class="page-copy">${esc(practice.desc)}</p><article class="card"><span class="eyebrow">YOU NEED</span><h3>${esc(data.need)}</h3><span class="eyebrow">LEVEL</span><h3>${ps.level} of 3</h3></article><button class="primary-button" data-tip9-begin>START TIP9</button><button class="text-button" data-tip9-setup-back>← Choose another</button></section>`;}
 
-export function startTIP9({container,onExit=()=>{},onComplete=()=>{}}){
+export function startTIP9({container,onExit=()=>{},onComplete=()=>{},preferredPracticeId=null}){
   let context=null,currentId=null,blocks=[],block=0,results=[],libraryContext=null,filter='all',completion=null;
   const controller=new AbortController();
+  const preferred=getTIP9Practice(preferredPracticeId);
   document.body.classList.add('execution-mode');
   function render(html){container.innerHTML=html;window.scrollTo({top:0,behavior:'instant'});}
   function home(){context=null;currentId=null;render(contextHTML());}
+  function preferredHome(){
+    if(!preferred){home();return;}
+    currentId=preferred.id;
+    if(preferred.contexts.length===1){context=preferred.contexts[0];render(setupHTML(context,preferred));return;}
+    render(preferredContextHTML(preferred));
+  }
   function chooseContext(c,avoid=null){context=c;const p=recommendTIP9(c,avoid);currentId=p?.id||null;render(p?recommendationHTML(c,p):contextHTML());}
+  function choosePreferredContext(c){if(!preferred||!preferred.contexts.includes(c)){home();return;}context=c;currentId=preferred.id;render(setupHTML(context,preferred));}
   function openSetup(id){currentId=id;const p=getTIP9Practice(id);if(!p)return;if(!context)context=p.contexts[0];render(setupHTML(context,p));}
   function openLibrary(c=libraryContext,f=filter){libraryContext=c;filter=f;render(libraryHTML(c,f));}
   function begin(){blocks=buildTIP9Blocks(currentId,context);block=0;results=[];renderPlay();}
@@ -45,7 +58,9 @@ export function startTIP9({container,onExit=()=>{},onComplete=()=>{}}){
   function cleanup(){controller.abort();document.body.classList.remove('execution-mode');}
   function exit(){cleanup();onExit();}
   function clickHandler(event){const t=event.target.closest('button');if(!t)return;
-    if(t.dataset.tip9Context)chooseContext(t.dataset.tip9Context);
+    if(t.dataset.tip9PreferredContext)choosePreferredContext(t.dataset.tip9PreferredContext);
+    else if(t.dataset.tip9Context)chooseContext(t.dataset.tip9Context);
+    else if(t.hasAttribute('data-tip9-normal-home'))home();
     else if(t.hasAttribute('data-tip9-exit'))exit();
     else if(t.hasAttribute('data-tip9-another'))chooseContext(context,currentId);
     else if(t.hasAttribute('data-tip9-change-context'))home();
@@ -55,15 +70,15 @@ export function startTIP9({container,onExit=()=>{},onComplete=()=>{}}){
     else if(t.dataset.tip9LibraryId)openSetup(t.dataset.tip9LibraryId);
     else if(t.hasAttribute('data-tip9-library-back'))libraryContext?chooseContext(libraryContext):home();
     else if(t.dataset.tip9Setup)openSetup(t.dataset.tip9Setup);
-    else if(t.hasAttribute('data-tip9-setup-back'))chooseContext(context,currentId);
+    else if(t.hasAttribute('data-tip9-setup-back'))preferred?preferredHome():chooseContext(context,currentId);
     else if(t.hasAttribute('data-tip9-begin'))begin();
     else if(t.dataset.tip9Score!=null)recordScore(Number(t.dataset.tip9Score));
     else if(t.hasAttribute('data-tip9-ready'))renderPlay();
-    else if(t.hasAttribute('data-tip9-end'))home();
+    else if(t.hasAttribute('data-tip9-end'))preferred?preferredHome():home();
     else if(t.dataset.tip9Feel){saveTIP9Feel(completion.entry.id,currentId,t.dataset.tip9Feel);container.querySelectorAll('[data-tip9-feel]').forEach(b=>b.classList.toggle('selected',b===t));container.querySelector('[data-tip9-done]')?.classList.remove('tip9-done-delayed');}
     else if(t.hasAttribute('data-tip9-done'))exit();
   }
   container.addEventListener('click',clickHandler,{signal:controller.signal});
-  home();
+  preferredHome();
   return cleanup;
 }
