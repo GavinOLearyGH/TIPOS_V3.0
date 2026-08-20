@@ -71,20 +71,24 @@ test('first-run welcome sets the simple TIP7 TIP9 TIP tone', async ({ page }) =>
   await expect(welcome).toContainText('Build your golfer.');
   await expect(welcome).toContainText('7 Minute Stretch & Strength');
   await expect(welcome).toContainText('9 Ball Challenge for Swing & Skill');
+  await expect(welcome).toContainText('Tell TIP about your golf. Let TIP help with what comes next.');
   await expect(welcome).not.toContainText(/PLAY.*PRACTICE.*REMEMBER.*IMPROVE/i);
   await page.locator('#welcomeStartBtn').click();
   await page.reload();
   await expect(page.locator('#welcomeDialog')).not.toHaveAttribute('open', '');
 });
 
-test('fresh golfer has only the V3 primary surfaces', async ({ page }) => {
+test('Home mirrors the three core splash pillars', async ({ page }) => {
   await fresh(page);
+  const rows = page.locator('.home-core-row');
+  await expect(rows).toHaveCount(3);
+  await expect(page.locator('[data-action="tip7"]')).toContainText('TIP7');
   await expect(page.locator('[data-action="tip7"]')).toContainText('7 Minute Stretch & Strength');
+  await expect(page.locator('[data-action="tip9"]')).toContainText('TIP9');
   await expect(page.locator('[data-action="tip9"]')).toContainText('9 Ball Challenge for Swing & Skill');
-  await expect(page.getByText('TIP SUGGESTS')).toBeVisible();
-  await expect(page.locator('[data-route="home"]')).toBeVisible();
-  await expect(page.locator('[data-route="tip"] .nav-tip-logo')).toHaveText('TIP');
-  await expect(page.locator('[data-route="golfer"]')).toBeVisible();
+  await expect(page.locator('.home-core-tip')).toContainText('TIP');
+  await expect(page.locator('.home-core-tip')).toContainText('Tell TIP about your golf. Let TIP help with what comes next.');
+  await expect(page.locator('[data-route="tip"] .nav-tip-logo')).toBeVisible();
   await expect(page.getByText(/Player Card|Today's Mission|Coach's Corner|TIP Plans/i)).toHaveCount(0);
 });
 
@@ -92,8 +96,8 @@ test('round entry feeds Journal and changes TIP from learning-only state', async
   await fresh(page);
   await addRound(page);
   await nav(page, 'home');
-  await expect(page.locator('.tip-suggestion-card')).toBeVisible();
-  await expect(page.locator('.tip-suggestion-card')).toContainText(/Contact|Approach|TIP9|IMPROVE|LEARN/i);
+  await expect(page.locator('.home-tip-suggestion')).toBeVisible();
+  await expect(page.locator('.home-tip-suggestion')).toContainText(/Contact|Approach|TIP9|IMPROVE|LEARN/i);
 });
 
 test('TIP7 completes, journals once, and locks for today', async ({ page }) => {
@@ -119,8 +123,8 @@ test('TIP Suggests start preserves the recommended TIP9 instead of rerolling', a
   await fresh(page);
   await addRound(page, 'Irons were heavy. Contact was poor and approaches were short.');
   await nav(page, 'home');
-  const card = page.locator('.tip-suggestion-card');
-  const title = (await card.locator('h3').textContent())?.trim();
+  const card = page.locator('.home-tip-suggestion');
+  const title = (await card.locator('h2').textContent())?.trim();
   await card.locator('[data-action="tip-suggestion"]').click();
   if (await page.locator('[data-tip9-preferred-context]').count()) await page.locator('[data-tip9-preferred-context]').first().click();
   await expect(page.getByRole('heading', { name: title, exact:true })).toBeVisible();
