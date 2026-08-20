@@ -58,6 +58,7 @@ export function startTIP7({ container, onExit = () => {}, onComplete = () => {} 
   let paused = false;
   let timer = null;
   let completionEntry = null;
+  const controller = new AbortController();
 
   document.body.classList.add('execution-mode');
 
@@ -106,15 +107,30 @@ export function startTIP7({ container, onExit = () => {}, onComplete = () => {} 
   function begin() {
     const status = getTIP7Status();
     if (!status.canStart) return;
-    dayIndex = status.nextIndex; step = 0; phase = 'prepare'; remaining = TIP7_PREP_SECONDS; paused = false;
-    renderSession(); stopTimer(); timer = setInterval(tick,1000); beep(520,.07);
+    dayIndex = status.nextIndex;
+    step = 0;
+    phase = 'prepare';
+    remaining = TIP7_PREP_SECONDS;
+    paused = false;
+    renderSession();
+    stopTimer();
+    timer = setInterval(tick,1000);
+    beep(520,.07);
+  }
+
+  function cleanup() {
+    stopTimer();
+    controller.abort();
+    document.removeEventListener('visibilitychange', visibility);
+    document.body.classList.remove('execution-mode');
   }
 
   function exit() {
-    stopTimer(); document.body.classList.remove('execution-mode'); onExit();
+    cleanup();
+    onExit();
   }
 
-  container.addEventListener('click', function handler(event) {
+  function clickHandler(event) {
     const target = event.target.closest('button');
     if (!target) return;
     if (target.matches('[data-tip7-start]')) begin();
@@ -130,14 +146,21 @@ export function startTIP7({ container, onExit = () => {}, onComplete = () => {} 
       else if (step>0) { step--; phase='prepare'; remaining=TIP7_PREP_SECONDS; }
       renderSession();
     } else if (target.matches('[data-tip7-feel]')) {
-      document.querySelectorAll('[data-tip7-feel]').forEach(b=>b.classList.toggle('selected', b===target));
+      container.querySelectorAll('[data-tip7-feel]').forEach(b=>b.classList.toggle('selected', b===target));
       saveTIP7Feel(dayIndex, target.dataset.tip7Feel);
     } else if (target.matches('[data-tip7-done]')) exit();
-  });
+  }
 
-  const visibility = () => { if (document.hidden && timer) { paused = true; renderSession(); } };
+  const visibility = () => {
+    if (document.hidden && timer) {
+      paused = true;
+      renderSession();
+    }
+  };
+
+  container.addEventListener('click', clickHandler, { signal:controller.signal });
   document.addEventListener('visibilitychange', visibility);
   renderOverview();
 
-  return () => { stopTimer(); document.removeEventListener('visibilitychange', visibility); document.body.classList.remove('execution-mode'); };
+  return cleanup;
 }
