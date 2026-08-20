@@ -1,0 +1,52 @@
+body.execution-mode .topbar,
+body.execution-mode .bottom-nav { display:none; }
+body.execution-mode .main { padding-top:max(18px,env(safe-area-inset-top)); padding-bottom:max(24px,env(safe-area-inset-bottom)); }
+
+.tip7-brand { font-size:31px; font-weight:950; letter-spacing:-.06em; margin-bottom:18px; }
+.tip7-brand b { color:var(--tip-accent); }
+.tip7-overview { padding-bottom:20px; }
+.tip7-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:18px 0; }
+.tip7-stats > div { padding:13px; border:1px solid var(--tip-line); border-radius:15px; background:var(--tip-panel); }
+.tip7-stats strong { display:block; font-size:22px; }
+.tip7-stats span { display:block; margin-top:4px; color:var(--tip-muted); font-size:10px; font-weight:850; letter-spacing:.08em; }
+.tip7-today { margin:8px 0 12px; }
+.tip7-week { display:grid; gap:7px; margin-top:22px; }
+.tip7-day { display:flex; gap:12px; align-items:center; padding:11px 13px; border:1px solid var(--tip-line); border-radius:14px; background:var(--tip-panel); color:var(--tip-muted); }
+.tip7-day > span { width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--tip-line); border-radius:10px; font-weight:900; }
+.tip7-day strong,.tip7-day small { display:block; }
+.tip7-day strong { color:var(--tip-text); font-size:13px; }
+.tip7-day small { margin-top:2px; font-size:10px; letter-spacing:.06em; }
+.tip7-day.done > span { background:var(--tip-accent); border-color:var(--tip-accent); color:#102016; }
+.tip7-day.today { border-color:var(--tip-line-accent); }
+.tip7-day.locked { opacity:.55; }
+.tip7-safety { margin:18px 0; color:var(--tip-faint); font-size:11px; line-height:1.5; text-align:center; }
+.text-button { width:100%; border:0; background:transparent; color:var(--tip-muted); padding:13px; cursor:pointer; font:inherit; }
+
+.tip7-session { min-height:calc(100dvh - 40px); display:flex; flex-direction:column; padding-bottom:78px; }
+.tip7-progress-head { display:flex; justify-content:space-between; gap:12px; color:var(--tip-muted); font-size:11px; margin-bottom:9px; }
+.tip7-track { height:6px; border-radius:99px; overflow:hidden; background:rgba(255,255,255,.08); }
+.tip7-track > div { height:100%; background:var(--tip-accent); transition:width .2s linear; }
+.tip7-phase { text-align:center; margin-top:24px; }
+.tip7-counter { margin:12px 0 2px; font-size:92px; line-height:.92; font-weight:950; letter-spacing:-.07em; font-variant-numeric:tabular-nums; }
+.tip7-phase small { color:var(--tip-muted); font-size:10px; font-weight:800; letter-spacing:.13em; }
+.tip7-exercise { margin-top:22px; }
+.tip7-exercise h2 { font-size:30px; }
+.tip7-exercise p { font-size:15px; line-height:1.55; color:var(--tip-text); }
+.tip7-cue { margin-top:15px; padding-top:14px; border-top:1px solid var(--tip-line); color:var(--tip-muted); font-size:13px; }
+.tip7-cue strong { color:var(--tip-accent); }
+.tip7-next { margin-top:13px; color:var(--tip-muted); font-size:12px; }
+.tip7-next strong { color:var(--tip-text); }
+.tip7-controls { position:fixed; left:50%; transform:translateX(-50%); bottom:max(10px,env(safe-area-inset-bottom)); width:min(calc(100% - 36px),524px); display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:7px; padding:9px; border:1px solid var(--tip-line); border-radius:17px; background:rgba(12,25,20,.95); backdrop-filter:blur(12px); z-index:20; }
+.tip7-controls button,.tip7-feel button { min-height:47px; border:1px solid var(--tip-line); border-radius:13px; background:var(--tip-panel-strong); color:var(--tip-text); font:inherit; font-weight:800; cursor:pointer; }
+.tip7-complete { text-align:center; padding-top:5vh; }
+.tip7-check { margin-bottom:8px; color:var(--tip-accent); font-size:58px; }
+.tip7-complete .card { text-align:left; margin:22px 0; }
+.tip7-complete h2 { margin:8px 0 12px; }
+.tip7-feel { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:12px 0 20px; }
+.tip7-feel button.selected { border-color:var(--tip-accent); color:var(--tip-accent); }
+.tip7-complete .primary-button { margin-top:8px; }
+
+@media (max-width:380px) {
+  .tip7-counter { font-size:78px; }
+  .tip7-feel { grid-template-columns:1fr; }
+}
