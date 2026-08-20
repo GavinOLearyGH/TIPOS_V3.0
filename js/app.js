@@ -1,12 +1,13 @@
 import { startRouter, navigate } from './router.js';
 import { TIPState } from './core/storage.js';
-import { deleteJournalEntry } from './core/journal.js';
+import { addJournalEntry, deleteJournalEntry } from './core/journal.js';
 import { detectV2Data, importV2FromThisDevice } from './core/import-v2.js';
 import { rebuildTIPMemory } from './coach/memory.js';
 import { getTIPSuggestion } from './coach/recommend.js';
 import { renderEntryForm, saveEntryForm } from './golfer/entry-form.js';
 import { renderHome } from './home/home-view.js';
 import { renderTIP } from './tip/tip-view.js';
+import { renderSessionBuilder, renderSessionPlan } from './tip/session-builder.js';
 import { renderGolfer } from './golfer/journal-view.js';
 import { startTIP7 } from './tip7/tip7-view.js';
 import { startTIP9 } from './tip9/tip9-view.js';
@@ -25,6 +26,8 @@ let toastTimer = null;
 let executionMode = null;
 let executionCleanup = null;
 let memoryScheduled = false;
+let sessionPlan = null;
+let sessionRun = null;
 
 const renderers = { home:renderHome, tip:renderTIP, golfer:renderGolfer };
 
@@ -74,10 +77,10 @@ function launchTIP7() {
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
-function launchTIP9(preferredPracticeId=null) {
+function launchTIP9(preferredPracticeId=null,preferredContext=null) {
   endExecution();
   executionMode = 'tip9';
-  executionCleanup = startTIP9({ container:view, preferredPracticeId, onExit:returnHomeFromExecution, onComplete:() => showToast('TIP9 saved to your Journal.') });
+  executionCleanup = startTIP9({ container:view, preferredPracticeId, preferredContext, onExit:returnHomeFromExecution, onComplete:() => showToast('TIP9 saved to your Journal.') });
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
@@ -86,6 +89,88 @@ function launchTIPSuggestion(){
   if(suggestion.action?.type === 'tip7') { launchTIP7(); return; }
   if(suggestion.action?.type === 'tip9') { launchTIP9(suggestion.action.practiceId || null); return; }
   showToast('TIP is still learning what to suggest next.');
+}
+
+function openSessionBuilder(){
+  sessionPlan=null;
+  activeRoute='tip';
+  view.innerHTML=renderSessionBuilder();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function showSessionPlan(options){
+  const built=renderSessionPlan(options);
+  sessionPlan=built.plan;
+  view.innerHTML=built.html;
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function finishBuiltSession(){
+  const run=sessionRun;
+  if(!run) returnHomeFromExecution();
+  endExecution();
+  const state=TIPState.get();
+  const children=run.entryIds.map(id=>state.journal.find(e=>e.id===id)).filter(Boolean);
+  const dimensions=[...new Set(children.flatMap(e=>e.dimensions||[]))];
+  const topics=[...new Set(children.flatMap(e=>e.topics||[]))];
+  addJournalEntry({
+    type:'session',
+    source:'tip-session',
+    title:"Today's Session",
+    dimensions,
+    topics,
+    context:{sessionContext:run.plan.context,sessionContextLabel:run.plan.contextLabel},
+    metrics:{duration:run.plan.minutes},
+    result:{completed:true,completedBlocks:run.entryIds.length,plannedBlocks:run.plan.blocks.length},
+    activity:{kind:'session',planId:run.plan.id,startedAt:run.startedAt,completedAt:new Date().toISOString(),entryIds:[...run.entryIds],blocks:run.plan.blocks.map(b=>({kind:b.kind,refId:b.refId||null,title:b.title,context:b.context||null}))},
+    note:run.plan.focus?`TIP built this session around ${run.plan.focus}.`:'Built by TIP from current progress and Journal memory.'
+  });
+  sessionRun=null;
+  activeRoute='golfer';
+  if(location.hash!=='#/golfer') navigate('golfer'); else render('golfer');
+  showToast('Session complete and saved to your Journal.');
+}
+
+function abortBuiltSession(){
+  endExecution();
+  const completed=sessionRun?.entryIds?.length||0;
+  sessionRun=null;
+  activeRoute='tip';
+  if(location.hash!=='#/tip') navigate('tip'); else render('tip');
+  showToast(completed ? 'Session stopped. Completed activities remain in your Journal.' : 'Session stopped.');
+}
+
+function runNextSessionBlock(){
+  if(!sessionRun) return;
+  if(sessionRun.index>=sessionRun.plan.blocks.length){ finishBuiltSession(); return; }
+  endExecution();
+  const block=sessionRun.plan.blocks[sessionRun.index];
+  let completedEntry=null;
+  const complete=entry=>{ completedEntry=entry||null; };
+  const exit=()=>{
+    const entry=completedEntry;
+    endExecution();
+    if(!sessionRun) return;
+    if(!entry){ abortBuiltSession(); return; }
+    sessionRun.entryIds.push(entry.id);
+    sessionRun.index++;
+    if(sessionRun.index>=sessionRun.plan.blocks.length) finishBuiltSession();
+    else runNextSessionBlock();
+  };
+
+  executionMode='session';
+  if(block.kind==='tip7'){
+    executionCleanup=startTIP7({container:view,onComplete:complete,onExit:exit});
+  } else {
+    executionCleanup=startTIP9({container:view,preferredPracticeId:block.refId,preferredContext:block.context,onComplete:complete,onExit:exit});
+  }
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function startBuiltSession(){
+  if(!sessionPlan?.blocks?.length){ showToast('TIP could not build that session.'); return; }
+  sessionRun={plan:sessionPlan,index:0,entryIds:[],startedAt:new Date().toISOString()};
+  runNextSessionBlock();
 }
 
 function openEntry(entryId = null, type = null) {
@@ -127,7 +212,10 @@ function handleAction(target) {
         showToast('Journal entry deleted.');
       }
       break;
-    case 'build-session': showToast('Build Today’s Session arrives in V3.0-G.'); break;
+    case 'build-session': openSessionBuilder(); break;
+    case 'session-cancel': render('tip'); break;
+    case 'session-rebuild': openSessionBuilder(); break;
+    case 'session-start': startBuiltSession(); break;
     default: break;
   }
 }
@@ -136,6 +224,13 @@ view.addEventListener('click', event => {
   if (executionMode) return;
   const target = event.target.closest('[data-action]');
   if (target) handleAction(target);
+});
+
+view.addEventListener('submit',event=>{
+  if(event.target.id!=='sessionBuilderForm') return;
+  event.preventDefault();
+  const data=new FormData(event.target);
+  showSessionPlan({minutes:Number(data.get('minutes')||30),context:String(data.get('context')||'anywhere')});
 });
 
 entryDialog.addEventListener('click', event => {
@@ -202,4 +297,7 @@ TIPState.addEventListener('change', event => {
 });
 
 rebuildTIPMemory();
-startRouter(route => { if (executionMode) endExecution(); render(route); });
+startRouter(route => {
+  if(executionMode){ endExecution(); sessionRun=null; }
+  render(route);
+});
