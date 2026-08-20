@@ -6,6 +6,7 @@ import { renderEntryForm, saveEntryForm } from './golfer/entry-form.js';
 import { renderHome } from './home/home-view.js';
 import { renderTIP } from './tip/tip-view.js';
 import { renderGolfer } from './golfer/journal-view.js';
+import { startTIP7 } from './tip7/tip7-view.js';
 
 const view = document.getElementById('view');
 const menuDialog = document.getElementById('menuDialog');
@@ -18,6 +19,8 @@ const toast = document.getElementById('toast');
 
 let activeRoute = 'home';
 let toastTimer = null;
+let executionMode = null;
+let executionCleanup = null;
 
 const renderers = { home:renderHome, tip:renderTIP, golfer:renderGolfer };
 
@@ -28,11 +31,35 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
 
+function endExecution() {
+  if (executionCleanup) executionCleanup();
+  executionCleanup = null;
+  executionMode = null;
+  document.body.classList.remove('execution-mode');
+}
+
 function render(route = activeRoute) {
+  if (executionMode) return;
   activeRoute = renderers[route] ? route : 'home';
   view.innerHTML = renderers[activeRoute]();
   document.querySelectorAll('[data-route]').forEach(link => link.classList.toggle('active', link.dataset.route === activeRoute));
   view.focus({ preventScroll:true });
+  window.scrollTo({ top:0, behavior:'instant' });
+}
+
+function launchTIP7() {
+  endExecution();
+  executionMode = 'tip7';
+  executionCleanup = startTIP7({
+    container:view,
+    onExit:() => {
+      endExecution();
+      activeRoute = 'home';
+      if (location.hash !== '#/home') navigate('home');
+      else render('home');
+    },
+    onComplete:() => showToast('TIP7 saved to your Journal.')
+  });
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
@@ -63,7 +90,7 @@ function downloadSnapshot() {
 function handleAction(target) {
   const action = target.dataset.action;
   switch (action) {
-    case 'tip7': showToast('TIP7 integration arrives in V3.0-C.'); break;
+    case 'tip7': launchTIP7(); break;
     case 'tip9': showToast('TIP9 integration arrives in V3.0-D.'); break;
     case 'tell-tip':
     case 'add-entry':
@@ -84,6 +111,7 @@ function handleAction(target) {
 }
 
 view.addEventListener('click', event => {
+  if (executionMode) return;
   const target = event.target.closest('[data-action]');
   if (target) handleAction(target);
 });
@@ -94,9 +122,7 @@ entryDialog.addEventListener('click', event => {
     return;
   }
   const typeButton = event.target.closest('[data-entry-type-choice]');
-  if (typeButton) {
-    entryDialogBody.innerHTML = renderEntryForm(null, typeButton.dataset.entryTypeChoice);
-  }
+  if (typeButton) entryDialogBody.innerHTML = renderEntryForm(null, typeButton.dataset.entryTypeChoice);
 });
 
 entryDialog.addEventListener('submit', event => {
@@ -180,5 +206,8 @@ restoreFile.addEventListener('change', async () => {
   }
 });
 
-TIPState.addEventListener('change', () => render(activeRoute));
-startRouter(render);
+TIPState.addEventListener('change', () => { if (!executionMode) render(activeRoute); });
+startRouter(route => {
+  if (executionMode) endExecution();
+  render(route);
+});
