@@ -10,36 +10,32 @@ function esc(value='') {
 export function renderHome() {
   const state = TIPState.get();
   const tip7 = getTIP7Status();
-  const tip7Copy = tip7.complete
-    ? 'Foundation complete · 7 / 7'
+  const tip7Status = tip7.complete
+    ? 'FOUNDATION COMPLETE'
     : tip7.doneToday
-      ? `Done today · 🔥 ${tip7.streak} day streak`
-      : `Day ${tip7.nextDay?.day || 1} · ${tip7.nextDay?.theme || 'Foundation'}`;
+      ? `DONE TODAY · ${tip7.streak} DAY STREAK`
+      : `DAY ${tip7.nextDay?.day || 1} · ${tip7.nextDay?.theme || 'OPEN'}`;
   const recentTip9 = (state.tip9.recent || [])[0];
-  const tip9Copy = state.tip9.lifetime
-    ? `${state.tip9.lifetime} completed${recentTip9?.context ? ` · Last: ${String(recentTip9.context).replace('noball','No Ball')}` : ''}`
-    : 'Nine balls · Swing + Skill';
+  const tip9Status = state.tip9.lifetime
+    ? `${state.tip9.lifetime} COMPLETE${recentTip9?.context ? ` · ${String(recentTip9.context).replace('noball','NO BALL').toUpperCase()}` : ''}`
+    : 'READY';
   const memoryCopy = memoryConfidenceCopy(state.memory);
   const suggestion = getTIPSuggestion();
 
   return `
-    <section>
-      <div class="eyebrow">THE IRISH PAR</div>
-      <h1 class="page-title">Build your golfer.</h1>
-      <p class="page-copy">Train your body. Practice your game. Let TIP remember what you learn.</p>
-    </section>
-
-    <section class="section">
+    <section class="home-products">
       <div class="product-grid">
         <button class="card card-button product-card" type="button" data-action="tip7">
           <div class="eyebrow">BODY</div>
           <div class="product-number">TIP<b>7</b></div>
-          <p>${tip7Copy}</p>
+          <p class="product-description">7 Minute Stretch &amp; Strength</p>
+          <div class="product-status">${esc(tip7Status)}</div>
         </button>
         <button class="card card-button product-card" type="button" data-action="tip9">
           <div class="eyebrow">GAME</div>
           <div class="product-number">TIP<b>9</b></div>
-          <p>${tip9Copy}</p>
+          <p class="product-description">9 Ball Challenge for Swing &amp; Skill</p>
+          <div class="product-status">${esc(tip9Status)}</div>
         </button>
       </div>
     </section>
