@@ -6,35 +6,17 @@ function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;',
 function unit(context){return context==='noball'?'REPS':'BALLS';}
 function renderBalls(results=[]){let html='';for(let i=0;i<9;i++){let status='';for(let j=0;j<results.length;j++)if(i>=j*3&&i<j*3+3)status=(i-j*3)<results[j]?'good':'miss';html+=`<div class="tip9-ball ${status}">${status==='good'?'✓':status==='miss'?'×':''}</div>`;}return html;}
 
-const CONTEXT_META={
-  range:['Range','Full flight · Targets · Turf'],bay:['Hitting Bay','Net · Simulator · Launch monitor'],green:['Putting Green','Start line · Speed · Scoring'],short:['Short Game','Chip · Pitch · Bunker'],noball:['No Ball','Rehearsals · Motion · Feel']
-};
+const CONTEXT_META={range:['Range','Full flight · Targets · Turf'],bay:['Hitting Bay','Net · Simulator · Launch monitor'],green:['Putting Green','Start line · Speed · Scoring'],short:['Short Game','Chip · Pitch · Bunker'],noball:['No Ball','Rehearsals · Motion · Feel']};
 function contextButtons(contexts,ObjectAttr='data-tip9-context'){
   return contexts.map(key=>{const meta=CONTEXT_META[key]||[TIP9_CONTEXTS[key]||key,''];return `<button ${ObjectAttr}="${esc(key)}"><strong>${esc(meta[0])}</strong><span>${esc(meta[1])}</span></button>`;}).join('');
 }
-
-function contextHTML(){
-  const state=TIPState.get();
-  return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">QUICK PRACTICE</div><h1 class="page-title">Nine balls.<br>One purpose.</h1><p class="page-copy">Choose where you are. TIP9 will give you a focused Swing or Skill practice that works there.</p><div class="tip9-contexts">${contextButtons(['range','bay','green','short','noball'])}</div><div class="card-meta">${state.tip9.lifetime||0} TIP9${state.tip9.lifetime===1?'':'s'} completed</div><button class="text-button" data-tip9-browse>Browse all practices</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;
-}
-
-function preferredContextHTML(practice){
-  return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">TIP SUGGESTED · ${esc(practice.type)}</div><h1 class="page-title">${esc(practice.name)}</h1><p class="page-copy">${esc(practice.desc)}</p><article class="card card-accent"><span class="eyebrow">ONE QUESTION</span><h3>Where are you practicing?</h3><p>TIP will keep the recommended work and adapt it to the place you have available.</p></article><div class="tip9-contexts">${contextButtons(practice.contexts,'data-tip9-preferred-context')}</div><button class="text-button" data-tip9-normal-home>Choose a different TIP9 instead</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;
-}
-
-function recommendationHTML(context,practice){
-  const ps=getTIP9PracticeState(practice.id); const data=getTIP9Data(practice,context);
-  return `<section class="tip9-overview"><div class="eyebrow">${esc(TIP9_CONTEXTS[context])}</div><p class="page-copy">TIP9 suggests:</p><article class="card card-accent"><div class="card-top"><span class="eyebrow">${esc(practice.type)}</span><span class="pill">LEVEL ${ps.level}</span></div><h1 class="page-title tip9-title">${esc(practice.name)}</h1><p>${esc(practice.desc)}</p><div class="tip9-need"><span>YOU NEED</span><strong>${esc(data.need)}</strong></div></article><button class="primary-button" data-tip9-setup="${esc(practice.id)}">START TIP9</button><div class="tip9-links"><button class="text-button" data-tip9-another>Another practice</button><button class="text-button" data-tip9-browse-context>Browse here</button></div><button class="text-button" data-tip9-change-context>← Change context</button></section>`;
-}
-
-function libraryHTML(context=null,filter='all'){
-  const rows=TIP9_PRACTICES.filter(p=>(!context||p.contexts.includes(context))&&(filter==='all'||p.type===filter));
-  return `<section class="tip9-overview"><div class="eyebrow">PRACTICE LIBRARY</div><h1 class="page-title">${context?esc(TIP9_CONTEXTS[context]):'All practices'}</h1><div class="tip9-filters"><button data-tip9-filter="all" class="${filter==='all'?'selected':''}">All</button><button data-tip9-filter="SWING" class="${filter==='SWING'?'selected':''}">Swing</button><button data-tip9-filter="SKILL" class="${filter==='SKILL'?'selected':''}">Skill</button></div><div class="tip9-library">${rows.map(p=>{const ps=getTIP9PracticeState(p.id);return `<button class="card card-button" data-tip9-library-id="${p.id}"><div class="card-top"><span class="eyebrow">${p.type}</span><span class="pill">LEVEL ${ps.level}</span></div><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p></button>`;}).join('')}</div><button class="text-button" data-tip9-library-back>← Back</button></section>`;
-}
-
+function contextHTML(){const state=TIPState.get();return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">QUICK PRACTICE</div><h1 class="page-title">Nine balls.<br>One purpose.</h1><p class="page-copy">Choose where you are. TIP9 will give you a focused Swing or Skill practice that works there.</p><div class="tip9-contexts">${contextButtons(['range','bay','green','short','noball'])}</div><div class="card-meta">${state.tip9.lifetime||0} TIP9${state.tip9.lifetime===1?'':'s'} completed</div><button class="text-button" data-tip9-browse>Browse all practices</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;}
+function preferredContextHTML(practice){return `<section class="tip9-overview"><div class="tip9-brand">TIP<b>9</b></div><div class="eyebrow">TIP SUGGESTED · ${esc(practice.type)}</div><h1 class="page-title">${esc(practice.name)}</h1><p class="page-copy">${esc(practice.desc)}</p><article class="card card-accent"><span class="eyebrow">ONE QUESTION</span><h3>Where are you practicing?</h3><p>TIP will keep the recommended work and adapt it to the place you have available.</p></article><div class="tip9-contexts">${contextButtons(practice.contexts,'data-tip9-preferred-context')}</div><button class="text-button" data-tip9-normal-home>Choose a different TIP9 instead</button><button class="text-button" data-tip9-exit>← BACK HOME</button></section>`;}
+function recommendationHTML(context,practice){const ps=getTIP9PracticeState(practice.id);const data=getTIP9Data(practice,context);return `<section class="tip9-overview"><div class="eyebrow">${esc(TIP9_CONTEXTS[context])}</div><p class="page-copy">TIP9 suggests:</p><article class="card card-accent"><div class="card-top"><span class="eyebrow">${esc(practice.type)}</span><span class="pill">LEVEL ${ps.level}</span></div><h1 class="page-title tip9-title">${esc(practice.name)}</h1><p>${esc(practice.desc)}</p><div class="tip9-need"><span>YOU NEED</span><strong>${esc(data.need)}</strong></div></article><button class="primary-button" data-tip9-setup="${esc(practice.id)}">START TIP9</button><div class="tip9-links"><button class="text-button" data-tip9-another>Another practice</button><button class="text-button" data-tip9-browse-context>Browse here</button></div><button class="text-button" data-tip9-change-context>← Change context</button></section>`;}
+function libraryHTML(context=null,filter='all'){const rows=TIP9_PRACTICES.filter(p=>(!context||p.contexts.includes(context))&&(filter==='all'||p.type===filter));return `<section class="tip9-overview"><div class="eyebrow">PRACTICE LIBRARY</div><h1 class="page-title">${context?esc(TIP9_CONTEXTS[context]):'All practices'}</h1><div class="tip9-filters"><button data-tip9-filter="all" class="${filter==='all'?'selected':''}">All</button><button data-tip9-filter="SWING" class="${filter==='SWING'?'selected':''}">Swing</button><button data-tip9-filter="SKILL" class="${filter==='SKILL'?'selected':''}">Skill</button></div><div class="tip9-library">${rows.map(p=>{const ps=getTIP9PracticeState(p.id);return `<button class="card card-button" data-tip9-library-id="${p.id}"><div class="card-top"><span class="eyebrow">${p.type}</span><span class="pill">LEVEL ${ps.level}</span></div><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p></button>`;}).join('')}</div><button class="text-button" data-tip9-library-back>← Back</button></section>`;}
 function setupHTML(context,practice){const data=getTIP9Data(practice,context),ps=getTIP9PracticeState(practice.id);return `<section class="tip9-overview"><div class="eyebrow">${practice.type} · ${esc(TIP9_CONTEXTS[context])}</div><h1 class="page-title">${esc(practice.name)}</h1><p class="page-copy">${esc(practice.desc)}</p><article class="card"><span class="eyebrow">YOU NEED</span><h3>${esc(data.need)}</h3><span class="eyebrow">LEVEL</span><h3>${ps.level} of 3</h3></article><button class="primary-button" data-tip9-begin>START TIP9</button><button class="text-button" data-tip9-setup-back>← Choose another</button></section>`;}
 
-export function startTIP9({container,onExit=()=>{},onComplete=()=>{},preferredPracticeId=null}){
+export function startTIP9({container,onExit=()=>{},onComplete=()=>{},preferredPracticeId=null,preferredContext=null}){
   let context=null,currentId=null,blocks=[],block=0,results=[],libraryContext=null,filter='all',completion=null;
   const controller=new AbortController();
   const preferred=getTIP9Practice(preferredPracticeId);
@@ -44,6 +26,7 @@ export function startTIP9({container,onExit=()=>{},onComplete=()=>{},preferredPr
   function preferredHome(){
     if(!preferred){home();return;}
     currentId=preferred.id;
+    if(preferredContext && preferred.contexts.includes(preferredContext)){context=preferredContext;render(setupHTML(context,preferred));return;}
     if(preferred.contexts.length===1){context=preferred.contexts[0];render(setupHTML(context,preferred));return;}
     render(preferredContextHTML(preferred));
   }
