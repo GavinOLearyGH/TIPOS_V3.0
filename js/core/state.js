@@ -12,7 +12,15 @@ export function createDefaultState() {
     },
     journal: [],
     memory: {
+      version: null,
       topics: {},
+      summary: {
+        known: 0,
+        totalEvidence: 0,
+        priority: null,
+        strength: null,
+        recentSignals: []
+      },
       updatedAt: null
     },
     tip7: {
@@ -71,7 +79,10 @@ export function normalizeState(input) {
   state.tip7.feel = isObject(state.tip7.feel) ? state.tip7.feel : {};
   state.tip9.recent = Array.isArray(state.tip9.recent) ? state.tip9.recent : [];
   state.tip9.practices = isObject(state.tip9.practices) ? state.tip9.practices : {};
+  state.memory = isObject(state.memory) ? state.memory : createDefaultState().memory;
   state.memory.topics = isObject(state.memory.topics) ? state.memory.topics : {};
+  state.memory.summary = isObject(state.memory.summary) ? state.memory.summary : createDefaultState().memory.summary;
+  state.memory.summary.recentSignals = Array.isArray(state.memory.summary.recentSignals) ? state.memory.summary.recentSignals : [];
   state.meta.updatedAt = new Date().toISOString();
   return state;
 }
