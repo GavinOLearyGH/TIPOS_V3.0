@@ -22,7 +22,11 @@
     <main id="view" class="main" tabindex="-1"></main>
     <nav class="bottom-nav" aria-label="Primary navigation">
       <a href="#/home" data-route="home" class="nav-item"><span class="nav-icon" aria-hidden="true">⌂</span><span>HOME</span></a>
-      <a href="#/tip" data-route="tip" class="nav-item nav-item-tip" aria-label="TIP"><span class="nav-tip-logo" aria-hidden="true">TIP</span></a>
+      <a href="#/tip" data-route="tip" class="nav-item nav-item-tip" aria-label="TIP">
+        <svg class="nav-tip-logo" viewBox="0 0 92 42" role="img" aria-label="TIP">
+          <path d="M1 2h34v8H22v30h-9V10H1zM40 2h9v38h-9zM57 2h18c10 0 16 5 16 14s-6 14-16 14h-9v10h-9zm9 8v12h8c5 0 8-2 8-6s-3-6-8-6z" fill="currentColor"/>
+        </svg>
+      </a>
       <a href="#/golfer" data-route="golfer" class="nav-item"><span class="nav-icon" aria-hidden="true">◉</span><span>GOLFER</span></a>
     </nav>
   </div>
@@ -50,7 +54,7 @@
       <button type="button" data-setting="import-v2">Import TIP OS V2</button>
       <button type="button" data-setting="reset">Reset Golfer</button>
     </div>
-    <p class="version-note">TIPOS V3.1 · Polish Preview</p>
+    <p class="version-note">TIPOS V3.2 · Home Structure</p>
   </dialog>
   <dialog id="entryDialog" class="sheet-dialog entry-dialog"><div id="entryDialogBody"></div></dialog>
   <input id="restoreFile" type="file" accept="application/json,.json" hidden />
