@@ -10,7 +10,7 @@ async function fresh(page) {
 test('Home uses behavioral page header', async ({ page }) => {
   await fresh(page);
   await expect(page.locator('.page-header .eyebrow')).toHaveText('TODAY');
-  await expect(page.locator('.page-header .page-title')).toHaveText('What are you working on?');
+  await expect(page.locator('.page-header .page-title')).toHaveText('What are we working on today?');
   await expect(page.locator('.home-core-row')).toHaveCount(3);
 });
 
