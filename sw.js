@@ -1,9 +1,9 @@
-const CACHE_NAME = 'tip-v3-suggests-1';
+const CACHE_NAME = 'tip-v3-session-1';
 const APP_SHELL = [
   './','./index.html','./manifest.json','./css/tokens.css','./css/app.css','./css/components.css','./css/execution.css',
   './js/app.js','./js/router.js','./js/core/state.js','./js/core/storage.js','./js/core/journal.js','./js/core/import-v2.js',
-  './js/coach/topics.js','./js/coach/signals.js','./js/coach/memory.js','./js/coach/recommend.js',
-  './js/home/home-view.js','./js/tip/tip-view.js','./js/golfer/journal-view.js','./js/golfer/entry-form.js',
+  './js/coach/topics.js','./js/coach/signals.js','./js/coach/memory.js','./js/coach/recommend.js','./js/coach/compose-session.js',
+  './js/home/home-view.js','./js/tip/tip-view.js','./js/tip/session-builder.js','./js/golfer/journal-view.js','./js/golfer/entry-form.js',
   './js/tip7/tip7-data.js','./js/tip7/tip7-engine.js','./js/tip7/tip7-view.js',
   './js/tip9/tip9-data.js','./js/tip9/tip9-engine.js','./js/tip9/tip9-view.js','./pwa-register.js'
 ];
