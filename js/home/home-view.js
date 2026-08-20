@@ -4,7 +4,7 @@ import { memoryConfidenceCopy } from '../coach/memory.js';
 import { getTIPSuggestion, suggestionModeLabel } from '../coach/recommend.js';
 
 function esc(value='') {
-  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 export function renderHome() {
