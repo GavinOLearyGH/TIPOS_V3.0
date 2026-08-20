@@ -1,6 +1,6 @@
 export function renderTIP() {
   return `
-    <section>
+    <section class="page-header">
       <div class="eyebrow">TIP</div>
       <h1 class="page-title">How can TIP help today?</h1>
       <p class="page-copy">Tell TIP what happened, or let TIP build the work.</p>
