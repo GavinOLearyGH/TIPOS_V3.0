@@ -19,9 +19,12 @@ export function createDefaultState() {
       level: 1,
       day: 1,
       completed: [],
+      dates: {},
+      feel: {},
       currentStreak: 0,
       bestStreak: 0,
-      lifetime: 0
+      lifetime: 0,
+      lastCompletedAt: null
     },
     tip9: {
       practices: {},
@@ -35,7 +38,9 @@ export function createDefaultState() {
     meta: {
       createdAt: now,
       updatedAt: now,
-      lastBackup: null
+      lastBackup: null,
+      lastRestore: null,
+      importedV2At: null
     }
   };
 }
@@ -62,6 +67,8 @@ export function normalizeState(input) {
   state.version = STATE_VERSION;
   state.journal = Array.isArray(state.journal) ? state.journal : [];
   state.tip7.completed = Array.isArray(state.tip7.completed) ? state.tip7.completed : [];
+  state.tip7.dates = isObject(state.tip7.dates) ? state.tip7.dates : {};
+  state.tip7.feel = isObject(state.tip7.feel) ? state.tip7.feel : {};
   state.tip9.recent = Array.isArray(state.tip9.recent) ? state.tip9.recent : [];
   state.tip9.practices = isObject(state.tip9.practices) ? state.tip9.practices : {};
   state.memory.topics = isObject(state.memory.topics) ? state.memory.topics : {};
