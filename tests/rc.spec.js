@@ -108,9 +108,9 @@ test('TIP Suggests start preserves the recommended TIP9 instead of rerolling', a
 
 test('session builder composes all supported time buckets', async ({ page }) => {
   await fresh(page);
+  await nav(page, 'tip');
+  await page.locator('[data-action="build-session"]').click();
   for (const minutes of ['7','15','30','45','60']) {
-    await nav(page, 'tip');
-    await page.locator('[data-action="build-session"]').click();
     await chooseSessionOption(page, 'minutes', minutes);
     await chooseSessionOption(page, 'context', 'range');
     await page.locator('#sessionBuilderForm button[type="submit"]').click();
