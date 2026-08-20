@@ -24,118 +24,100 @@ The golfer sees only three primary places:
 - **V3.0-C — TIP7:** native TIP7 engine with shared progress and Journal completion. ✓
 - **V3.0-D — TIP9:** native TIP9 engine with shared progress and Journal completion. ✓
 - **V3.0-E — TIP Memory:** Journal → signals → topics → memory. ✓
-- **V3.0-F — TIP Suggests:** memory → one recommended action.
+- **V3.0-F — TIP Suggests:** memory → one recommended action. ✓
 - **V3.0-G — Build Today's Session:** compose TIP7/TIP9/custom activities from time, context and memory.
 
-## Current milestone — V3.0-E TIP Memory
+## Current milestone — V3.0-F TIP Suggests
 
-TIP Memory is an internal coaching layer. It does not create another golfer-facing dashboard. The Journal remains the single source of truth; Memory is derived state that can be rebuilt from Journal history at any time.
+TIP Suggests connects the invisible Memory layer to one visible action on Home. It does not expose a weakness dashboard, topic list or coaching scorecard.
 
-### Canonical topic vocabulary
+The Home contract is now:
 
-V3.0-E starts deliberately smaller than the V2 coaching ontology.
+- TIP7 — Body
+- TIP9 — Game
+- TIP Suggests — one next action
 
-**Game / Skill**
-- Tee Control
-- Approach Play
-- Wedge Distance
-- Putting Start Line
-- Putting Pace
-- Short Game
-- Course Management
+### Recommendation contract
 
-**Game / Swing**
-- Contact
-- Tempo
-- Start Direction
-- Low Point
-- Face Awareness
-- Balance
-- Transition
+`js/coach/recommend.js` returns one recommendation with:
 
-**Body / Stretch**
-- Mobility
-- Rotation
-- Hips
-- Thoracic Rotation
-- Shoulders
+- `kind` — TIP7 or TIP9
+- `mode` — Improve, Reinforce, Maintain or Learn
+- coaching topic
+- display title and reason
+- executable action
 
-**Body / Strength**
-- Stability
-- Core
-- Lower Body
-- Golf Posture
+The Home screen renders only that single recommendation and one `START` button.
 
-**Mind / other**
-- Routine
-- Confidence
-- Equipment
+### Improve
 
-### Signal extraction
+When Memory contains a meaningful recent negative pattern, TIP identifies the strongest current need using recency, confidence, trend and negative evidence.
 
-The Memory layer reads evidence from the existing Journal rather than asking the golfer to maintain another coaching model.
+Game priorities are mapped to the relevant TIP9 practice families. Examples include:
 
-Signals currently come from:
+- Tee Control → Playable Tee Ball
+- Approach Play → Approach Window / Club Selection
+- Wedge Distance → Wedge Distance / Pitch Control
+- Putting Pace → Lag Putting / Speed Ladder
+- Contact → Contact / Low Point
+- Tempo → Tempo / Transition
+- Short Game → the relevant short-game TIP9 family
 
-- explicit Journal topics
-- simple positive/negative reflection language
-- mixed reflections evaluated clause-by-clause
-- round metrics such as Fairways, GIR, Putts and Penalties
-- TIP7 completion/check-in outcomes
-- TIP9 Skill scores
-- TIP9 Swing `Felt Good / Keep Working` outcomes
+Recent practice history and the golfer's current TIP9 level influence which eligible practice is selected so TIP does not simply repeat the same drill when a useful alternative exists.
 
-For example, a note such as:
+### Reinforce
 
-> Driver was good, but the irons were heavy and most approaches were short.
+If there is no sufficiently strong current weakness, TIP can reinforce an established positive Game pattern instead of inventing a problem.
 
-can produce positive Tee Control evidence and negative Approach/Contact evidence from the same entry.
+This supports the coaching principle that a strength can be worth preserving and that every recommendation does not need to be corrective.
 
-### Rebuildable memory
+### Body priorities
 
-Memory is recalculated from Journal history whenever shared state changes. Editing or deleting a manual Journal entry therefore changes TIP's understanding rather than leaving stale coaching evidence behind.
+Body topics continue to respect TIP7's programmed Foundation sequence. TIP will not jump directly to an arbitrary mobility or strength circuit merely because one body topic scores highly.
 
-The derived state lives at:
+If a Body priority is active and today's TIP7 is available, the suggestion launches the next legitimate Foundation day and explains that it is continuing the body work without breaking progression.
 
-`TIP_V3_STATE.memory`
+### Learn / early golfer
 
-Each known topic stores:
+TIP does not pretend to know a weakness when the Journal has too little evidence.
 
-- positive evidence
-- negative evidence
-- net score
-- confidence
-- trend
-- current state
-- last observed date
-- recent evidence history
+During the learning stage it recommends a simple useful activity — normally the available TIP7 day or a foundational TIP9 — specifically to generate better evidence for the Journal and Memory layer.
 
-The memory summary stores the current strongest need, strongest positive area, total weighted evidence and recent signals.
+### Suggested TIP9 context
 
-### Recency and protected reads
+A Home recommendation can now carry a selected TIP9 practice directly into the execution engine.
 
-Recent evidence matters more than old evidence. Signals decay gradually as they age so last week's golf carries more coaching weight than last year's golf.
+If that practice works in several locations, TIP asks only one question:
 
-An established positive pattern is also protected from being erased by one isolated bad observation. Negative evidence still counts, but its immediate impact is reduced when TIP has substantial prior evidence that the area is a real strength.
+**Where are you practicing?**
 
-### Confidence language
+The golfer chooses from the contexts supported by that recommended practice, and TIP9 then opens at the correct current progression level. The golfer can still choose a different TIP9 if desired.
 
-The golfer does not see confidence percentages or topic scores. Home only exposes a lightweight coaching-state sentence:
+This means the sequence is:
 
-- `I'm learning your golf.`
-- `I'm starting to see the first signals.`
-- `I'm starting to see patterns.`
-- `I've seen enough to coach with more confidence.`
+**Memory → recommended practice → context → current level → 3 × 3 execution**
 
-V3.0-F will use the underlying priority and strength data to replace the current Memory card with one actual recommended action.
+rather than selecting a recommendation on Home and then losing it when TIP9 opens.
+
+### Recent-use protection
+
+TIP9 recommendation selection takes account of recent use and completion history. When several practices address the same coaching topic, recently repeated work receives a penalty so an equally useful alternative can surface.
+
+This is intentionally lightweight in V3.0-F. V3.0-G can use the same recommendation contract when composing longer sessions.
+
+### Memory remains derived
+
+The Journal is still truth. TIP Memory and TIP Suggests are interpretations of that history.
+
+Editing or deleting a manual Journal entry rebuilds Memory, which can immediately change the Home recommendation. Completing TIP7 or TIP9 also writes to the Journal, rebuilds Memory, and allows the next suggestion to adapt.
 
 ### Offline
 
-The TIP Memory topic registry, signal extractor and memory engine are included in the V3 PWA app-shell cache. The derived coaching model can therefore update from local Journal activity without connectivity.
+`js/coach/recommend.js` is included in the PWA app-shell cache alongside Memory, TIP7 and TIP9. Recommendation selection and execution therefore continue to work from the local golfer state when offline.
 
 ## What now exists
 
-The first three parts of the coaching loop are now structurally present:
+The core V3 loop now works end-to-end:
 
 **DO**
 - TIP7 — Body
@@ -150,6 +132,11 @@ The first three parts of the coaching loop are now structurally present:
 ↓
 
 **SUGGEST**
-- next milestone: V3.0-F
+- one Home recommendation
 
-The important product constraint remains: complexity belongs behind the interface. The golfer still sees only Home, TIP and Golfer.
+↓
+
+**DO AGAIN**
+- START launches the recommended TIP7 or TIP9
+
+The remaining major V3.0 milestone is **V3.0-G — Build Today's Session**, where TIP will combine the same body/game activities into a longer session based on available time, practice context and current Memory.
