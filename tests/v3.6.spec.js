@@ -10,13 +10,16 @@ async function fresh(page) {
 async function addRound(page) {
   await page.locator('[data-route="tip"]').click();
   await page.locator('[data-action="tell-tip"]').click();
+  await page.locator('[data-action="tip-entry-type"][data-entry-type="round"]').click();
   await page.locator('input[name="title"]').fill('Springhaven');
   await page.locator('input[name="score"]').fill('82');
+  await page.locator('.entry-details').first().locator('summary').click();
   await page.locator('input[name="fairways"]').fill('4');
   await page.locator('input[name="gir"]').fill('3');
   await page.locator('input[name="putts"]').fill('31');
   await page.locator('textarea[name="note"]').fill('Over drawing when trying to shape it.');
   await page.locator('#journalEntryForm button[type="submit"]').click();
+  await page.locator('[data-route="golfer"]').click();
 }
 
 test('Journal uses a calm compact header and empty state', async ({ page }) => {
