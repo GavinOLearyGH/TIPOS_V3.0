@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   statuses: write
 
 jobs:
@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -24,6 +26,18 @@ jobs:
         run: npm install
       - name: Generate V2 curriculum migration audit
         run: node scripts/import-v2-curriculum.mjs
+      - name: Materialize V3.12 legacy library
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'v3.12-tip-library'
+        run: |
+          if git diff --quiet -- js/coach/legacy-library-data.js; then
+            echo "Legacy library already materialized."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add js/coach/legacy-library-data.js
+            git commit -m "V3.12 materialize V2 practice-ready curriculum"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
       - name: Upload V2 curriculum migration audit
         uses: actions/upload-artifact@v4
         with:
