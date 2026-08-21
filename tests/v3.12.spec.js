@@ -8,13 +8,12 @@ async function fresh(page){
 }
 
 async function openLibrary(page){
-  await page.locator('[data-action="tip9"]').click();
-  await expect(page.locator('[data-tip9-browse]')).toContainText('TIP Library');
-  await page.locator('[data-tip9-browse]').click();
+  await page.locator('[data-route="tip"]').click();
+  await page.locator('[data-action="tip-library"]').click();
   await expect(page.locator('.tip-library-view')).toBeVisible();
 }
 
-test('TIP Library exposes the unified four-dimension curriculum',async({page})=>{
+test('TIP Library exposes the full leaf-level four-dimension curriculum',async({page})=>{
   await fresh(page);
   await openLibrary(page);
   await expect(page.getByRole('heading',{name:'TIP Library',exact:true})).toBeVisible();
@@ -24,13 +23,13 @@ test('TIP Library exposes the unified four-dimension curriculum',async({page})=>
   await expect(page.locator('[data-tip9-filter="Skill"]')).toBeVisible();
   await expect(page.locator('[data-tip9-filter="Stretch"]')).toBeVisible();
   await expect(page.locator('[data-tip9-filter="Strength"]')).toBeVisible();
-  await expect(page.locator('.tip-library-row')).toHaveCount(503);
+  await expect(page.locator('.tip-library-row')).toHaveCount(477);
 });
 
-test('dimension taps expose substantially more than the old 26 TIP9 items',async({page})=>{
+test('dimension taps preserve the complete V2 practice-ready curriculum',async({page})=>{
   await fresh(page);
   await openLibrary(page);
-  const minimum={Swing:110,Skill:201,Stretch:75,Strength:80};
+  const minimum={Swing:102,Skill:183,Stretch:75,Strength:80};
   for(const [dimension,count] of Object.entries(minimum)){
     await page.locator(`[data-tip9-filter="${dimension}"]`).click();
     await expect(page.locator('.tip-library-row').first()).toBeVisible();
@@ -51,7 +50,7 @@ test('legacy V2 execution content survives migration into browsable detail',asyn
   await expect(page.locator('.tip-library-detail')).toContainText('At least 4 of 6 shots finish in balance');
 });
 
-test('Stretch and Strength include migrated curriculum, not only TIP7 program cards',async({page})=>{
+test('Stretch and Strength include migrated curriculum plus unique TIP7 movement content',async({page})=>{
   await fresh(page);
   await openLibrary(page);
   await page.locator('[data-tip9-filter="Stretch"]').click();
@@ -60,17 +59,16 @@ test('Stretch and Strength include migrated curriculum, not only TIP7 program ca
   await expect(page.locator('.tip-library-row').filter({hasText:'Pallof Press'}).first()).toBeVisible();
 });
 
-test('native TIP9 families remain executable from the unified Library',async({page})=>{
+test('TIP9 family taxonomy stays behind the golfer-facing Library',async({page})=>{
   await fresh(page);
   await openLibrary(page);
+  await expect(page.locator('.tip-library-view')).not.toContainText('TIP9 · LEVEL');
   await page.locator('[data-tip-library-search]').fill('Playable Tee Ball');
   await page.waitForTimeout(220);
   const row=page.locator('.tip-library-row').filter({hasText:'Playable Tee Ball'}).first();
   await expect(row).toBeVisible();
   await row.click();
-  await expect(page.locator('.tip-library-tip9-start')).toBeVisible();
-  const context=page.locator('[data-tip9-library-context]').first();
-  await context.click();
-  await expect(page.getByRole('heading',{name:'Playable Tee Ball',exact:true})).toBeVisible();
-  await expect(page.locator('[data-tip9-begin]')).toBeVisible();
+  await expect(page.locator('.tip-library-detail')).toBeVisible();
+  await expect(page.locator('.tip-library-tip9-start')).toHaveCount(0);
+  await expect(page.locator('[data-tip9-library-context]')).toHaveCount(0);
 });
