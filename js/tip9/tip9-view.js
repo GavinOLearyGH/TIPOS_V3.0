@@ -23,12 +23,29 @@ function libraryMeta(item){
   if(item.duration) return `${item.duration} MIN`;
   return item.skill||item.area||'PRACTICE';
 }
-function libraryHTML(module,context=null,filter='All',query=''){
-  const dimensions=['All',...module.TIP_LIBRARY_DIMENSIONS];
+function libraryRowsHTML(module,context=null,filter='All',query=''){
   const rows=module.filterTIPLibrary({dimension:filter,context,query});
+  const dimensions=['All',...module.TIP_LIBRARY_DIMENSIONS];
   const counts=Object.fromEntries(dimensions.map(d=>[d,module.filterTIPLibrary({dimension:d,context,query}).length]));
+  return {
+    countHTML:`${rows.length} practice${rows.length===1?'':'s'}`,
+    filtersHTML:dimensions.map(d=>`<button data-tip9-filter="${d}" class="${filter===d?'selected':''}">${d}<small>${counts[d]}</small></button>`).join(''),
+    rowsHTML:rows.map(item=>`<button class="tip-library-row" data-tip-library-id="${esc(item.id)}"><div class="tip-library-row-top"><span class="eyebrow">${esc(item.dimension)}${item.skill?` · ${esc(item.skill)}`:''}</span><span class="tip-library-meta">${esc(libraryMeta(item))}</span></div><strong>${esc(item.title)}</strong>${item.summary?`<p>${esc(item.summary)}</p>`:''}</button>`).join('')||'<div class="tip-library-empty">No practices match that search.</div>'
+  };
+}
+function libraryHTML(module,context=null,filter='All',query=''){
   const heading=context?`${CONTEXT_META[context]?.[0]||TIP9_CONTEXTS[context]} Library`:'TIP Library';
-  return `<section class="tip9-overview tip-library-view"><div class="eyebrow">FULL CURRICULUM</div><h1 class="page-title">${esc(heading)}</h1><p class="page-copy">Swing. Skill. Stretch. Strength. Everything TIP knows how to practice, in one place.</p><label class="tip-library-search"><span class="sr-only">Search TIP Library</span><input type="search" data-tip-library-search value="${esc(query)}" placeholder="Search TIP Library"></label><div class="tip9-filters tip-library-filters">${dimensions.map(d=>`<button data-tip9-filter="${d}" class="${filter===d?'selected':''}">${d}<small>${counts[d]}</small></button>`).join('')}</div><div class="tip-library-count">${rows.length} practice${rows.length===1?'':'s'}</div><div class="tip9-library tip-library-list">${rows.map(item=>`<button class="tip-library-row" data-tip-library-id="${esc(item.id)}"><div class="tip-library-row-top"><span class="eyebrow">${esc(item.dimension)}${item.skill?` · ${esc(item.skill)}`:''}</span><span class="tip-library-meta">${esc(libraryMeta(item))}</span></div><strong>${esc(item.title)}</strong>${item.summary?`<p>${esc(item.summary)}</p>`:''}</button>`).join('')||'<div class="tip-library-empty">No practices match that filter.</div>'}</div><button class="text-button" data-tip9-library-back>← Back</button></section>`;
+  const parts=libraryRowsHTML(module,context,filter,query);
+  return `<section class="tip9-overview tip-library-view"><div class="eyebrow">FULL CURRICULUM</div><h1 class="page-title">${esc(heading)}</h1><p class="page-copy">Swing. Skill. Stretch. Strength. Everything TIP knows how to practice, in one place.</p><label class="tip-library-search"><span class="sr-only">Search TIP Library</span><input type="search" data-tip-library-search value="${esc(query)}" placeholder="Search a problem, skill or practice"></label><div class="tip9-filters tip-library-filters" data-tip-library-filters>${parts.filtersHTML}</div><div class="tip-library-count" data-tip-library-count>${parts.countHTML}</div><div class="tip9-library tip-library-list" data-tip-library-results>${parts.rowsHTML}</div><button class="text-button" data-tip9-library-back>← Back</button></section>`;
+}
+function updateLibraryResults(container,module,context,filter,query){
+  const parts=libraryRowsHTML(module,context,filter,query);
+  const filters=container.querySelector('[data-tip-library-filters]');
+  const count=container.querySelector('[data-tip-library-count]');
+  const results=container.querySelector('[data-tip-library-results]');
+  if(filters) filters.innerHTML=parts.filtersHTML;
+  if(count) count.textContent=parts.countHTML;
+  if(results) results.innerHTML=parts.rowsHTML;
 }
 function libraryDetailHTML(item){
   const detailMeta=[item.duration?`${item.duration} min`:item.dose?.seconds?`${item.dose.seconds} sec`:'',...(item.locations||[]).slice(0,3)].filter(Boolean).join(' · ');
@@ -68,26 +85,31 @@ export function startTIP9({container,onExit=()=>{},onComplete=()=>{},preferredPr
     else if(t.hasAttribute('data-tip9-normal-home'))home();
     else if(t.hasAttribute('data-tip9-exit'))exit();
     else if(t.hasAttribute('data-tip9-another'))chooseContext(context,currentId);
+    else if(t.dataset.tip9Setup)openSetup(t.dataset.tip9Setup);
+    else if(t.hasAttribute('data-tip9-begin'))begin();
+    else if(t.dataset.tip9Score!==undefined)recordScore(Number(t.dataset.tip9Score));
+    else if(t.hasAttribute('data-tip9-ready'))renderPlay();
+    else if(t.hasAttribute('data-tip9-end'))home();
+    else if(t.dataset.tip9Feel){saveTIP9Feel(completion?.entry?.id,t.dataset.tip9Feel);t.parentElement?.querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b===t));container.querySelector('[data-tip9-done]')?.classList.remove('tip9-done-delayed');}
+    else if(t.hasAttribute('data-tip9-done'))exit();
     else if(t.hasAttribute('data-tip9-change-context'))home();
+    else if(t.hasAttribute('data-tip9-setup-back'))chooseContext(context,currentId);
     else if(t.hasAttribute('data-tip9-browse'))openLibrary(null,'All','');
     else if(t.hasAttribute('data-tip9-browse-context'))openLibrary(context,'All','');
-    else if(t.dataset.tip9Filter)openLibrary(libraryContext,t.dataset.tip9Filter,libraryQuery);
+    else if(t.dataset.tip9Filter){filter=t.dataset.tip9Filter;if(libraryModule) updateLibraryResults(container,libraryModule,libraryContext,filter,libraryQuery);}
     else if(t.dataset.tipLibraryId)openLibraryItem(t.dataset.tipLibraryId);
-    else if(t.hasAttribute('data-tip-library-detail-back'))openLibrary(libraryContext,filter,libraryQuery);
-    else if(t.dataset.tip9LibraryContext&&libraryItem?.kind==='tip9'){context=t.dataset.tip9LibraryContext;openSetup(libraryItem.nativeId);}
-    else if(t.hasAttribute('data-tip9-library-back'))libraryContext?chooseContext(libraryContext):home();
-    else if(t.dataset.tip9Setup)openSetup(t.dataset.tip9Setup);
-    else if(t.hasAttribute('data-tip9-setup-back'))preferred?preferredHome():chooseContext(context,currentId);
-    else if(t.hasAttribute('data-tip9-begin'))begin();
-    else if(t.dataset.tip9Score!=null)recordScore(Number(t.dataset.tip9Score));
-    else if(t.hasAttribute('data-tip9-ready'))renderPlay();
-    else if(t.hasAttribute('data-tip9-end'))preferred?preferredHome():home();
-    else if(t.dataset.tip9Feel){saveTIP9Feel(completion.entry.id,currentId,t.dataset.tip9Feel);container.querySelectorAll('[data-tip9-feel]').forEach(b=>b.classList.toggle('selected',b===t));container.querySelector('[data-tip9-done]')?.classList.remove('tip9-done-delayed');}
-    else if(t.hasAttribute('data-tip9-done'))exit();
+    else if(t.hasAttribute('data-tip-library-detail-back')){if(libraryModule)render(libraryHTML(libraryModule,libraryContext,filter,libraryQuery));}
+    else if(t.dataset.tip9LibraryContext){context=t.dataset.tip9LibraryContext;currentId=libraryItem?.nativeId||null;if(currentId)render(setupHTML(context,getTIP9Practice(currentId)));}
+    else if(t.hasAttribute('data-tip9-library-back')){libraryContext?chooseContext(libraryContext):home();}
   }
-  function inputHandler(event){if(!event.target.matches('[data-tip-library-search]'))return;libraryQuery=event.target.value;clearTimeout(inputHandler.timer);inputHandler.timer=setTimeout(()=>{if(libraryModule)render(libraryHTML(libraryModule,libraryContext,filter,libraryQuery));},160);}
+  function inputHandler(event){
+    const input=event.target.closest('[data-tip-library-search]');
+    if(!input)return;
+    libraryQuery=input.value;
+    if(libraryModule) updateLibraryResults(container,libraryModule,libraryContext,filter,libraryQuery);
+  }
   container.addEventListener('click',clickHandler,{signal:controller.signal});
   container.addEventListener('input',inputHandler,{signal:controller.signal});
-  preferredHome();
-  return cleanup;
+  preferred?preferredHome():home();
+  return {cleanup};
 }
