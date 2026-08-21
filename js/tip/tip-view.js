@@ -71,7 +71,7 @@ export function renderTIP(workspace = {}) {
       </div>
 
       <div class="tip-workspace-group">
-        <button class="tip-workspace-row" type="button" data-action="tip9" aria-label="Browse TIP Library">
+        <button class="tip-workspace-row" type="button" data-action="tip-library" aria-label="Browse TIP Library">
           <div><div class="eyebrow">EXPLORE TIP</div><h2>Browse TIP Library</h2><p>Explore the complete Swing, Skill, Stretch and Strength practice curriculum. TIP keeps the coaching connections behind the scenes.</p></div>
           <span aria-hidden="true">›</span>
         </button>
