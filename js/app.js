@@ -30,7 +30,7 @@ const renderers={home:renderHome,golfer:renderGolfer};
 
 function showToast(message){clearTimeout(toastTimer);toast.textContent=message;toast.classList.add('show');toastTimer=setTimeout(()=>toast.classList.remove('show'),2800);}
 function scheduleMemoryRebuild(){if(memoryScheduled)return;memoryScheduled=true;queueMicrotask(()=>{memoryScheduled=false;try{rebuildTIPMemory();}catch(error){console.warn('TIP memory rebuild failed',error);}});}
-function endExecution(){if(executionCleanup)executionCleanup();executionCleanup=null;executionMode=null;document.body.classList.remove('execution-mode');}
+function endExecution(){if(executionCleanup){if(typeof executionCleanup==='function')executionCleanup();else executionCleanup.cleanup?.();}executionCleanup=null;executionMode=null;document.body.classList.remove('execution-mode');}
 function resetTIPWorkspace(){tipWorkspace={mode:null,entryType:null,entryHTML:'',sessionHTML:'',libraryFilter:'All',libraryQuery:'',libraryItemId:null};}
 function clearSessionTransient(){sessionPlan=null;sessionRun=null;}
 function tipHTML(){if(tipWorkspace.mode==='library')return renderTIPLibrary(tipWorkspace);if(tipWorkspace.mode==='library-detail')return renderTIPLibraryDetail(tipWorkspace.libraryItemId);return renderTIP(tipWorkspace);}
