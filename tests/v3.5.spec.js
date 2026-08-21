@@ -14,7 +14,8 @@ test('TIP page uses a calmer headline and compact workspace rows', async ({ page
   const tipTitle = page.locator('.tip-page-header .page-title');
   const tipTitleSize = await tipTitle.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
   expect(tipTitleSize).toBeLessThan(homeTitleSize);
-  await expect(page.locator('.tip-workspace-row')).toHaveCount(2);
+  await expect(page.locator('.tip-workspace-row')).toHaveCount(3);
+  await expect(page.locator('[data-action="tip-library"]')).toBeVisible();
   const paddingTop = await page.locator('.tip-workspace-row').first().evaluate(el => parseFloat(getComputedStyle(el).paddingTop));
   expect(paddingTop).toBeLessThanOrEqual(20);
 });
