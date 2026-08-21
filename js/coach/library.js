@@ -1,6 +1,4 @@
 import { LEGACY_LIBRARY_ITEMS, LEGACY_LIBRARY_REPORT } from './legacy-library-data.js';
-import { SESSION_FOCUS } from './catalog.js';
-import { TIP9_PRACTICES } from '../tip9/tip9-data.js';
 import { TIP7_DAYS } from '../tip7/tip7-data.js';
 
 export const TIP_LIBRARY_DIMENSIONS=['Swing','Skill','Stretch','Strength'];
@@ -8,36 +6,6 @@ export const TIP_LIBRARY_DIMENSIONS=['Swing','Skill','Stretch','Strength'];
 const normalize=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const slug=value=>normalize(value).replace(/\s+/g,'-');
 const DIMENSION_ORDER=new Map(TIP_LIBRARY_DIMENSIONS.map((d,i)=>[d,i]));
-const CONTEXT_LABELS={range:'Range',bay:'Hitting Bay',green:'Putting Green',short:'Short Game',noball:'Home / No Ball'};
-
-function tip9FocusKeys(id){
-  return Object.entries(SESSION_FOCUS).filter(([,focus])=>focus.practiceIds?.includes(id)).map(([key])=>key);
-}
-
-function nativeTIP9(){
-  return TIP9_PRACTICES.map(practice=>({
-    id:`v3:tip9:${practice.id}`,
-    nativeId:practice.id,
-    kind:'tip9',
-    title:practice.name,
-    dimension:practice.type==='SWING'?'Swing':'Skill',
-    skill:practice.name,
-    area:'TIP9',
-    summary:practice.desc,
-    purpose:practice.desc,
-    locations:practice.contexts.map(c=>CONTEXT_LABELS[c]||c),
-    contexts:[...practice.contexts],
-    equipment:practice.need?[practice.need]:[],
-    duration:0,
-    dose:{balls:9},
-    instructions:practice.levels?.[0]?.[0]?[practice.levels[0][0]]:[],
-    success:practice.levels?.[0]?.[1]?[practice.levels[0][1]]:[],
-    easier:[],harder:[],notice:[],coachNote:'',journalPrompt:'',safety:[],
-    focusKeys:tip9FocusKeys(practice.id),
-    familyIds:[practice.id],
-    source:'v3-tip9'
-  }));
-}
 
 function movementDimension(day,exercise){
   if(day.dimension==='STRETCH') return 'Stretch';
@@ -84,22 +52,28 @@ function nativeTIP7Movements(){
   return [...map.values()];
 }
 
+// The golfer-facing library is deliberately leaf-level curriculum only.
+// TIP9 family IDs, focus relationships and recommendation taxonomy remain internal
+// in the coaching engine. They are not browse categories and are never rendered here.
 const legacyTitles=new Set(LEGACY_LIBRARY_ITEMS.map(item=>normalize(item.title)));
-const tip9Items=nativeTIP9();
-const tip7Items=nativeTIP7Movements().filter(item=>!legacyTitles.has(normalize(item.title)));
+const allTIP7Movements=nativeTIP7Movements();
+const tip7Items=allTIP7Movements.filter(item=>!legacyTitles.has(normalize(item.title)));
 
-export const TIP_LIBRARY_ITEMS=[...LEGACY_LIBRARY_ITEMS,...tip9Items,...tip7Items].sort((a,b)=>{
+export const TIP_LIBRARY_ITEMS=[...LEGACY_LIBRARY_ITEMS,...tip7Items].sort((a,b)=>{
   const dimension=(DIMENSION_ORDER.get(a.dimension)??99)-(DIMENSION_ORDER.get(b.dimension)??99);
   return dimension||String(a.title).localeCompare(String(b.title));
 });
 
 export const TIP_LIBRARY_REPORT={
   legacy:LEGACY_LIBRARY_REPORT,
+  sourceLessons:LEGACY_LIBRARY_REPORT.sourceLessonCount||475,
   legacyPracticeReady:LEGACY_LIBRARY_ITEMS.length,
-  nativeTIP9:tip9Items.length,
-  nativeTIP7Unique:nativeTIP7Movements().length,
+  legacyExcludedByV2Gate:LEGACY_LIBRARY_REPORT.excludedCount??Math.max(0,(LEGACY_LIBRARY_REPORT.sourceLessonCount||0)-LEGACY_LIBRARY_ITEMS.length),
+  v2ReadyVisibleCoverage:1,
+  sourceLessonCoverage:(LEGACY_LIBRARY_REPORT.sourceLessonCount||0)?LEGACY_LIBRARY_ITEMS.length/LEGACY_LIBRARY_REPORT.sourceLessonCount:0,
+  nativeTIP7Unique:allTIP7Movements.length,
   nativeTIP7Added:tip7Items.length,
-  exactTIP7Deduplicated:nativeTIP7Movements().length-tip7Items.length,
+  exactTIP7Deduplicated:allTIP7Movements.length-tip7Items.length,
   total:TIP_LIBRARY_ITEMS.length,
   byDimension:Object.fromEntries(TIP_LIBRARY_DIMENSIONS.map(d=>[d,TIP_LIBRARY_ITEMS.filter(item=>item.dimension===d).length]))
 };
@@ -123,6 +97,6 @@ function contextMatches(item,context){
 export function filterTIPLibrary({dimension='All',context=null,query=''}={}){
   const q=normalize(query);
   return TIP_LIBRARY_ITEMS.filter(item=>
-    (dimension==='All'||item.dimension===dimension)&&contextMatches(item,context)&&(!q||normalize([item.title,item.skill,item.area,item.summary,...(item.focusKeys||[])].join(' ')).includes(q))
+    (dimension==='All'||item.dimension===dimension)&&contextMatches(item,context)&&(!q||normalize([item.title,item.skill,item.area,item.summary].join(' ')).includes(q))
   );
 }
