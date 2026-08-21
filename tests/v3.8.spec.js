@@ -10,14 +10,17 @@ async function freshTip(page) {
 }
 
 async function assertNoHorizontalOverflow(page) {
-  const dims = await page.evaluate(() => ({
-    documentWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-    bodyWidth: document.body.scrollWidth,
-    innerWidth: window.innerWidth
-  }));
-  expect(dims.documentWidth).toBeLessThanOrEqual(dims.clientWidth);
-  expect(dims.bodyWidth).toBeLessThanOrEqual(dims.innerWidth);
+  const report = await page.evaluate(() => {
+    const innerWidth = window.innerWidth;
+    const offenders = [...document.querySelectorAll('*')].map(el => {
+      const r = el.getBoundingClientRect();
+      return { tag:el.tagName, cls:el.className?.baseVal || el.className || '', id:el.id || '', left:r.left, right:r.right, width:r.width, scrollWidth:el.scrollWidth, clientWidth:el.clientWidth };
+    }).filter(x => x.right > innerWidth + 1 || x.left < -1 || x.scrollWidth > x.clientWidth + 1).slice(0,20);
+    return { documentWidth:document.documentElement.scrollWidth, clientWidth:document.documentElement.clientWidth, bodyWidth:document.body.scrollWidth, innerWidth, offenders };
+  });
+  if (report.documentWidth > report.clientWidth || report.bodyWidth > report.innerWidth) console.log('OVERFLOW_REPORT', JSON.stringify(report));
+  expect(report.documentWidth).toBeLessThanOrEqual(report.clientWidth);
+  expect(report.bodyWidth).toBeLessThanOrEqual(report.innerWidth);
 }
 
 test('inline Round keeps datetime inside the mobile workspace', async ({ page }) => {
@@ -40,9 +43,7 @@ test('round coaching evidence metrics are visible without opening details', asyn
   await freshTip(page);
   await page.locator('[data-action="tell-tip"]').click();
   await page.locator('[data-action="tip-entry-type"][data-entry-type="round"]').click();
-  for (const name of ['score','fairways','gir','putts','upDowns','penalties']) {
-    await expect(page.locator(`input[name="${name}"]`)).toBeVisible();
-  }
+  for (const name of ['score','fairways','gir','putts','upDowns','penalties']) await expect(page.locator(`input[name="${name}"]`)).toBeVisible();
   await expect(page.locator('.entry-details')).toHaveCount(1);
   await expect(page.locator('.entry-details summary')).toContainText('Focus');
 });
@@ -55,11 +56,7 @@ test('inline session builder never expands the mobile viewport', async ({ page }
   await assertNoHorizontalOverflow(page);
   const afterWidth = await page.evaluate(() => document.documentElement.clientWidth);
   expect(afterWidth).toBe(initialWidth);
-  const form = page.locator('#sessionBuilderForm');
-  const formBounds = await form.evaluate(el => {
-    const r = el.getBoundingClientRect();
-    return { left:r.left, right:r.right, width:r.width };
-  });
+  const formBounds = await page.locator('#sessionBuilderForm').evaluate(el => { const r=el.getBoundingClientRect(); return {left:r.left,right:r.right,width:r.width}; });
   expect(formBounds.left).toBeGreaterThanOrEqual(0);
   expect(formBounds.right).toBeLessThanOrEqual(initialWidth);
 });
