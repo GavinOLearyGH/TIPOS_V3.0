@@ -25,21 +25,26 @@ test('fresh Home shows only TIP7 TIP9 TIP and no coaching suggestion', async ({ 
   await expect(page.locator('[data-action="tip9"]')).toContainText('9 Ball Challenge for Swing & Skill');
   await expect(page.locator('.home-core-tip')).toContainText('Tell TIP about your golf. Let TIP help with what comes next.');
   await expect(page.locator('.home-suggests')).toHaveCount(0);
+  await expect(page.locator('.tip-suggests')).toHaveCount(0);
   await expect(page.getByText('MAINTAIN', { exact: true })).toHaveCount(0);
 });
 
-test('TIP Suggests appears only after real Journal evidence', async ({ page }) => {
+test('TIP Suggests appears on TIP only after real Journal evidence', async ({ page }) => {
   await fresh(page);
   await page.locator('[data-route="tip"]').click();
+  await expect(page.locator('.tip-suggests')).toHaveCount(0);
   await page.locator('[data-action="tell-tip"]').click();
   await page.locator('[data-action="tip-entry-type"][data-entry-type="round"]').click();
   await page.locator('input[name="title"]').fill('Springhaven');
   await page.locator('input[name="score"]').fill('81');
+  await page.locator('input[name="gir"]').fill('4');
   await page.locator('textarea[name="note"]').fill('Driver was good. Irons were heavy and approaches were short.');
   await page.locator('#journalEntryForm button[type="submit"]').click();
+  await expect(page.locator('.tip-suggests')).toBeVisible();
+  await expect(page.locator('.tip-suggests [data-action="tip-suggestion"]')).toBeVisible();
   await page.locator('[data-route="home"]').click();
-  await expect(page.locator('.home-suggests')).toBeVisible();
-  await expect(page.locator('.tip-suggestion-card')).toBeVisible();
+  await expect(page.locator('.tip-suggests')).toHaveCount(0);
+  await expect(page.locator('.home-suggests')).toHaveCount(0);
 });
 
 test('center nav uses the TIP graphic mark', async ({ page }) => {
