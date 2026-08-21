@@ -1,4 +1,4 @@
-import { getJournal } from '../core/journal.js';
+import { addJournalEntry, getJournal } from '../core/journal.js';
 
 function esc(value = '') {
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
@@ -59,6 +59,25 @@ function entryHTML(entry) {
       </div>
     </article>`;
 }
+function quickNoteHTML(){
+  return `<details class="journal-quick-note">
+    <summary class="journal-add-button">+ ADD NOTE</summary>
+    <form id="quickJournalNoteForm" class="entry-form entry-form-inline journal-quick-note-form">
+      <div>
+        <div class="eyebrow">ADD A NOTE</div>
+        <h2>What do you want TIP to remember?</h2>
+      </div>
+      <label class="field">
+        <span class="sr-only">Journal note</span>
+        <textarea name="note" required maxlength="2000" placeholder="A thought, feel, result or anything worth remembering…"></textarea>
+      </label>
+      <div class="button-row">
+        <button class="secondary-button" type="button" data-journal-note-cancel>CANCEL</button>
+        <button class="primary-button" type="submit">SAVE NOTE</button>
+      </div>
+    </form>
+  </details>`;
+}
 export function renderGolfer() {
   const entries = getJournal();
   const countLabel = `${entries.length} ${entries.length===1?'ENTRY':'ENTRIES'}`;
@@ -69,14 +88,31 @@ export function renderGolfer() {
       <p class="page-copy">Everything TIP remembers about your golf.</p>
     </section>
     <section class="journal-toolbar">
-      <button class="journal-add-button" type="button" data-action="add-entry">+ ADD ENTRY</button>
+      ${quickNoteHTML()}
     </section>
     <section class="journal-section">
       <div class="journal-section-label"><span>YOUR GOLF</span>${entries.length ? `<small>${countLabel}</small>` : ''}</div>
       ${entries.length ? `<div class="journal-preview">${entries.map(entryHTML).join('')}</div>` : `
         <div class="journal-empty">
           <strong>Nothing here yet.</strong>
-          <p>Tell TIP about a round, practice or anything worth remembering.</p>
+          <p>Tell TIP about a round or practice, or add a quick note here whenever something is worth remembering.</p>
         </div>`}
     </section>`;
 }
+
+// Quick Journal Note intentionally stays local to the Journal view. The canonical
+// Journal write triggers the normal TIP Memory rebuild and Golfer re-render.
+document.addEventListener('submit', event => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement) || form.id !== 'quickJournalNoteForm') return;
+  event.preventDefault();
+  const text = String(new FormData(form).get('note') || '').trim();
+  if (!text) return;
+  addJournalEntry({ type:'note', source:'journal-quick-note', title:'Note', note:text });
+});
+
+document.addEventListener('click', event => {
+  const cancel = event.target.closest?.('[data-journal-note-cancel]');
+  if (!cancel) return;
+  cancel.closest('details')?.removeAttribute('open');
+});
