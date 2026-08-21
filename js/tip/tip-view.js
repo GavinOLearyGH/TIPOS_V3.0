@@ -1,3 +1,6 @@
+import { TIPState } from '../core/storage.js';
+import { getTIPSuggestion, suggestionModeLabel } from '../coach/recommend.js';
+
 const ENTRY_TYPES = [
   ['round','Round','Score, stats, course, notes'],
   ['practice','Practice','Range, short game, putting'],
@@ -6,10 +9,34 @@ const ENTRY_TYPES = [
   ['note','Note','Anything worth remembering']
 ];
 
+function esc(value='') {
+  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 export function renderEntryTypeChoices() {
   return `<div class="tip-entry-types" aria-label="Choose Journal entry type">
     ${ENTRY_TYPES.map(([key,label,copy]) => `<button type="button" class="tip-entry-type" data-action="tip-entry-type" data-entry-type="${key}"><span><strong>${label}</strong><small>${copy}</small></span><b aria-hidden="true">›</b></button>`).join('')}
   </div>`;
+}
+
+function renderTIPSuggests() {
+  const state = TIPState.get();
+  const totalEvidence = Number(state.memory?.summary?.totalEvidence || 0);
+  if (totalEvidence <= 0) return '';
+  const suggestion = getTIPSuggestion();
+  return `
+    <section class="tip-suggests section" aria-label="TIP Suggests">
+      <div class="eyebrow">TIP SUGGESTS</div>
+      <article class="tip-suggests-row">
+        <div class="tip-suggests-main">
+          <div class="tip-suggests-meta">${esc(suggestionModeLabel(suggestion.mode))} · ${esc(suggestion.label)}</div>
+          <h2>${esc(suggestion.title)}</h2>
+          <p>${esc(suggestion.reason)}</p>
+        </div>
+        <button class="tip-suggests-start" type="button" data-action="tip-suggestion">START</button>
+      </article>
+    </section>
+  `;
 }
 
 export function renderTIP(workspace = {}) {
@@ -22,6 +49,8 @@ export function renderTIP(workspace = {}) {
       <h1 class="page-title">How can TIP help today?</h1>
       <p class="page-copy">Tell TIP what happened, or let TIP build the work.</p>
     </section>
+
+    ${renderTIPSuggests()}
 
     <section class="tip-workspace section">
       <div class="tip-workspace-group ${tellOpen ? 'open' : ''}">
