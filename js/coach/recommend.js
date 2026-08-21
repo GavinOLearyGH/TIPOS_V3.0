@@ -1,11 +1,12 @@
 import { TIPState } from '../core/storage.js';
 import { getTIPMemory } from './memory.js';
+import { signalsFromEntry } from './signals.js';
 import { TIP_TOPICS } from './topics.js';
 import { getTIP7Status } from '../tip7/tip7-engine.js';
 import { TIP9_PRACTICES } from '../tip9/tip9-data.js';
 import { getTIP9PracticeState } from '../tip9/tip9-engine.js';
 
-export const TIP_SUGGEST_VERSION = '3.10-1';
+export const TIP_SUGGEST_VERSION = '3.10-2';
 const ACTION_COOLDOWN_HOURS = 24;
 
 const TOPIC_TO_TIP9 = {
@@ -31,7 +32,6 @@ function daysSince(value){
   const time = new Date(value || 0).getTime();
   return time ? Math.max(0,(Date.now()-time)/86400000) : 9999;
 }
-
 function hoursSince(value){ return daysSince(value)*24; }
 
 function topicNeedScore(topic){
@@ -74,13 +74,13 @@ function recentPracticePenalty(id,state){
   return index < 0 ? 0 : (8-index)*3;
 }
 
-function hasNewExternalNeed(topic,lastAt){
+function journalHasNewExternalNeed(topicKey,lastAt,state){
   const last = new Date(lastAt || 0).getTime();
   if(!last) return false;
-  return (topic?.history || []).some(item => {
-    const at = new Date(item.at || 0).getTime();
-    const source = String(item.source || '');
-    return at > last + 1000 && item.signal < 0 && !source.startsWith('tip9-');
+  return (state.journal || []).some(entry => {
+    const at = new Date(entry.createdAt || 0).getTime();
+    if(!at || at <= last || entry.type === 'tip9') return false;
+    return signalsFromEntry(entry).some(signal => signal.topic === topicKey && signal.signal < 0);
   });
 }
 
@@ -88,7 +88,7 @@ function practiceEligible(practiceId,topic,state){
   const ps = getTIP9PracticeState(practiceId,state);
   if(!ps.lastAt) return true;
   if(hoursSince(ps.lastAt) >= ACTION_COOLDOWN_HOURS) return true;
-  return hasNewExternalNeed(topic,ps.lastAt);
+  return journalHasNewExternalNeed(topic?.key,ps.lastAt,state);
 }
 
 function chooseTIP9ForTopic(topic,state){
@@ -147,7 +147,7 @@ function firstEligibleLearningPractice(state,memory){
   const ordered = preferred ? [preferred,...TIP9_PRACTICES.filter(p=>p.id!==preferred.id)] : TIP9_PRACTICES;
   return ordered.find(practice => {
     const topics = Object.values(memory?.topics || {}).filter(t => (TOPIC_TO_TIP9[t.key]||[]).includes(practice.id));
-    const topic = topics[0] || {history:[]};
+    const topic = topics[0] || {key:null};
     return practiceEligible(practice.id,topic,state);
   }) || null;
 }
