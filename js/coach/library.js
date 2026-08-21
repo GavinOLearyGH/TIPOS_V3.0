@@ -1,5 +1,6 @@
 import { LEGACY_LIBRARY_ITEMS, LEGACY_LIBRARY_REPORT } from './legacy-library-data.js';
 import { TIP7_DAYS } from '../tip7/tip7-data.js';
+import { TIP_LIBRARY_SIGNAL_THEMES } from './library-search-signals.js';
 
 export const TIP_LIBRARY_DIMENSIONS=['Swing','Skill','Stretch','Strength'];
 
@@ -52,14 +53,34 @@ function nativeTIP7Movements(){
   return [...map.values()];
 }
 
-// The golfer-facing library is deliberately leaf-level curriculum only.
-// TIP9 family IDs, focus relationships and recommendation taxonomy remain internal
-// in the coaching engine. They are not browse categories and are never rendered here.
+// The golfer-facing library remains leaf-level curriculum only. Hidden search
+// signals help TIP understand golfer language without exposing taxonomy.
 const legacyTitles=new Set(LEGACY_LIBRARY_ITEMS.map(item=>normalize(item.title)));
 const allTIP7Movements=nativeTIP7Movements();
 const tip7Items=allTIP7Movements.filter(item=>!legacyTitles.has(normalize(item.title)));
 
-export const TIP_LIBRARY_ITEMS=[...LEGACY_LIBRARY_ITEMS,...tip7Items].sort((a,b)=>{
+function searchableText(item){
+  return [
+    item.title,item.skill,item.area,item.summary,item.purpose,item.coachNote,item.journalPrompt,
+    ...(item.instructions||[]),...(item.success||[]),...(item.easier||[]),...(item.harder||[]),
+    ...(item.notice||[]),...(item.equipment||[]),...(item.focusKeys||[]),...(item.familyIds||[])
+  ].filter(Boolean).join(' ');
+}
+function semanticSignals(item){
+  const hay=normalize(searchableText(item));
+  const signals=[];
+  for(const [signal,themes] of Object.entries(TIP_LIBRARY_SIGNAL_THEMES)){
+    if(themes.some(theme=>hay.includes(normalize(theme)))) signals.push(signal);
+  }
+  return signals;
+}
+function prepare(item){
+  const searchText=normalize(searchableText(item));
+  const signals=semanticSignals(item);
+  return {...item,_searchText:searchText,_signalText:normalize(signals.join(' '))};
+}
+
+export const TIP_LIBRARY_ITEMS=[...LEGACY_LIBRARY_ITEMS,...tip7Items].map(prepare).sort((a,b)=>{
   const dimension=(DIMENSION_ORDER.get(a.dimension)??99)-(DIMENSION_ORDER.get(b.dimension)??99);
   return dimension||String(a.title).localeCompare(String(b.title));
 });
@@ -74,12 +95,12 @@ export const TIP_LIBRARY_REPORT={
   nativeTIP7Unique:allTIP7Movements.length,
   nativeTIP7Added:tip7Items.length,
   exactTIP7Deduplicated:allTIP7Movements.length-tip7Items.length,
+  semanticSignals:Object.keys(TIP_LIBRARY_SIGNAL_THEMES).length,
   total:TIP_LIBRARY_ITEMS.length,
   byDimension:Object.fromEntries(TIP_LIBRARY_DIMENSIONS.map(d=>[d,TIP_LIBRARY_ITEMS.filter(item=>item.dimension===d).length]))
 };
 
 export function getTIPLibraryItem(id){return TIP_LIBRARY_ITEMS.find(item=>item.id===id)||null;}
-
 export function getTIPLibraryCounts(){return {...TIP_LIBRARY_REPORT.byDimension,All:TIP_LIBRARY_REPORT.total};}
 
 function contextMatches(item,context){
@@ -94,9 +115,30 @@ function contextMatches(item,context){
   return true;
 }
 
+function queryScore(item,q){
+  const title=normalize(item.title),skill=normalize(item.skill),area=normalize(item.area),summary=normalize(item.summary);
+  let score=0;
+  if(title===q) score+=120; else if(title.includes(q)) score+=80;
+  if(skill.includes(q)) score+=60;
+  if(area.includes(q)) score+=50;
+  if(item._signalText.includes(q)) score+=70;
+  if(summary.includes(q)) score+=35;
+  if(item._searchText.includes(q)) score+=25;
+  const terms=q.split(' ').filter(Boolean);
+  if(terms.length>1){
+    const matched=terms.filter(term=>item._searchText.includes(term)||item._signalText.includes(term)).length;
+    score+=matched*8;
+    if(matched===terms.length) score+=15;
+  }
+  return score;
+}
+
 export function filterTIPLibrary({dimension='All',context=null,query=''}={}){
   const q=normalize(query);
-  return TIP_LIBRARY_ITEMS.filter(item=>
-    (dimension==='All'||item.dimension===dimension)&&contextMatches(item,context)&&(!q||normalize([item.title,item.skill,item.area,item.summary].join(' ')).includes(q))
-  );
+  const eligible=TIP_LIBRARY_ITEMS.filter(item=>(dimension==='All'||item.dimension===dimension)&&contextMatches(item,context));
+  if(!q) return eligible;
+  return eligible.map(item=>({item,score:queryScore(item,q)}))
+    .filter(row=>row.score>0)
+    .sort((a,b)=>b.score-a.score||String(a.item.title).localeCompare(String(b.item.title)))
+    .map(row=>row.item);
 }
