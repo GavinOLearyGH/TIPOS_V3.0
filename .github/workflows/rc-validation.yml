@@ -29,7 +29,7 @@ jobs:
       - name: Materialize V3.12 legacy library
         if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'v3.12-tip-library'
         run: |
-          if git diff --quiet -- js/coach/legacy-library-data.js; then
+          if [ -z "$(git status --porcelain -- js/coach/legacy-library-data.js)" ]; then
             echo "Legacy library already materialized."
           else
             git config user.name "github-actions[bot]"
