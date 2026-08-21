@@ -31,49 +31,48 @@ function numberField(name, label, value = '', min = 0) {
   return `<label class="field"><span>${label}</span><input name="${name}" type="number" inputmode="numeric" min="${min}" value="${value ?? ''}"></label>`;
 }
 
-function typeFields(type, entry = null) {
+function typeFields(type, entry = null, inline = false) {
   const m = entry?.metrics || {};
-  if (type === 'round') return `
-    <div class="metric-grid">
-      ${numberField('score','Score',m.score)}
+  if (type === 'round') {
+    const stats = `<div class="metric-grid compact-metrics">
       ${numberField('fairways','Fairways',m.fairways)}
       ${numberField('gir','GIR',m.gir)}
       ${numberField('putts','Putts',m.putts)}
       ${numberField('upDowns','Up & Downs',m.upDowns)}
       ${numberField('penalties','Penalties',m.penalties)}
     </div>`;
-  if (type === 'practice') return `
-    <div class="metric-grid">
-      ${numberField('duration','Minutes',m.duration)}
-      ${numberField('balls','Balls / reps',m.balls)}
-    </div>`;
+    return `${numberField('score','Score',m.score)}${inline ? `<details class="entry-details"><summary>Round details <span>optional stats</span></summary>${stats}</details>` : stats}`;
+  }
+  if (type === 'practice') return `<div class="metric-grid compact-metrics">${numberField('duration','Minutes',m.duration)}${numberField('balls','Balls / reps',m.balls)}</div>`;
   if (type === 'lesson') return `${numberField('duration','Minutes',m.duration)}`;
   return '';
 }
 
-function topicChips(type, selected = []) {
+function topicChips(type, selected = [], inline = false) {
   const topics = TOPICS[type] || [];
   if (!topics.length) return '';
-  return `<fieldset class="field"><legend>Focus <small>optional</small></legend><div class="chip-grid">${topics.map(topic => `
+  const chips = `<fieldset class="field"><legend>Focus <small>optional</small></legend><div class="chip-grid">${topics.map(topic => `
     <label class="check-chip"><input type="checkbox" name="topics" value="${topic}" ${selected.includes(topic)?'checked':''}><span>${esc(topic.replace(/([A-Z])/g,' $1'))}</span></label>`).join('')}</div></fieldset>`;
+  return inline ? `<details class="entry-details"><summary>Focus <span>optional</span></summary>${chips}</details>` : chips;
 }
 
-export function renderEntryForm(entryId = null, forcedType = null) {
+export function renderEntryForm(entryId = null, forcedType = null, options = {}) {
   const entry = entryId ? getJournalEntry(entryId) : null;
   const type = forcedType || entry?.type || 'round';
   const meta = TYPE_META[type] || TYPE_META.note;
+  const inline = options.inline === true && !entry;
   return `
-    <form id="journalEntryForm" class="entry-form" data-entry-id="${esc(entryId || '')}" data-entry-type="${esc(type)}">
-      <div class="sheet-head">
-        <div><div class="eyebrow">${entry ? 'EDIT' : 'ADD TO JOURNAL'}</div><h2>${esc(meta.label)}</h2></div>
-        <button type="button" class="icon-button" data-entry-close aria-label="Close">×</button>
+    <form id="journalEntryForm" class="entry-form ${inline ? 'entry-form-inline' : ''}" data-entry-id="${esc(entryId || '')}" data-entry-type="${esc(type)}">
+      <div class="entry-form-head">
+        <div><div class="eyebrow">${entry ? 'EDIT' : 'TELL TIP'}</div><h2>${esc(meta.label)}</h2></div>
+        ${inline ? `<button type="button" class="text-button" data-action="tip-entry-change">← Change type</button>` : `<button type="button" class="icon-button" data-entry-close aria-label="Close">×</button>`}
       </div>
-      ${!entry ? `<div class="type-tabs">${Object.entries(TYPE_META).map(([key,value]) => `<button type="button" data-entry-type-choice="${key}" class="${key===type?'active':''}">${value.label}</button>`).join('')}</div>` : ''}
+      ${!entry && !inline ? `<div class="type-tabs">${Object.entries(TYPE_META).map(([key,value]) => `<button type="button" data-entry-type-choice="${key}" class="${key===type?'active':''}">${value.label}</button>`).join('')}</div>` : ''}
       <label class="field"><span>${esc(meta.title)}</span><input name="title" required maxlength="80" value="${esc(entry?.title || '')}" placeholder="${esc(meta.title)}"></label>
-      <label class="field"><span>Date & time</span><input name="createdAt" type="datetime-local" value="${localInputDate(entry?.createdAt)}"></label>
-      ${typeFields(type, entry)}
-      ${topicChips(type, entry?.topics || [])}
-      <label class="field"><span>${type==='round' ? 'How did it go?' : 'What should TIP remember?'}</span><textarea name="note" rows="5" maxlength="1200" placeholder="A short note is enough.">${esc(entry?.reflection?.text || '')}</textarea></label>
+      <label class="field field-date"><span>Date & time</span><input name="createdAt" type="datetime-local" value="${localInputDate(entry?.createdAt)}"></label>
+      ${typeFields(type, entry, inline)}
+      <label class="field"><span>${type==='round' ? 'What happened?' : 'What should TIP remember?'}</span><textarea name="note" rows="${inline ? 3 : 5}" maxlength="1200" placeholder="A short note is enough.">${esc(entry?.reflection?.text || '')}</textarea></label>
+      ${topicChips(type, entry?.topics || [], inline)}
       <button class="primary-button" type="submit">${entry ? 'SAVE CHANGES' : 'SAVE TO JOURNAL'}</button>
     </form>`;
 }

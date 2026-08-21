@@ -7,16 +7,16 @@ async function fresh(page) {
   await page.locator('#welcomeStartBtn').click();
 }
 
-test('TIP page uses a calmer headline and tighter action cards', async ({ page }) => {
+test('TIP page uses a calmer headline and compact workspace rows', async ({ page }) => {
   await fresh(page);
   const homeTitleSize = await page.locator('.page-header .page-title').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
   await page.locator('[data-route="tip"]').click();
   const tipTitle = page.locator('.tip-page-header .page-title');
   const tipTitleSize = await tipTitle.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
   expect(tipTitleSize).toBeLessThan(homeTitleSize);
-  await expect(page.locator('.tip-action-card')).toHaveCount(2);
-  const paddingTop = await page.locator('.tip-action-card').first().evaluate(el => parseFloat(getComputedStyle(el).paddingTop));
-  expect(paddingTop).toBeLessThanOrEqual(14);
+  await expect(page.locator('.tip-workspace-row')).toHaveCount(2);
+  const paddingTop = await page.locator('.tip-workspace-row').first().evaluate(el => parseFloat(getComputedStyle(el).paddingTop));
+  expect(paddingTop).toBeLessThanOrEqual(20);
 });
 
 test('center TIP nav mark has padded viewBox and remains fully visible', async ({ page }) => {

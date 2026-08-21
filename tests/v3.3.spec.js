@@ -32,6 +32,7 @@ test('TIP Suggests appears only after real Journal evidence', async ({ page }) =
   await fresh(page);
   await page.locator('[data-route="tip"]').click();
   await page.locator('[data-action="tell-tip"]').click();
+  await page.locator('[data-action="tip-entry-type"][data-entry-type="round"]').click();
   await page.locator('input[name="title"]').fill('Springhaven');
   await page.locator('input[name="score"]').fill('81');
   await page.locator('textarea[name="note"]').fill('Driver was good. Irons were heavy and approaches were short.');

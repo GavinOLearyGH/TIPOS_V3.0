@@ -22,12 +22,18 @@ async function fresh(page) {
 async function addRound(page, note='Driver was good. Irons were heavy and approaches were short.') {
   await nav(page, 'tip');
   await page.locator('[data-action="tell-tip"]').click();
-  await expect(page.locator('#entryDialog')).toHaveAttribute('open', '');
+  await expect(page.locator('.tip-entry-types')).toBeVisible();
+  await page.locator('[data-action="tip-entry-type"][data-entry-type="round"]').click();
+  await expect(page.locator('#journalEntryForm.entry-form-inline')).toBeVisible();
+  await expect(page.locator('#entryDialog')).not.toHaveAttribute('open', '');
   await page.locator('input[name="title"]').fill('Springhaven');
   await page.locator('input[name="score"]').fill('81');
+  const details = page.locator('.entry-details').first();
+  if (await details.count()) await details.locator('summary').click();
   await page.locator('input[name="gir"]').fill('4');
   await page.locator('textarea[name="note"]').fill(note);
   await page.locator('#journalEntryForm button[type="submit"]').click();
+  await nav(page, 'golfer');
   await expect(page.getByText('Springhaven')).toBeVisible();
 }
 
