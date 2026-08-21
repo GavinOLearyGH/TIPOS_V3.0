@@ -23,9 +23,13 @@ test('choosing a Journal type replaces the selector with a compact inline form',
   await expect(page.locator('.tip-entry-types')).toHaveCount(0);
   await expect(page.locator('#journalEntryForm.entry-form-inline')).toBeVisible();
   await expect(page.locator('input[name="score"]')).toBeVisible();
-  await expect(page.locator('input[name="gir"]')).not.toBeVisible();
-  await page.locator('.entry-details').first().locator('summary').click();
+  await expect(page.locator('input[name="fairways"]')).toBeVisible();
   await expect(page.locator('input[name="gir"]')).toBeVisible();
+  await expect(page.locator('input[name="putts"]')).toBeVisible();
+  await expect(page.locator('input[name="upDowns"]')).toBeVisible();
+  await expect(page.locator('input[name="penalties"]')).toBeVisible();
+  await expect(page.locator('.entry-details')).toHaveCount(1);
+  await expect(page.locator('.entry-details summary')).toContainText('Focus');
   await page.locator('[data-action="tip-entry-change"]').click();
   await expect(page.locator('.tip-entry-types')).toBeVisible();
 });
