@@ -93,7 +93,7 @@ test('Home mirrors the three core splash pillars', async ({ page }) => {
   await expect(page.locator('[data-action="tip9"]')).toContainText('TIP9');
   await expect(page.locator('[data-action="tip9"]')).toContainText('9 Ball Challenge for Swing & Skill');
   await expect(page.locator('.home-core-tip')).toContainText('TIP');
-  await expect(page.locator('.home-core-tip')).toContainText('Tell TIP about your golf. Let TIP help with what comes next.');
+  await expect(page.locator('.home-core-tip')).toContainText('Add to your Golf Journal. TIP learns from what you record and uses it to guide what comes next.');
   await expect(page.locator('[data-route="tip"] .nav-tip-logo')).toBeVisible();
   await expect(page.getByText(/Player Card|Today's Mission|Coach's Corner|TIP Plans/i)).toHaveCount(0);
 });

@@ -23,7 +23,7 @@ test('fresh Home shows only TIP7 TIP9 TIP and no coaching suggestion', async ({ 
   await expect(page.locator('.home-core-row')).toHaveCount(3);
   await expect(page.locator('[data-action="tip7"]')).toContainText('7 Minute Stretch & Strength');
   await expect(page.locator('[data-action="tip9"]')).toContainText('9 Ball Challenge for Swing & Skill');
-  await expect(page.locator('.home-core-tip')).toContainText('Tell TIP about your golf. Let TIP help with what comes next.');
+  await expect(page.locator('.home-core-tip')).toContainText('Add to your Golf Journal. TIP learns from what you record and uses it to guide what comes next.');
   await expect(page.locator('.home-suggests')).toHaveCount(0);
   await expect(page.locator('.tip-suggests')).toHaveCount(0);
   await expect(page.getByText('MAINTAIN', { exact: true })).toHaveCount(0);
