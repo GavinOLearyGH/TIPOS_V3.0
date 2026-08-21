@@ -6,7 +6,7 @@ import { getTIP7Status } from '../tip7/tip7-engine.js';
 import { TIP9_PRACTICES } from '../tip9/tip9-data.js';
 import { getTIP9PracticeState } from '../tip9/tip9-engine.js';
 
-export const TIP_SUGGEST_VERSION = '3.10-2';
+export const TIP_SUGGEST_VERSION = '3.10-3';
 const ACTION_COOLDOWN_HOURS = 24;
 
 const TOPIC_TO_TIP9 = {
@@ -76,10 +76,13 @@ function recentPracticePenalty(id,state){
 
 function journalHasNewExternalNeed(topicKey,lastAt,state){
   const last = new Date(lastAt || 0).getTime();
-  if(!last) return false;
+  if(!last || !topicKey) return false;
   return (state.journal || []).some(entry => {
-    const at = new Date(entry.createdAt || 0).getTime();
-    if(!at || at <= last || entry.type === 'tip9') return false;
+    // createdAt is the golf/event time and can be user-entered at minute precision.
+    // updatedAt is when TIP actually received or changed the evidence, which is the
+    // correct clock for deciding whether new information arrived after an action.
+    const receivedAt = new Date(entry.updatedAt || entry.createdAt || 0).getTime();
+    if(!receivedAt || receivedAt <= last || entry.type === 'tip9') return false;
     return signalsFromEntry(entry).some(signal => signal.topic === topicKey && signal.signal < 0);
   });
 }
