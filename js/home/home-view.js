@@ -1,7 +1,5 @@
 import { TIPState } from '../core/storage.js';
 import { getTIP7Status } from '../tip7/tip7-engine.js';
-import { memoryConfidenceCopy } from '../coach/memory.js';
-import { getTIPSuggestion, suggestionModeLabel } from '../coach/recommend.js';
 
 function esc(value='') {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,10 +17,6 @@ export function renderHome() {
   const tip9Status = state.tip9.lifetime
     ? `${state.tip9.lifetime} COMPLETE${recentTip9?.context ? ` · ${String(recentTip9.context).replace('noball','NO BALL').toUpperCase()}` : ''}`
     : 'READY';
-  const memoryCopy = memoryConfidenceCopy(state.memory);
-  const totalEvidence = Number(state.memory?.summary?.totalEvidence || 0);
-  const hasCoachingEvidence = totalEvidence > 0;
-  const suggestion = hasCoachingEvidence ? getTIPSuggestion() : null;
 
   return `
     <section class="page-header">
@@ -57,27 +51,5 @@ export function renderHome() {
         <span class="home-core-arrow" aria-hidden="true">›</span>
       </a>
     </section>
-
-    ${hasCoachingEvidence ? `
-      <section class="home-suggests section">
-        <div class="section-head">
-          <div>
-            <div class="eyebrow">TIP SUGGESTS</div>
-            <h2>${esc(memoryCopy)}</h2>
-          </div>
-        </div>
-        <article class="card card-accent tip-suggestion-card home-tip-suggestion">
-          <div class="card-top">
-            <div>
-              <span class="pill">${esc(suggestionModeLabel(suggestion.mode))}</span>
-              <h2>${esc(suggestion.title)}</h2>
-            </div>
-            <small>${esc(suggestion.label)}</small>
-          </div>
-          <p>${esc(suggestion.reason)}</p>
-          <button class="primary-button tip-suggestion-start" type="button" data-action="tip-suggestion">START</button>
-        </article>
-      </section>
-    ` : ''}
   `;
 }
