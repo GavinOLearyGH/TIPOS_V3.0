@@ -71,9 +71,9 @@ function quickNoteHTML(){
         <span class="sr-only">Journal note</span>
         <textarea name="note" required maxlength="2000" placeholder="A thought, feel, result or anything worth remembering…"></textarea>
       </label>
-      <div class="button-row">
-        <button class="secondary-button" type="button" data-journal-note-cancel>CANCEL</button>
-        <button class="primary-button" type="submit">SAVE NOTE</button>
+      <div class="journal-quick-note-actions">
+        <button class="journal-note-cancel" type="button" data-journal-note-cancel>CANCEL</button>
+        <button class="primary-button journal-note-save" type="submit">SAVE NOTE</button>
       </div>
     </form>
   </details>`;
@@ -108,7 +108,15 @@ document.addEventListener('submit', event => {
   event.preventDefault();
   const text = String(new FormData(form).get('note') || '').trim();
   if (!text) return;
+  // Release the mobile text control before the Journal re-renders. Combined with
+  // a 16px input font this prevents iOS Safari retaining a focused/zoomed viewport.
+  form.querySelector('textarea[name="note"]')?.blur();
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   addJournalEntry({ type:'note', source:'journal-quick-note', title:'Note', note:text });
+  requestAnimationFrame(() => {
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+  });
 });
 
 document.addEventListener('click', event => {
