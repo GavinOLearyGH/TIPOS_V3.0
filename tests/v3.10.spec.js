@@ -23,7 +23,8 @@ async function completeSuggestedTip9Poorly(page){
   await page.locator('[data-action="tip-suggestion"]').click();
   const preferredContext=page.locator('[data-tip9-preferred-context]').first();
   if(await preferredContext.count()) await preferredContext.click();
-  await page.locator('[data-tip9-setup]').click();
+  const setup=page.locator('[data-tip9-setup]');
+  if(await setup.count()) await setup.click();
   await page.locator('[data-tip9-begin]').click();
   for(let block=0;block<3;block++){
     await page.locator('[data-tip9-score="0"]').click();
