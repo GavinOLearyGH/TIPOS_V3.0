@@ -1,6 +1,6 @@
-const CACHE_NAME = 'tip-v3-15-quick-journal-note-1';
+const CACHE_NAME = 'tip-v3-15-1-quick-note-mobile-polish-1';
 const APP_SHELL = [
-  './','./index.html','./manifest.json','./css/tokens.css','./css/app.css','./css/components.css','./css/execution.css','./css/library.css',
+  './','./index.html','./manifest.json','./css/tokens.css','./css/app.css','./css/components.css','./css/execution.css','./css/library.css','./css/journal-quick-note.css',
   './js/app.js','./js/router.js','./js/core/state.js','./js/core/storage.js','./js/core/journal.js','./js/core/import-v2.js',
   './js/coach/topics.js','./js/coach/signals.js','./js/coach/memory.js','./js/coach/recommend.js','./js/coach/catalog.js','./js/coach/library.js','./js/coach/library-search-signals.js','./js/coach/legacy-library-data.js','./js/coach/compose-session.js',
   './js/home/home-view.js','./js/tip/tip-view.js','./js/tip/library-view.js','./js/tip/session-builder.js','./js/golfer/journal-view.js','./js/golfer/entry-form.js',
