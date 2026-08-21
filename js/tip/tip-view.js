@@ -48,7 +48,7 @@ export function renderTIP(workspace = {}) {
     <section class="page-header tip-page-header">
       <div class="eyebrow">TIP</div>
       <h1 class="page-title">How can TIP help today?</h1>
-      <p class="page-copy">Add to your Golf Journal, or ask TIP what to work on next.</p>
+      <p class="page-copy">Add to your Golf Journal, ask TIP what to work on next, or browse the full practice library.</p>
     </section>
 
     ${renderTIPSuggests()}
@@ -68,6 +68,13 @@ export function renderTIP(workspace = {}) {
           <span aria-hidden="true">${sessionOpen ? '⌄' : '›'}</span>
         </button>
         ${sessionOpen ? `<div class="tip-workspace-expand">${workspace.sessionHTML || ''}</div>` : ''}
+      </div>
+
+      <div class="tip-workspace-group">
+        <button class="tip-workspace-row" type="button" data-action="tip-library" aria-label="Browse TIP Library">
+          <div><div class="eyebrow">EXPLORE TIP</div><h2>Browse TIP Library</h2><p>Explore the complete Swing, Skill, Stretch and Strength practice curriculum. TIP keeps the coaching connections behind the scenes.</p></div>
+          <span aria-hidden="true">›</span>
+        </button>
       </div>
     </section>
   `;

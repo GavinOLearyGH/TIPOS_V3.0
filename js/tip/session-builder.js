@@ -7,13 +7,13 @@ export function renderSessionBuilder(options={}){
   const inline = options.inline === true;
   const form = `<form id="sessionBuilderForm" class="session-builder-form ${inline?'session-builder-inline':''}">
       <fieldset class="field"><legend>How much time?</legend><div class="session-choice-grid">
-        ${[7,15,30,45,60].map(m=>`<label class="session-choice"><input type="radio" name="minutes" value="${m}" ${m===30?'checked':''}><span><strong>${m===60?'60+':m}</strong><small>MIN</small></span></label>`).join('')}
+        ${[7,15,30,45,60].map(m=>`<label class="session-choice" data-session-choice="minutes" data-session-value="${m}"><input type="radio" name="minutes" value="${m}" ${m===30?'checked':''}><span><strong>${m===60?'60+':m}</strong><small>MIN</small></span></label>`).join('')}
       </div></fieldset>
       <fieldset class="field"><legend>Where are you?</legend><div class="session-context-grid">
-        ${Object.entries(SESSION_CONTEXTS).map(([key,value])=>`<label class="session-choice session-context-choice"><input type="radio" name="context" value="${key}" ${key==='anywhere'?'checked':''}><span><strong>${esc(value.label)}</strong></span></label>`).join('')}
+        ${Object.entries(SESSION_CONTEXTS).map(([key,value])=>`<label class="session-choice session-context-choice" data-session-choice="context" data-session-value="${key}"><input type="radio" name="context" value="${key}" ${key==='anywhere'?'checked':''}><span><strong>${esc(value.label)}</strong></span></label>`).join('')}
       </div></fieldset>
       <fieldset class="field"><legend>What do you want to work on? <small>Choose a focus, or let TIP decide.</small></legend><div class="session-context-grid session-focus-grid">
-        ${Object.entries(SESSION_FOCUS).map(([key,value])=>`<label class="session-choice session-focus-choice"><input type="radio" name="focus" value="${key}" ${key==='auto'?'checked':''}><span><strong>${esc(value.label)}</strong></span></label>`).join('')}
+        ${Object.entries(SESSION_FOCUS).map(([key,value])=>`<label class="session-choice session-focus-choice" data-session-choice="focus" data-session-value="${key}"><input type="radio" name="focus" value="${key}" ${key==='auto'?'checked':''}><span><strong>${esc(value.label)}</strong></span></label>`).join('')}
       </div></fieldset>
       <button class="primary-button" type="submit">BUILD SESSION</button>
     </form>`;

@@ -13,8 +13,10 @@ async function openBuilder(page){
   await expect(page.locator('#sessionBuilderForm')).toBeVisible();
 }
 
-async function selectRadio(page,name,value){
-  await page.locator(`input[name="${name}"][value="${value}"]`).check({force:true});
+async function selectChoice(page,name,value){
+  const choice=page.locator(`[data-session-choice="${name}"][data-session-value="${value}"]`);
+  await choice.click();
+  await expect(choice.locator(`input[name="${name}"][value="${value}"]`)).toBeChecked();
 }
 
 test('V3.11 teaches the Journal and coaching relationship calmly',async({page})=>{
@@ -40,9 +42,9 @@ test('custom builder exposes time location and focus with Let TIP Decide',async(
 test('Putting focus constrains prescription to putting practice families',async({page})=>{
   await fresh(page);
   await openBuilder(page);
-  await selectRadio(page,'minutes','15');
-  await selectRadio(page,'context','anywhere');
-  await selectRadio(page,'focus','putting');
+  await selectChoice(page,'minutes','15');
+  await selectChoice(page,'context','anywhere');
+  await selectChoice(page,'focus','putting');
   await page.locator('#sessionBuilderForm button[type="submit"]').click();
   await expect(page.locator('.inline-session-head')).toContainText('Putting Session');
   const titles=await page.locator('.compact-session-block h3').allTextContents();
@@ -54,9 +56,9 @@ test('Putting focus constrains prescription to putting practice families',async(
 test('TIP explains when selected focus is unavailable at the chosen location',async({page})=>{
   await fresh(page);
   await openBuilder(page);
-  await selectRadio(page,'minutes','15');
-  await selectRadio(page,'context','green');
-  await selectRadio(page,'focus','tee');
+  await selectChoice(page,'minutes','15');
+  await selectChoice(page,'context','green');
+  await selectChoice(page,'focus','tee');
   await page.locator('#sessionBuilderForm button[type="submit"]').click();
   await expect(page.locator('.session-reason')).toContainText('Tee Game is not available in Putting Green');
   await expect(page.locator('.compact-session-block')).toHaveCount(2);
@@ -65,9 +67,9 @@ test('TIP explains when selected focus is unavailable at the chosen location',as
 test('Body focus stays inside TIP7 instead of filling time with unrelated TIP9 work',async({page})=>{
   await fresh(page);
   await openBuilder(page);
-  await selectRadio(page,'minutes','30');
-  await selectRadio(page,'context','anywhere');
-  await selectRadio(page,'focus','body');
+  await selectChoice(page,'minutes','30');
+  await selectChoice(page,'context','anywhere');
+  await selectChoice(page,'focus','body');
   await page.locator('#sessionBuilderForm button[type="submit"]').click();
   await expect(page.locator('.inline-session-head')).toContainText('Body Session');
   await expect(page.locator('.compact-session-block')).toHaveCount(1);
