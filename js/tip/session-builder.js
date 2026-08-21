@@ -1,7 +1,7 @@
 import { composeTodaySession, SESSION_CONTEXTS } from '../coach/compose-session.js';
 import { SESSION_FOCUS } from '../coach/catalog.js';
 
-function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
+function esc(value=''){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 export function renderSessionBuilder(options={}){
   const inline = options.inline === true;
@@ -12,9 +12,9 @@ export function renderSessionBuilder(options={}){
       <fieldset class="field"><legend>Where are you?</legend><div class="session-context-grid">
         ${Object.entries(SESSION_CONTEXTS).map(([key,value])=>`<label class="session-choice session-context-choice"><input type="radio" name="context" value="${key}" ${key==='anywhere'?'checked':''}><span><strong>${esc(value.label)}</strong></span></label>`).join('')}
       </div></fieldset>
-      <fieldset class="field"><legend>What do you want to work on?</legend><div class="session-context-grid session-focus-grid">
+      <fieldset class="field"><legend>What do you want to work on? <small>Choose a focus, or let TIP decide.</small></legend><div class="session-context-grid session-focus-grid">
         ${Object.entries(SESSION_FOCUS).map(([key,value])=>`<label class="session-choice session-focus-choice"><input type="radio" name="focus" value="${key}" ${key==='auto'?'checked':''}><span><strong>${esc(value.label)}</strong></span></label>`).join('')}
-      </div><small class="field-help">Choose a focus, or let TIP decide from your Journal and recent work.</small></fieldset>
+      </div></fieldset>
       <button class="primary-button" type="submit">BUILD SESSION</button>
     </form>`;
   if (inline) return form;
