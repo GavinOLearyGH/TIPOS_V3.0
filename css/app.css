@@ -263,8 +263,21 @@ html, body, .app-shell { overflow-x: hidden; }
   overflow: hidden;
 }
 .session-builder-inline .session-choice {
+  position: relative;
   width: 100%;
   overflow: hidden;
+}
+.session-builder-inline .session-choice input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  max-width: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 .session-builder-inline .session-choice span {
   width: 100%;
