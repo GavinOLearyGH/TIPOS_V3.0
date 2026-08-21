@@ -98,12 +98,14 @@ test('Home mirrors the three core splash pillars', async ({ page }) => {
   await expect(page.getByText(/Player Card|Today's Mission|Coach's Corner|TIP Plans/i)).toHaveCount(0);
 });
 
-test('round entry feeds Journal and changes TIP from learning-only state', async ({ page }) => {
+test('round entry feeds Journal and surfaces coaching on TIP', async ({ page }) => {
   await fresh(page);
   await addRound(page);
   await nav(page, 'home');
-  await expect(page.locator('.home-tip-suggestion')).toBeVisible();
-  await expect(page.locator('.home-tip-suggestion')).toContainText(/Contact|Approach|TIP9|IMPROVE|LEARN/i);
+  await expect(page.locator('.home-suggests')).toHaveCount(0);
+  await nav(page, 'tip');
+  await expect(page.locator('.tip-suggests')).toBeVisible();
+  await expect(page.locator('.tip-suggests')).toContainText(/Contact|Approach|TIP9|IMPROVE|LEARN/i);
 });
 
 test('TIP7 completes, journals once, and locks for today', async ({ page }) => {
@@ -128,8 +130,8 @@ test('TIP9 completes and writes canonical Journal activity', async ({ page }) =>
 test('TIP Suggests start preserves the recommended TIP9 instead of rerolling', async ({ page }) => {
   await fresh(page);
   await addRound(page, 'Irons were heavy. Contact was poor and approaches were short.');
-  await nav(page, 'home');
-  const card = page.locator('.home-tip-suggestion');
+  await nav(page, 'tip');
+  const card = page.locator('.tip-suggests');
   const title = (await card.locator('h2').textContent())?.trim();
   await card.locator('[data-action="tip-suggestion"]').click();
   if (await page.locator('[data-tip9-preferred-context]').count()) await page.locator('[data-tip9-preferred-context]').first().click();
