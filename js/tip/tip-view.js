@@ -24,6 +24,7 @@ function renderTIPSuggests() {
   const totalEvidence = Number(state.memory?.summary?.totalEvidence || 0);
   if (totalEvidence <= 0) return '';
   const suggestion = getTIPSuggestion();
+  if (!suggestion) return '';
   return `
     <section class="tip-suggests section" aria-label="TIP Suggests">
       <div class="eyebrow">TIP SUGGESTS</div>
