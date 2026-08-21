@@ -48,12 +48,13 @@ test('saving an inline entry stays on TIP and writes to Journal', async ({ page 
   await expect(page.getByText('Range thought')).toBeVisible();
 });
 
-test('Add Entry from Journal routes into the same inline TIP selector', async ({ page }) => {
+test('Journal Add Note stays local instead of routing into Tell TIP', async ({ page }) => {
   await fresh(page);
   await page.locator('[data-route="golfer"]').click();
-  await page.locator('[data-action="add-entry"]').click();
-  await expect(page).toHaveURL(/#\/tip$/);
-  await expect(page.locator('.tip-entry-types')).toBeVisible();
+  await page.locator('.journal-add-button').click();
+  await expect(page).toHaveURL(/#\/golfer$/);
+  await expect(page.locator('#quickJournalNoteForm')).toBeVisible();
+  await expect(page.locator('.tip-entry-types')).toHaveCount(0);
   await expect(page.locator('#entryDialog')).not.toHaveAttribute('open', '');
 });
 

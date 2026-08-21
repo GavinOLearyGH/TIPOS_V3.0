@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tip-v3-14-first-class-tip-library-1';
+const CACHE_NAME = 'tip-v3-15-quick-journal-note-1';
 const APP_SHELL = [
   './','./index.html','./manifest.json','./css/tokens.css','./css/app.css','./css/components.css','./css/execution.css','./css/library.css',
   './js/app.js','./js/router.js','./js/core/state.js','./js/core/storage.js','./js/core/journal.js','./js/core/import-v2.js',
