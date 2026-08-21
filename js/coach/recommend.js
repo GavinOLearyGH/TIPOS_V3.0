@@ -5,7 +5,8 @@ import { getTIP7Status } from '../tip7/tip7-engine.js';
 import { TIP9_PRACTICES } from '../tip9/tip9-data.js';
 import { getTIP9PracticeState } from '../tip9/tip9-engine.js';
 
-export const TIP_SUGGEST_VERSION = '3.0-f-1';
+export const TIP_SUGGEST_VERSION = '3.10-1';
+const ACTION_COOLDOWN_HOURS = 24;
 
 const TOPIC_TO_TIP9 = {
   teeControl:['SK06'],
@@ -31,6 +32,8 @@ function daysSince(value){
   return time ? Math.max(0,(Date.now()-time)/86400000) : 9999;
 }
 
+function hoursSince(value){ return daysSince(value)*24; }
+
 function topicNeedScore(topic){
   if(!topic || !topic.evidence) return -Infinity;
   const negative = Math.max(0,-Number(topic.score||0));
@@ -52,16 +55,17 @@ function actionableTopic(topic){
   return group === 'body' || Boolean(TOPIC_TO_TIP9[topic?.key]);
 }
 
-function chooseTopic(memory){
+function rankedSelections(memory){
   const known = Object.values(memory?.topics || {}).filter(t => t.evidence > 0 && TIP_TOPICS[t.key] && actionableTopic(t));
   const needs = known.filter(t => t.score < 0)
-    .map(t => ({topic:t,score:topicNeedScore(t)})).sort((a,b)=>b.score-a.score);
-  if(needs[0] && needs[0].score >= .75) return { mode:'improve', topic:needs[0].topic };
-
+    .map(t => ({mode:'improve',topic:t,score:topicNeedScore(t)}))
+    .filter(x => x.score >= .75)
+    .sort((a,b)=>b.score-a.score);
   const strengths = known.filter(t => t.score > 0 && Boolean(TOPIC_TO_TIP9[t.key]))
-    .map(t => ({topic:t,score:topicReinforceScore(t)})).sort((a,b)=>b.score-a.score);
-  if(strengths[0] && strengths[0].score >= 1.5) return { mode:'reinforce', topic:strengths[0].topic };
-  return null;
+    .map(t => ({mode:'reinforce',topic:t,score:topicReinforceScore(t)}))
+    .filter(x => x.score >= 1.5)
+    .sort((a,b)=>b.score-a.score);
+  return [...needs,...strengths];
 }
 
 function recentPracticePenalty(id,state){
@@ -70,9 +74,29 @@ function recentPracticePenalty(id,state){
   return index < 0 ? 0 : (8-index)*3;
 }
 
-function chooseTIP9ForTopic(topicKey,state){
-  const ids = TOPIC_TO_TIP9[topicKey] || [];
-  const candidates = ids.map(id => TIP9_PRACTICES.find(p=>p.id===id)).filter(Boolean);
+function hasNewExternalNeed(topic,lastAt){
+  const last = new Date(lastAt || 0).getTime();
+  if(!last) return false;
+  return (topic?.history || []).some(item => {
+    const at = new Date(item.at || 0).getTime();
+    const source = String(item.source || '');
+    return at > last + 1000 && item.signal < 0 && !source.startsWith('tip9-');
+  });
+}
+
+function practiceEligible(practiceId,topic,state){
+  const ps = getTIP9PracticeState(practiceId,state);
+  if(!ps.lastAt) return true;
+  if(hoursSince(ps.lastAt) >= ACTION_COOLDOWN_HOURS) return true;
+  return hasNewExternalNeed(topic,ps.lastAt);
+}
+
+function chooseTIP9ForTopic(topic,state){
+  const ids = TOPIC_TO_TIP9[topic.key] || [];
+  const candidates = ids
+    .map(id => TIP9_PRACTICES.find(p=>p.id===id))
+    .filter(Boolean)
+    .filter(practice => practiceEligible(practice.id,topic,state));
   if(!candidates.length) return null;
   return candidates.map((practice,index)=>{
     const ps = getTIP9PracticeState(practice.id,state);
@@ -101,7 +125,7 @@ function bodySuggestion(selection,state){
 }
 
 function gameSuggestion(selection,state){
-  const practice = chooseTIP9ForTopic(selection.topic.key,state);
+  const practice = chooseTIP9ForTopic(selection.topic,state);
   if(!practice) return null;
   const ps = getTIP9PracticeState(practice.id,state);
   return {
@@ -118,12 +142,23 @@ function gameSuggestion(selection,state){
   };
 }
 
-function learningSuggestion(state){
+function firstEligibleLearningPractice(state,memory){
+  const preferred = TIP9_PRACTICES.find(p=>p.id==='SW02');
+  const ordered = preferred ? [preferred,...TIP9_PRACTICES.filter(p=>p.id!==preferred.id)] : TIP9_PRACTICES;
+  return ordered.find(practice => {
+    const topics = Object.values(memory?.topics || {}).filter(t => (TOPIC_TO_TIP9[t.key]||[]).includes(practice.id));
+    const topic = topics[0] || {history:[]};
+    return practiceEligible(practice.id,topic,state);
+  }) || null;
+}
+
+function learningSuggestion(state,memory){
   const tip7 = getTIP7Status();
   if(tip7.canStart && Number(state.tip7.lifetime||0) <= Number(state.tip9.lifetime||0)) {
     return bodySuggestion(null,state);
   }
-  const practice = TIP9_PRACTICES.find(p=>p.id==='SW02') || TIP9_PRACTICES[0];
+  const practice = firstEligibleLearningPractice(state,memory);
+  if(!practice) return null;
   const ps = getTIP9PracticeState(practice.id,state);
   return {
     version:TIP_SUGGEST_VERSION,
@@ -137,14 +172,21 @@ function learningSuggestion(state){
 export function getTIPSuggestion(){
   const state = TIPState.get();
   const memory = getTIPMemory();
-  const selection = chooseTopic(memory);
+  const selections = rankedSelections(memory);
 
-  if(selection){
-    const def = TIP_TOPICS[selection.topic.key];
-    if(def?.group === 'body') return bodySuggestion(selection,state) || learningSuggestion(state);
-    if(TOPIC_TO_TIP9[selection.topic.key]) return gameSuggestion(selection,state) || learningSuggestion(state);
+  if(selections.length){
+    for(const selection of selections){
+      const def = TIP_TOPICS[selection.topic.key];
+      const suggestion = def?.group === 'body'
+        ? bodySuggestion(selection,state)
+        : TOPIC_TO_TIP9[selection.topic.key]
+          ? gameSuggestion(selection,state)
+          : null;
+      if(suggestion) return suggestion;
+    }
+    return null;
   }
-  return learningSuggestion(state);
+  return learningSuggestion(state,memory);
 }
 
 export function suggestionModeLabel(mode){
