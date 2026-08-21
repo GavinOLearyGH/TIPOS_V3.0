@@ -15,8 +15,8 @@ export function libraryResultsHTML({dimension='All',query='',context=null}={}){
   const counts=Object.fromEntries(dimensions.map(d=>[d,filterTIPLibrary({dimension:d,query,context}).length]));
   return {
     count:`${rows.length} practice${rows.length===1?'':'s'}`,
-    filters:dimensions.map(d=>`<button type="button" data-action="library-filter" data-library-filter="${esc(d)}" class="${dimension===d?'selected':''}">${esc(d)}<small>${counts[d]}</small></button>`).join(''),
-    rows:rows.map(item=>`<button type="button" class="tip-library-row" data-action="library-item" data-library-id="${esc(item.id)}"><div class="tip-library-row-top"><span class="eyebrow">${esc(item.dimension)}${item.skill?` · ${esc(item.skill)}`:''}</span><span class="tip-library-meta">${esc(meta(item))}</span></div><strong>${esc(item.title)}</strong>${item.summary?`<p>${esc(item.summary)}</p>`:''}</button>`).join('')||'<div class="tip-library-empty">No practices match that search.</div>'
+    filters:dimensions.map(d=>`<button type="button" data-action="library-filter" data-library-filter="${esc(d)}" data-tip9-filter="${esc(d)}" class="${dimension===d?'selected':''}">${esc(d)}<small>${counts[d]}</small></button>`).join(''),
+    rows:rows.map(item=>`<button type="button" class="tip-library-row" data-action="library-item" data-library-id="${esc(item.id)}" data-tip-library-id="${esc(item.id)}"><div class="tip-library-row-top"><span class="eyebrow">${esc(item.dimension)}${item.skill?` · ${esc(item.skill)}`:''}</span><span class="tip-library-meta">${esc(meta(item))}</span></div><strong>${esc(item.title)}</strong>${item.summary?`<p>${esc(item.summary)}</p>`:''}</button>`).join('')||'<div class="tip-library-empty">No practices match that search.</div>'
   };
 }
 
@@ -26,8 +26,8 @@ export function renderTIPLibrary(workspace={}){
   const parts=libraryResultsHTML({dimension,query});
   return `<section class="tip-library-view tip-library-workspace">
     <button type="button" class="tip-library-back-top" data-action="library-close">‹ Back to TIP</button>
-    <div class="eyebrow">TIP LIBRARY</div>
-    <h1 class="page-title">Explore the full curriculum.</h1>
+    <div class="eyebrow">FULL CURRICULUM</div>
+    <h1 class="page-title">TIP Library</h1>
     <p class="page-copy">Swing. Skill. Stretch. Strength. Everything TIP knows how to practice, in one place.</p>
     <label class="tip-library-search"><span class="sr-only">Search TIP Library</span><input type="search" data-tip-library-search value="${esc(query)}" placeholder="Search a problem, skill or practice" autocomplete="off"></label>
     <div class="tip9-filters tip-library-filters" data-tip-library-filters>${parts.filters}</div>
