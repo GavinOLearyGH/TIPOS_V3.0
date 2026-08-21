@@ -26,7 +26,7 @@ test('Journal uses a calm compact header and empty state', async ({ page }) => {
   await fresh(page);
   await page.locator('[data-route="golfer"]').click();
   await expect(page.locator('.journal-page-header .page-copy')).toHaveText('Everything TIP remembers about your golf.');
-  await expect(page.locator('.journal-add-button')).toHaveText('+ ADD ENTRY');
+  await expect(page.locator('.journal-add-button')).toHaveText('+ ADD NOTE');
   await expect(page.locator('.journal-empty')).toContainText('Nothing here yet.');
   await expect(page.locator('.empty-state')).toHaveCount(0);
 });
