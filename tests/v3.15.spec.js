@@ -33,7 +33,7 @@ test('saving Quick Journal Note stays on Journal and shows the new note immediat
   const note=page.locator('.journal-row').filter({hasText:'Driver felt much better when I slowed the transition.'}).first();
   await expect(note).toBeVisible();
   await expect(note).toContainText('Note');
-  await expect(page.locator('#quickJournalNoteForm')).toHaveCount(0);
+  await expect(page.locator('#quickJournalNoteForm')).not.toBeVisible();
 });
 
 test('cancel closes Quick Journal Note without creating an entry',async({page})=>{
