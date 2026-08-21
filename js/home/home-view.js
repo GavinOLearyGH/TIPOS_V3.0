@@ -46,7 +46,7 @@ export function renderHome() {
       <a class="home-core-row home-core-tip" href="#/tip" aria-label="Open TIP">
         <div class="home-core-name">TIP</div>
         <div class="home-core-content">
-          <div class="home-core-description home-core-tip-description">Tell TIP about your golf. Let TIP help with what comes next.</div>
+          <div class="home-core-description home-core-tip-description">Add to your Golf Journal. TIP learns from what you record and uses it to guide what comes next.</div>
         </div>
         <span class="home-core-arrow" aria-hidden="true">›</span>
       </a>
