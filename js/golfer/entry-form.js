@@ -34,14 +34,14 @@ function numberField(name, label, value = '', min = 0) {
 function typeFields(type, entry = null, inline = false) {
   const m = entry?.metrics || {};
   if (type === 'round') {
-    const stats = `<div class="metric-grid compact-metrics">
+    const stats = `<div class="metric-grid compact-metrics round-evidence-metrics">
       ${numberField('fairways','Fairways',m.fairways)}
       ${numberField('gir','GIR',m.gir)}
       ${numberField('putts','Putts',m.putts)}
       ${numberField('upDowns','Up & Downs',m.upDowns)}
       ${numberField('penalties','Penalties',m.penalties)}
     </div>`;
-    return `${numberField('score','Score',m.score)}${inline ? `<details class="entry-details"><summary>Round details <span>optional stats</span></summary>${stats}</details>` : stats}`;
+    return `${numberField('score','Score',m.score)}${stats}`;
   }
   if (type === 'practice') return `<div class="metric-grid compact-metrics">${numberField('duration','Minutes',m.duration)}${numberField('balls','Balls / reps',m.balls)}</div>`;
   if (type === 'lesson') return `${numberField('duration','Minutes',m.duration)}`;
