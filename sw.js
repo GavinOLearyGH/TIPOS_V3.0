@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tip-v3-15-2-ui-polish-1';
+const CACHE_NAME = 'tip-v3-15-2-welcome-refresh-2';
 const APP_SHELL = [
   './','./index.html','./manifest.json','./css/tokens.css','./css/app.css','./css/components.css','./css/execution.css','./css/library.css','./css/journal-quick-note.css','./css/v3.15.2.css',
   './js/app.js','./js/router.js','./js/core/state.js','./js/core/storage.js','./js/core/journal.js','./js/core/import-v2.js',
