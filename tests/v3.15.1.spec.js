@@ -20,10 +20,14 @@ async function expectNoHorizontalOverflow(page){
   expect(width.body).toBeLessThanOrEqual(width.inner+1);
 }
 
+async function openQuickNote(page){
+  await page.locator('.journal-add-row').click();
+}
+
 test('Quick Note stays inside the mobile viewport before during and after save',async({page})=>{
   await fresh(page);
   await expectNoHorizontalOverflow(page);
-  await page.getByText('+ ADD NOTE',{exact:true}).click();
+  await openQuickNote(page);
   await expectNoHorizontalOverflow(page);
   const textarea=page.locator('#quickJournalNoteForm textarea[name="note"]');
   await textarea.fill('A compact note should not change the Journal viewport.');
@@ -34,7 +38,7 @@ test('Quick Note stays inside the mobile viewport before during and after save',
 
 test('Quick Note mobile controls are compact and use an iOS-safe text size',async({page})=>{
   await fresh(page);
-  await page.getByText('+ ADD NOTE',{exact:true}).click();
+  await openQuickNote(page);
   const textarea=page.locator('#quickJournalNoteForm textarea[name="note"]');
   const style=await textarea.evaluate(el=>({fontSize:parseFloat(getComputedStyle(el).fontSize),height:el.getBoundingClientRect().height}));
   expect(style.fontSize).toBeGreaterThanOrEqual(16);
