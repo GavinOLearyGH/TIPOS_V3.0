@@ -21,7 +21,8 @@ async function selectChoice(page,name,value){
 
 test('V3.11 teaches the Journal and coaching relationship calmly',async({page})=>{
   await fresh(page);
-  await expect(page.locator('.home-core-tip')).toContainText('TIP learns from what you record');
+  await expect(page.locator('.home-core-tip')).toContainText('Tell TIP. Ask TIP. Explore TIP.');
+  await expect(page.locator('.home-core-tip')).toContainText('HELP TIP HELP YOUR GOLF');
   await page.locator('[data-route="tip"]').click();
   await expect(page.locator('.tip-page-header')).toContainText('Add to your Golf Journal');
   await expect(page.locator('[data-action="tell-tip"]')).toContainText('Tell TIP about your golf');
