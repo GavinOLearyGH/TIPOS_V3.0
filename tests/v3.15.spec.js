@@ -12,11 +12,16 @@ async function openJournal(page){
   await expect(page.getByRole('heading',{name:'Journal.'})).toBeVisible();
 }
 
+async function openQuickNote(page){
+  await page.locator('.journal-add-row').click();
+}
+
 test('Journal offers a local Add Note instead of routing into Tell TIP',async({page})=>{
   await fresh(page);
   await openJournal(page);
-  await expect(page.getByText('+ ADD NOTE',{exact:true})).toBeVisible();
-  await page.getByText('+ ADD NOTE',{exact:true}).click();
+  await expect(page.getByText('ADD NOTE',{exact:true})).toBeVisible();
+  await expect(page.getByText('Something worth remembering?',{exact:true})).toBeVisible();
+  await openQuickNote(page);
   await expect(page.getByText('What do you want TIP to remember?')).toBeVisible();
   await expect(page.locator('#quickJournalNoteForm textarea[name="note"]')).toBeVisible();
   expect(page.url()).toContain('#/golfer');
@@ -25,7 +30,7 @@ test('Journal offers a local Add Note instead of routing into Tell TIP',async({p
 test('saving Quick Journal Note stays on Journal and shows the new note immediately',async({page})=>{
   await fresh(page);
   await openJournal(page);
-  await page.getByText('+ ADD NOTE',{exact:true}).click();
+  await openQuickNote(page);
   await page.locator('#quickJournalNoteForm textarea[name="note"]').fill('Driver felt much better when I slowed the transition.');
   await page.getByRole('button',{name:'SAVE NOTE'}).click();
   expect(page.url()).toContain('#/golfer');
@@ -39,7 +44,7 @@ test('saving Quick Journal Note stays on Journal and shows the new note immediat
 test('cancel closes Quick Journal Note without creating an entry',async({page})=>{
   await fresh(page);
   await openJournal(page);
-  await page.getByText('+ ADD NOTE',{exact:true}).click();
+  await openQuickNote(page);
   await page.locator('#quickJournalNoteForm textarea[name="note"]').fill('Do not save this.');
   await page.getByRole('button',{name:'CANCEL'}).click();
   await expect(page.locator('#quickJournalNoteForm')).not.toBeVisible();

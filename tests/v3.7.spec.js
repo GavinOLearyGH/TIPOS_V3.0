@@ -51,7 +51,7 @@ test('saving an inline entry stays on TIP and writes to Journal', async ({ page 
 test('Journal Add Note stays local instead of routing into Tell TIP', async ({ page }) => {
   await fresh(page);
   await page.locator('[data-route="golfer"]').click();
-  await page.locator('.journal-add-button').click();
+  await page.locator('.journal-add-row').click();
   await expect(page).toHaveURL(/#\/golfer$/);
   await expect(page.locator('#quickJournalNoteForm')).toBeVisible();
   await expect(page.locator('.tip-entry-types')).toHaveCount(0);

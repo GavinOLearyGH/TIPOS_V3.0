@@ -61,7 +61,13 @@ function entryHTML(entry) {
 }
 function quickNoteHTML(){
   return `<details class="journal-quick-note">
-    <summary class="journal-add-button">+ ADD NOTE</summary>
+    <summary class="journal-add-row">
+      <span class="journal-add-row-copy">
+        <strong>ADD NOTE</strong>
+        <small>Something worth remembering?</small>
+      </span>
+      <span class="journal-add-row-arrow" aria-hidden="true">›</span>
+    </summary>
     <form id="quickJournalNoteForm" class="entry-form entry-form-inline journal-quick-note-form">
       <div>
         <div class="eyebrow">ADD A NOTE</div>
@@ -108,8 +114,6 @@ document.addEventListener('submit', event => {
   event.preventDefault();
   const text = String(new FormData(form).get('note') || '').trim();
   if (!text) return;
-  // Release the mobile text control before the Journal re-renders. Combined with
-  // a 16px input font this prevents iOS Safari retaining a focused/zoomed viewport.
   form.querySelector('textarea[name="note"]')?.blur();
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   addJournalEntry({ type:'note', source:'journal-quick-note', title:'Note', note:text });
