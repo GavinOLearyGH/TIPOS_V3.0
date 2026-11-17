@@ -75,7 +75,27 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 .welcome-hero{padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:18px;background:linear-gradient(125deg,#293b2c,#192720)}
 .welcome-hero h1{font-size:clamp(2.6rem,7vw,5rem)}.welcome-hero p{color:var(--muted);margin:.8rem 0 1.3rem}
 .welcome-hero .streak-line{margin:1rem 0 0}.streak-line strong{color:var(--gold)}
-.welcome-actions{display:flex;flex-wrap:wrap;gap:.65rem}.primary{background:var(--gold);color:#252517;font-weight:750}
+.shot-guide{padding:1rem;border:1px solid var(--line);border-radius:12px;background:#13231d;margin-bottom:1rem}
+.shot-guide h2{font:600 1.2rem/1.2 Georgia,serif;margin:0 0 .8rem}
+.shot-guide ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem;list-style:none;margin:0;padding:0}
+.shot-guide li{min-width:0;padding:.45rem;background:#1e3428;border-radius:8px;font-size:.82rem}
+.guide-view{height:56px;position:relative;margin-bottom:.35rem;overflow:hidden}
+.guide-view i{position:absolute;display:block}
+.guide-ball,.guide-ring{left:50%;top:29px;transform:translate(-50%,-50%);border-radius:50%}
+.guide-ball{width:8px;height:8px;background:#fff;box-shadow:0 0 0 1px #203220}
+.guide-ring{width:23px;height:23px;border:2px solid #ffe9ad}
+.guide-tether,.guide-aim{left:50%;top:29px;height:2px;transform-origin:left center}
+.guide-tether{width:18px;background:#ffe9ad;transform:rotate(90deg)}
+.guide-aim{width:26px;transform:rotate(-90deg);background:repeating-linear-gradient(90deg,#ffe4a3 0 6px,transparent 6px 10px)}
+.guide-pull .guide-ring{top:46px}.guide-side .guide-ring{left:calc(50% - 13px);top:45px}
+.guide-side .guide-tether{width:21px;transform:rotate(129deg)}.guide-side .guide-aim{transform:rotate(-51deg)}
+.guide-release .guide-ball{top:7px}.guide-release .guide-ring{opacity:.5}
+.daily-action{display:grid;align-content:start;justify-items:start;gap:.35rem}
+.daily-rule{color:var(--muted);font-size:.86rem}
+.welcome-actions #how-to-play-toggle{color:var(--gold)}
+.result-kind{margin:0 0 .3rem;color:var(--gold);font-size:.86rem;font-weight:700}
+#result-detail:empty{display:none}#rank-title:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.welcome-actions{display:flex;flex-wrap:wrap;align-items:start;gap:.65rem}.primary{background:var(--gold);color:#252517;font-weight:750}
 .welcome-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-top:1rem}
 .welcome-panel,.result-panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:clamp(16px,3vw,25px)}
 .welcome-panel h2,.result-panel h2{margin:0 0 .55rem;font:600 1.5rem/1.15 Georgia,serif}
@@ -97,7 +117,7 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 .result-panel input{min-height:42px;max-width:100%;width:230px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:.5rem}
 .result-panel input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .play-header{flex-wrap:wrap}.mode-buttons{flex-wrap:wrap}
-@media(max-width:640px){.welcome-grid{grid-template-columns:1fr}.welcome-actions button{flex:1}.result-panel form>*{max-width:100%}}
+@media(max-width:640px){.welcome-grid{grid-template-columns:1fr}.welcome-actions button{flex:1}.result-panel form>*{max-width:100%}.daily-action{flex:1 0 100%;justify-items:stretch}}
 </style></head>
 <body><main>
 <section id="welcome" class="welcome" aria-labelledby="welcome-title">
@@ -105,7 +125,20 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <div class="club-brand">THE IRISH PAR</div>
 <h1 id="welcome-title" tabindex="-1">Daily Challenge</h1>
 <p><strong>Hole 6 · Hole in 1 Challenge</strong><br>Today's Setup: <span id="welcome-setup"></span></p>
-<div class="welcome-actions"><button id="open-daily" class="primary">Play Daily Challenge</button><button id="open-practice">Practice</button><button id="review-daily" hidden>View today’s result</button></div>
+<section id="how-to-play" class="shot-guide" aria-labelledby="how-to-play-title" hidden>
+<h2 id="how-to-play-title">How to play</h2>
+<ol>
+<li><div class="guide-view guide-pull" aria-hidden="true"><i class="guide-aim"></i><i class="guide-tether"></i><i class="guide-ring"></i><i class="guide-ball"></i></div>Pull back for power</li>
+<li><div class="guide-view guide-side" aria-hidden="true"><i class="guide-aim"></i><i class="guide-tether"></i><i class="guide-ring"></i><i class="guide-ball"></i></div>Slide to aim</li>
+<li><div class="guide-view guide-release" aria-hidden="true"><i class="guide-aim"></i><i class="guide-ring"></i><i class="guide-ball"></i></div>Release to swing</li>
+</ol>
+</section>
+<div class="welcome-actions">
+<div class="daily-action"><button id="open-daily" class="primary" aria-describedby="daily-rule">Play Daily Challenge</button><span id="daily-rule" class="daily-rule">Your first shot is your official result</span></div>
+<button id="open-practice">Practice</button>
+<button id="review-daily" hidden>View today’s result</button>
+<button id="how-to-play-toggle" type="button" aria-controls="how-to-play" aria-expanded="false">How to play</button>
+</div>
 <p class="streak-line" role="status"><strong id="streak-count"></strong><span id="streak-detail"></span></p>
 </div>
 <p id="board-source" class="board-source" role="status"></p>
@@ -113,7 +146,7 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <section class="welcome-panel" aria-labelledby="leader-title"><h2 id="leader-title">Today’s Leader</h2><p id="leader-name" class="leader-name"></p><p id="leader-detail" class="leader-detail"></p></section>
 <section class="welcome-panel" aria-labelledby="distribution-title"><h2 id="distribution-title">Score Distribution</h2><p id="player-count" class="subtle"></p><ul id="score-bands" class="score-bands"></ul></section>
 </div>
-<section class="welcome-panel rank-panel" aria-labelledby="rank-title"><h2 id="rank-title">Leaderboard</h2>
+<section class="welcome-panel rank-panel" aria-labelledby="rank-title"><h2 id="rank-title" tabindex="-1">Leaderboard</h2>
 <p id="board-empty" class="subtle">No scores yet.</p>
 <table id="rank-table" hidden><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">First shot</th></tr></thead><tbody id="rank-rows"></tbody></table>
 </section></section>
@@ -134,9 +167,9 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <label id="power-wrap"><span id="power-label" title="Estimated distance from the ball along your aim, using terrain and green speed. If the ball rolls back, the readout shows how far it reaches and where it settles. The estimate treats the cup as part of the green.">Power · 0%</span><progress id="power" value="0" max="100"></progress></label>
 </div>
 <div id="flyover-fade" hidden aria-hidden="true"></div>
-<dialog id="shot-result" class="result-panel" aria-labelledby="result-title" aria-describedby="result-detail">
+<dialog id="shot-result" class="result-panel" aria-labelledby="result-title" aria-describedby="result-kind result-detail">
 <div class="result-header">
-<h2 id="result-title" tabindex="-1" autofocus></h2>
+<div><p id="result-kind" class="result-kind"></p><h2 id="result-title" tabindex="-1" autofocus></h2></div>
 <button id="result-close" type="button">Close</button>
 </div>
 <p id="result-detail"></p>
@@ -148,6 +181,7 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <div class="welcome-actions">
 <button id="result-retry" type="button">Try again</button>
 <button id="result-random" type="button" hidden>Random position</button>
+<button id="result-leaderboard" class="primary" type="button" hidden>View leaderboard</button>
 <button id="result-home" type="button">Back to welcome</button>
 </div>
 </dialog>
@@ -1815,6 +1849,9 @@ function renderStreak(day){
         count?' · Play today to keep it going.':' · Your first shot counts.';
     $('review-daily').hidden=!first;
     $('open-daily').textContent=first?'Practice today’s setup':'Play Daily Challenge';
+    $('daily-rule').hidden=!!first;
+    if(first)$('open-daily').removeAttribute('aria-describedby');
+    else $('open-daily').setAttribute('aria-describedby','daily-rule');
 }
 function localBoard(day){
     const first=readOfficial(day);
@@ -1886,16 +1923,17 @@ function openGame(wantsDaily){
     daily=wantsDaily;previousClub=null;previousAim=null;
     reset();$('back-home').focus();
 }
-function backToWelcome(){
+function backToWelcome(destination=$('welcome-title')){
     if(active()||flyover)return;
     cancel();clearResult();$('game-screen').hidden=true;$('welcome').hidden=false;
-    $('welcome-title').focus();refreshWelcome();
+    destination.focus();refreshWelcome();
 }
 function clearResult(){
     visibleResult=null;practiceRetry=null;
     viewResult.hidden=true;
     if(resultDialog.open)resultDialog.close();
     $('post-status').textContent='';$('post-score').disabled=false;
+    $('result-leaderboard').hidden=true;
 }
 function openResult(){
     if(viewResult.hidden||viewResult.disabled||resultDialog.open)return;
@@ -1908,18 +1946,25 @@ function showDailyResult(result,practice=false){
     $('score-form').hidden=!eligible;
     $('result-retry').textContent='Try again for practice';
     $('result-random').hidden=true;
-    $('result-title').textContent=result.ace?(practice?'Practice ace!':'Ace!'):
-        result.outcome==='in-play'?scoreText(result)+' to the pin':resultText(result);
-    $('result-detail').textContent=practice?'Practice attempt · Today’s official result is locked.':
-        'Official first shot · Counts toward your streak.';
+    $('result-kind').textContent=practice?'Practice result':'Official result';
+    const inPlay=result.outcome==='in-play';
+    $('result-title').textContent=result.ace?(practice?'Practice ace!':'Hole in one!'):
+        inPlay?scoreText(result)+' to the pin':resultText(result)+(practice?'':' · Streak kept');
+    $('result-detail').textContent=practice?'Today’s official result is locked.':
+        inPlay?'Counts toward your streak.':'';
     $('player-name').value=readBrowser('springhaven-player-name')||'';
     $('post-score').textContent=leaderEndpoint?'Post score':'Save score';
-    $('post-status').textContent=result.name?'Score '+(leaderEndpoint?'posted':'saved')+' for '+result.name+'.':'';
+    showPostingStatus(!practice&&Boolean(result.name));
     viewResult.hidden=false;
     openResult();
 }
+function showPostingStatus(posted){
+    $('post-status').textContent=posted?(leaderEndpoint?'Score posted.':'Score saved on this browser.'):'';
+    $('result-leaderboard').hidden=!posted;
+}
 function showPracticeResult(){
     const start=[...$('practice').options].find(option=>option.value===practiceStart.practice).textContent;
+    $('result-kind').textContent='Practice result';
     $('result-title').textContent='Hole complete';
     const total=stroke+(stroke===1?' stroke':' strokes');
     const penalty=penalties?' · includes '+penalties+(penalties===1?' penalty stroke':' penalty strokes'):'';
@@ -1953,7 +1998,7 @@ async function submitResult(event){
         writeOfficial({...official,...record});
         saveBrowser('springhaven-player-name',record.name);
         if(visibleResult===score){
-            message.textContent=(leaderEndpoint?'Score posted for ':'Score saved for ')+record.name+'.';
+            showPostingStatus(true);
             $('score-form').hidden=true;
             if(resultDialog.open)message.focus({preventScroll:true});
         }
@@ -1965,7 +2010,22 @@ async function submitResult(event){
         savingResult=null;
     }
 }
-$('open-daily').onclick=()=>openGame(true);
+const guideSeenKey='irish-par-how-to-play-seen';
+function showGuide(open){
+    $('how-to-play').hidden=!open;
+    $('how-to-play-toggle').setAttribute('aria-expanded',String(open));
+    $('how-to-play-toggle').textContent=open?'Hide how to play':'How to play';
+    $('open-practice').textContent=open?'Try Practice':'Practice';
+}
+function dismissGuide(){
+    saveBrowser(guideSeenKey,true);
+    showGuide(false);
+}
+$('how-to-play-toggle').onclick=()=>{
+    if($('how-to-play').hidden)showGuide(true);
+    else dismissGuide();
+};
+$('open-daily').onclick=()=>{dismissGuide();openGame(true);};
 $('review-daily').onclick=async()=>{
     const first=readOfficial(dayKey());
     if(!first)return;
@@ -1974,8 +2034,13 @@ $('review-daily').onclick=async()=>{
     const official=await syncOfficial(first).catch(()=>first);
     if(visibleResult===first&&(official.id!==first.id||official.outcome!==first.outcome))showDailyResult(official);
 };
-$('open-practice').onclick=()=>openGame(false);
-$('back-home').onclick=$('result-home').onclick=backToWelcome;
+$('open-practice').onclick=()=>{dismissGuide();openGame(false);};
+$('back-home').onclick=$('result-home').onclick=()=>backToWelcome();
+$('result-leaderboard').onclick=()=>{
+    const rankings=$('rank-title');
+    backToWelcome(rankings);
+    rankings.scrollIntoView({block:'start'});
+};
 viewResult.onclick=openResult;
 $('result-close').onclick=()=>resultDialog.close();
 resultDialog.addEventListener('close',()=>{
@@ -1996,6 +2061,7 @@ window.addEventListener('storage',event=>{
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('welcome').hidden)refreshWelcome();});
 setInterval(()=>{if(!$('welcome').hidden&&boardDate!==dayKey())refreshWelcome();},15000);
 
+showGuide(!readBrowser(guideSeenKey));
 reset();
 requestAnimationFrame(frame);
 refreshWelcome();
