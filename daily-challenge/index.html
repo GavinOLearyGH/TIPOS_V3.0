@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>The Irish Par Daily Challenge · Hole 6</title>
-<meta name="description" content="Play The Irish Par Daily Challenge. Take on Hole 6, get closest to the pin, or sharpen your game in Practice.">
+<title>The Irish Par Daily Challenge · The Springhaven Club - Hole 6</title>
+<meta name="description" content="Play The Irish Par Daily Challenge. Play The Springhaven Club - Hole 6, get closest to the pin, or sharpen your game in Practice.">
 <link rel="canonical" href="https://gavinolearygh.github.io/TIPOS_V3.0/daily-challenge/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Irish Par">
-<meta property="og:title" content="The Irish Par Daily Challenge · Hole 6">
+<meta property="og:title" content="The Irish Par Daily Challenge · The Springhaven Club - Hole 6">
 <meta property="og:description" content="One hole. Take your shot and see how close you get.">
 <meta property="og:url" content="https://gavinolearygh.github.io/TIPOS_V3.0/daily-challenge/">
 <meta name="twitter:card" content="summary">
@@ -29,6 +29,7 @@ h1{font:600 clamp(2rem,5vw,3.5rem)/1 Georgia,serif;margin:.32rem 0 0}
 #pull-tether{background:#ffe4a3}
 #pull-aim{background:repeating-linear-gradient(90deg,#ffe4a3 0 9px,transparent 9px 14px)}
 #flyover{position:absolute;top:8px;right:12px;z-index:2;min-height:40px;padding:.4rem .6rem;background:#142018ec;color:var(--gold);font-size:.82rem}
+#flyover-green-read{position:absolute;left:var(--hud-inset);bottom:var(--shot-clearance);padding:.4rem .6rem;border-radius:6px;background:#142018ec;color:var(--gold);font-size:.8rem;pointer-events:none}
 #flyover-fade{position:absolute;inset:0;background:#121b17;opacity:0;pointer-events:none;z-index:1}
 .stage-hud{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:57%;pointer-events:none}
 .stage-hud>span,.shot-letter{background:#142018ec;padding:.38rem .55rem;border:1px solid #fff3;border-radius:6px;color:#fff;font-size:.82rem}
@@ -124,7 +125,7 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <div class="welcome-hero">
 <div class="club-brand">THE IRISH PAR</div>
 <h1 id="welcome-title" tabindex="-1">Daily Challenge</h1>
-<p><strong>Hole 6 · Hole in 1 Challenge</strong><br>Today's Setup: <span id="welcome-setup"></span></p>
+<p><strong>The Springhaven Club - Hole 6 · Hole in 1 Challenge</strong><br>Today's Setup: <span id="welcome-setup"></span></p>
 <section id="how-to-play" class="shot-guide" aria-labelledby="how-to-play-title" hidden>
 <h2 id="how-to-play-title">How to play</h2>
 <ol>
@@ -150,14 +151,14 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <p id="board-empty" class="subtle">No scores yet.</p>
 <table id="rank-table" hidden><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">First shot</th></tr></thead><tbody id="rank-rows"></tbody></table>
 </section></section>
-<section id="game-screen" hidden aria-label="Play Hole 6">
-<header class="play-header"><div><div class="club-brand">THE IRISH PAR</div><h1>Hole 6</h1></div><div class="mode-buttons" aria-label="Play mode"><button id="back-home">Welcome</button><button id="daily" aria-pressed="true">Daily Challenge</button><button id="practice-mode" aria-pressed="false">Practice</button></div></header>
+<section id="game-screen" hidden aria-label="Play The Springhaven Club - Hole 6">
+<header class="play-header"><div><div class="club-brand">THE IRISH PAR</div><h1>The Springhaven Club - Hole 6</h1></div><div class="mode-buttons" aria-label="Play mode"><button id="back-home">Welcome</button><button id="daily" aria-pressed="true">Daily Challenge</button><button id="practice-mode" aria-pressed="false">Practice</button></div></header>
 <div class="context"><span id="setup-name"></span><span id="daily-official"></span></div>
-<div class="stage" aria-label="First-person view of Hole 6">
+<div class="stage" aria-label="First-person view of The Springhaven Club - Hole 6">
 <canvas id="course" tabindex="0" aria-describedby="controls-guide" aria-label="Course view. Pull back from the ball to set aim and power." role="img"></canvas>
 <div class="stage-hud"><span id="distance"></span><span id="lie"></span><span><b id="wind-arrow" aria-hidden="true">↑</b><span id="wind-readout"></span></span><span id="carry" hidden></span><span id="slope" hidden></span><span id="aim-offset" hidden></span></div>
 <button id="flyover" type="button">Flyover</button>
-<div class="map-card"><canvas id="map" width="164" height="516" role="img" aria-label="Overhead view of hole 6, with the green at the top and tee boxes at the bottom. Tracks the ball during the shot."></canvas></div>
+<div class="map-card"><canvas id="map" width="164" height="516" role="img" aria-label="Overhead view of The Springhaven Club - Hole 6, with the green at the top and tee boxes at the bottom. Tracks the ball during the shot."></canvas></div>
 <div id="aim-ring" hidden></div><div id="ball-marker" hidden></div>
 <div id="pull-aim" hidden aria-hidden="true"></div><div id="pull-tether" hidden aria-hidden="true"></div><div id="pull-handle" hidden aria-hidden="true"></div>
 <div class="shot-letter" id="trace" hidden>Ball in play</div>
@@ -166,6 +167,7 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <label class="club-panel">Club · carry<select id="club"></select></label>
 <label id="power-wrap"><span id="power-label" title="Estimated distance from the ball along your aim, using terrain and green speed. If the ball rolls back, the readout shows how far it reaches and where it settles. The estimate treats the cup as part of the green.">Power · 0%</span><progress id="power" value="0" max="100"></progress></label>
 </div>
+<span id="flyover-green-read" hidden>Green read · Downhill direction</span>
 <div id="flyover-fade" hidden aria-hidden="true"></div>
 <dialog id="shot-result" class="result-panel" aria-labelledby="result-title" aria-describedby="result-kind result-detail">
 <div class="result-header">
@@ -878,7 +880,7 @@ function makeRenderer(canvas,map){
         }`;
     const fragment=`
         precision highp float;varying vec3 world,color;varying float depth;
-        uniform sampler2D atlas;uniform float kind;
+        uniform sampler2D atlas;uniform float kind,opacity;
         void main(){
             vec3 outColor=color;
             if(kind>0.5){
@@ -895,7 +897,7 @@ function makeRenderer(canvas,map){
                     outColor=sampleColor*color*(.95+grain);
                 }
             }
-            gl_FragColor=vec4(mix(outColor,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)),1.);
+            gl_FragColor=vec4(mix(outColor,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)),opacity);
         }`;
     const program=gl.createProgram();
     for(const [type,source] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){
@@ -909,8 +911,10 @@ function makeRenderer(canvas,map){
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
     gl.useProgram(program);
     gl.enable(gl.DEPTH_TEST);
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     const attrib=['a','c'].map(n=>gl.getAttribLocation(program,n));
-    const uniform=Object.fromEntries(['eye','right','up','forward','ratio','kind'].map(n=>[n,gl.getUniformLocation(program,n)]));
+    const uniform=Object.fromEntries(['eye','right','up','forward','ratio','kind','opacity'].map(n=>[n,gl.getUniformLocation(program,n)]));
+    gl.uniform1f(uniform.opacity,1);
     const texture=gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D,texture);
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,map);
@@ -1135,19 +1139,43 @@ function makeRenderer(canvas,map){
             if(grade<.0015)continue;
             const dx=-gx/grade,dz=-gz/grade;
             if(onGreen(x-dx*.6,z-dz*.6)&&onGreen(x+dx*.6,z+dz*.6)){
-                streams.push({x,z,dx,dz,period:mix(54,19,clamp(grade/.06,0,1)),phase:(i*17+j*11)%37/37});
+                const preview=i%(cells*2)===0&&j%(cells*2)===0&&
+                    onGreen(x-dx*.9,z-dz*.9)&&onGreen(x+dx*.9,z+dz*.9);
+                streams.push({x,z,dx,dz,preview,period:mix(54,19,clamp(grade/.06,0,1)),phase:(i*17+j*11)%37/37});
             }
         }
         return {mesh:buffer(mesh),streams};
     }
+    function drawGreenRead(tick,opacity){
+        const arrows=[];
+        puttingGrid??=makePuttingGrid();
+        for(const {x,z,dx,dz,preview,period,phase} of puttingGrid.streams){
+            if(!preview)continue;
+            const t=(tick/period+phase)%1,span=(t-.5)*.9;
+            const ax=x+span*dx,az=z+span*dz;
+            const light=Math.sin(Math.PI*t);
+            const shade=[mix(.65,1,light),mix(.71,.92,light),mix(.38,.65,light)];
+            for(const side of [-1,1]){
+                const wingX=-dx*.42-dz*.25*side,wingZ=-dz*.42+dx*.25*side;
+                greenLine(arrows,ax,az,wingX,wingZ,.055,.08,shade);
+            }
+        }
+        gl.enable(gl.BLEND);
+        gl.uniform1f(uniform.opacity,opacity);
+        gl.bindBuffer(gl.ARRAY_BUFFER,mobile);
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrows),gl.DYNAMIC_DRAW);
+        draw({handle:mobile,count:arrows.length/6},0);
+        gl.uniform1f(uniform.opacity,1);
+        gl.disable(gl.BLEND);
+    }
     let puttingGrid;
     let camera,lastStatic;
-    function frame(eye,target,pin,ball,aim,trail,heading,flying,gridTick=null){
+    function frame(eye,target,pin,ball,aim,trail,heading,flying,gridTick=null,readOpacity=null){
         const ratio=Math.min(devicePixelRatio||1,1.6);
         const width=Math.round(canvas.clientWidth*ratio),height=Math.round(canvas.clientHeight*ratio);
         const still=ball.mode==='rest'||ball.mode==='holed'||ball.mode==='water'||ball.mode==='out';
         if(still){
-            const view=[width,height,...eye,...target,ball.x,ball.y,ball.z,ball.mode,pin.x,pin.z,aim?.x,aim?.z,trail.length,gridTick].join();
+            const view=[width,height,...eye,...target,ball.x,ball.y,ball.z,ball.mode,pin.x,pin.z,aim?.x,aim?.z,trail.length,gridTick,readOpacity].join();
             if(lastStatic===view)return;
             lastStatic=view;
         }else lastStatic=null;
@@ -1163,7 +1191,7 @@ function makeRenderer(canvas,map){
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
         draw(groundBuffer,1);draw(bankBuffer,4);draw(waterBuffer,2);draw(shorelineBuffer,3);draw(solidBuffer,0);
         const moving=[],base=ground(pin.x,pin.z);
-        if(gridTick!==null){
+        if(gridTick!==null&&readOpacity===null){
             puttingGrid??=makePuttingGrid();
             draw(puttingGrid.mesh,0);
             for(const {x,z,dx,dz,period,phase} of puttingGrid.streams){
@@ -1193,6 +1221,7 @@ function makeRenderer(canvas,map){
         gl.bindBuffer(gl.ARRAY_BUFFER,mobile);
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(moving),gl.DYNAMIC_DRAW);
         draw({handle:mobile,count:moving.length/6},0);
+        if(readOpacity>0)drawGreenRead(gridTick,readOpacity);
     }
     function project(x,y,z){
         if(!camera)return null;
@@ -1208,7 +1237,7 @@ const $=id=>document.getElementById(id);
 const canvas=$('course'), mapCanvas=$('map'), status=$('status');
 const ballMarker=$('ball-marker'),pullHandle=$('pull-handle'),pullTether=$('pull-tether'),pullAim=$('pull-aim');
 const gridButton=$('green-grid');
-const flyButton=$('flyover'),flyFade=$('flyover-fade');
+const flyButton=$('flyover'),flyFade=$('flyover-fade'),flyGreenRead=$('flyover-green-read');
 const map=atlas(),mapContext=mapCanvas.getContext('2d');
 const mapBounds={x:55,z:59,length:1295,width:411};
 const mapWidth=mapCanvas.width,mapHeight=mapCanvas.height;
@@ -1693,6 +1722,7 @@ function drawPullGuide(anchor,near){
 function stopFlyover(){
     flyover=null;
     flyFade.hidden=true;
+    flyGreenRead.hidden=true;
     flyFade.style.opacity=0;
     updateHUD();
 }
@@ -1710,19 +1740,28 @@ function renderFlyover(now){
     const tour=flyover;
     tour.started??=now;
     const elapsed=(now-tour.started)/1000;
-    if(elapsed>=6.2){stopFlyover();return false;}
-    if(elapsed>=5.8){
-        flyFade.style.opacity=1-ease((elapsed-5.8)/.4);
+    const arrival=4.9,departure=arrival+3,fade=.35;
+    const returnStart=departure+fade;
+    if(elapsed>=returnStart+fade){stopFlyover();return false;}
+    if(elapsed>=returnStart){
+        flyGreenRead.hidden=true;
+        flyFade.style.opacity=1-ease((elapsed-returnStart)/fade);
         if(eye&&target)renderer.frame(eye,target,settings.pin,ball,null,trail,heading,false);
         return true;
     }
-    flyFade.style.opacity=ease((elapsed-5.45)/.35);
-    const u=ease(elapsed/4.9),along=mix(-4,tour.size-12,u);
+    const greenRead=ease((elapsed-arrival)/.35)*ease((departure-elapsed)/.35);
+    flyGreenRead.hidden=greenRead===0;
+    flyGreenRead.style.opacity=greenRead;
+    flyFade.style.opacity=ease((elapsed-departure)/fade);
+    const ratio=canvas.clientWidth/Math.max(canvas.clientHeight,1);
+    const framing=greenComplex.frame.width*scale*Math.max(1,1.16/Math.max(ratio,.45));
+    const u=ease(elapsed/arrival),along=mix(-4,tour.size-framing*.63,u);
     const x=tour.tee.x+tour.dx*along,z=tour.tee.z+tour.dz*along;
-    const look=Math.min(tour.size,along+mix(19,12,u));
+    const look=Math.min(tour.size,along+mix(19,framing*.63,u));
     const tx=tour.tee.x+tour.dx*look,tz=tour.tee.z+tour.dz*look;
-    const height=mix(ground(tour.tee.x,tour.tee.z)+1.65,ground(tour.green.x,tour.green.z)+7,u)+23*Math.sin(Math.PI*u);
-    renderer.frame([x,height,z],[tx,ground(tx,tz)+mix(-2,.16,u),tz],settings.pin,ball,null,[],0,false);
+    const height=mix(ground(tour.tee.x,tour.tee.z)+1.65,ground(tour.green.x,tour.green.z)+framing*.93,u)+23*Math.sin(Math.PI*u);
+    renderer.frame([x,height,z],[tx,ground(tx,tz)+mix(-2,.16,u),tz],
+        settings.pin,ball,null,[],0,false,Math.floor(now/50),greenRead);
     return true;
 }
 function frame(now){
