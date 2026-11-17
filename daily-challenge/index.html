@@ -74,6 +74,7 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 .welcome{max-width:980px;margin:clamp(14px,5vw,54px) auto}
 .welcome-hero{padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:18px;background:linear-gradient(125deg,#293b2c,#192720)}
 .welcome-hero h1{font-size:clamp(2.6rem,7vw,5rem)}.welcome-hero p{color:var(--muted);margin:.8rem 0 1.3rem}
+.welcome-hero .streak-line{margin:1rem 0 0}.streak-line strong{color:var(--gold)}
 .welcome-actions{display:flex;flex-wrap:wrap;gap:.65rem}.primary{background:var(--gold);color:#252517;font-weight:750}
 .welcome-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-top:1rem}
 .welcome-panel,.result-panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:clamp(16px,3vw,25px)}
@@ -104,7 +105,8 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 <div class="club-brand">THE IRISH PAR</div>
 <h1 id="welcome-title" tabindex="-1">Daily Challenge</h1>
 <p><strong>Hole 6 · Closest to the pin</strong><br><span id="welcome-setup"></span></p>
-<div class="welcome-actions"><button id="open-daily" class="primary">Play Daily Challenge</button><button id="open-practice">Practice</button></div>
+<div class="welcome-actions"><button id="open-daily" class="primary">Play Daily Challenge</button><button id="open-practice">Practice</button><button id="review-daily" hidden>View today’s result</button></div>
+<p class="streak-line" role="status"><strong id="streak-count"></strong><span id="streak-detail"></span></p>
 </div>
 <p id="board-source" class="board-source" role="status"></p>
 <div class="welcome-grid">
@@ -113,11 +115,11 @@ details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:point
 </div>
 <section class="welcome-panel rank-panel" aria-labelledby="rank-title"><h2 id="rank-title">Leaderboard</h2>
 <p id="board-empty" class="subtle">No scores yet.</p>
-<table id="rank-table" hidden><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Best shot</th></tr></thead><tbody id="rank-rows"></tbody></table>
+<table id="rank-table" hidden><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">First shot</th></tr></thead><tbody id="rank-rows"></tbody></table>
 </section></section>
 <section id="game-screen" hidden aria-label="Play Hole 6">
 <header class="play-header"><div><div class="club-brand">THE IRISH PAR</div><h1>Hole 6</h1></div><div class="mode-buttons" aria-label="Play mode"><button id="back-home">Welcome</button><button id="daily" aria-pressed="true">Daily Challenge</button><button id="practice-mode" aria-pressed="false">Practice</button></div></header>
-<div class="context"><span id="setup-name"></span><span id="daily-best"></span></div>
+<div class="context"><span id="setup-name"></span><span id="daily-official"></span></div>
 <div class="stage" aria-label="First-person view of Hole 6">
 <canvas id="course" tabindex="0" aria-describedby="controls-guide" aria-label="Course view. Pull back from the ball to set aim and power." role="img"></canvas>
 <div class="stage-hud"><span id="distance"></span><span id="lie"></span><span><b id="wind-arrow" aria-hidden="true">↑</b><span id="wind-readout"></span></span><span id="carry" hidden></span><span id="slope" hidden></span><span id="aim-offset" hidden></span></div>
@@ -801,9 +803,9 @@ function replayDailyShot(day,club,power,heading){
     const replaySettings={pin,wind:windVector(setup.dir,setup.mph),greenSpeed:setup.speed};
     const ball=strike(tee,ground,club,power,heading,surface(tee.x,tee.z));
     while(ball.time<50&&['air','roll','drop'].includes(ball.mode))advance(ball,course,replaySettings);
-    if(ball.mode==='holed')return {ace:true,distance:0};
-    if(ball.mode==='rest')return {ace:false,distance:Math.hypot(ball.x-pin.x,ball.z-pin.z)};
-    return null;
+    if(ball.mode==='holed')return {outcome:'in-play',ace:true,mm:0};
+    if(ball.mode==='rest')return {outcome:'in-play',ace:false,mm:Math.round(Math.hypot(ball.x-pin.x,ball.z-pin.z)*1000)};
+    return {outcome:ball.mode==='water'?'water':'out',ace:false,mm:null};
 }
 // End shared physics.
 const path=Object.fromEntries(Object.entries(shapes).map(([key,d])=>[key,new Path2D(d)]));
@@ -1197,17 +1199,6 @@ const names={back:'Back',middle:'Middle',forward:'Forward',front:'Front'};
 const pinNames={frontLeft:'Front left',front:'Front center',frontRight:'Front right',
     middleLeft:'Middle left',middle:'Middle center',middleRight:'Middle right',
     backLeft:'Back left',back:'Back center',backRight:'Back right'};
-function readStats(day){
-    try{
-        const stats=JSON.parse(localStorage.getItem('springhaven-ace-'+day));
-        if(Number.isInteger(stats?.attempts)&&stats.attempts>=0&&
-            (stats.best===null||Number.isFinite(stats.best)&&stats.best>=0))return stats;
-    }catch{}
-    return {attempts:0,best:null};
-}
-function saveStats(){
-    try {localStorage.setItem('springhaven-ace-'+currentDay,JSON.stringify(stats));}catch{}
-}
 function addOptions(id,items){
     for(const [value,text] of items){
         const option=document.createElement('option');
@@ -1218,12 +1209,12 @@ addOptions('club',bag.map(name=>[name,clubs[name].carry?name+' · '+clubs[name].
 addOptions('wind',windDirections.map((name,index)=>[index,name]));
 addOptions('pin',Object.keys(pins).map(key=>[key,pinNames[key]]));
 $('pin').value='middle';
-let daily=true,currentDay='',challenge,stats,finished=false,previousClub=null,previousAim=null;
+let daily=true,currentDay='',challenge,finished=false,previousClub=null,previousAim=null;
 const quantize=(value,step)=>Math.round(value/step)*step;
 function applyMode(){
     if(daily){
         const day=dayKey();
-        if(day!==currentDay){currentDay=day;challenge=challengeFor(day);stats=readStats(day);previousClub=null;previousAim=null;}
+        if(day!==currentDay){currentDay=day;challenge=challengeFor(day);previousClub=null;previousAim=null;}
         Object.assign(settings,{tee:tees[challenge.tee],pin:challenge.cup,wind:windVector(challenge.dir,challenge.mph),greenSpeed:challenge.speed});
     }else{
         Object.assign(settings,{tee:tees[$('tee').value],pin:pins[$('pin').value],
@@ -1347,8 +1338,9 @@ function updateHUD(){
         $('slope').textContent=(ahead>=0?'Uphill':'Downhill')+' '+Math.abs(ahead*100).toFixed(1)+'% at ball · '+across;
     }
     $('setup-name').textContent=daily?currentDay+' · '+names[challenge.tee]+' tee · '+names[challenge.pin]+' pin · '+(challenge.speed<1?'Slow':challenge.speed>1?'Fast':'Medium')+' green':'Practice';
-    $('daily-best').textContent=!daily||stats.best===null?'':stats.best===0?'Best · Ace':'Best · '+leave(stats.best);
-    $('score').textContent=daily?stats.attempts+' '+(stats.attempts===1?'attempt':'attempts'):stroke+' '+(stroke===1?'stroke':'strokes')+(penalties?' · '+penalties+' penalty':'');
+    const official=daily&&readOfficial(currentDay);
+    $('daily-official').textContent=official?'Official · '+resultText(official):'';
+    $('score').textContent=daily?(practiceRetry??Boolean(official)?'Practice attempt':'Official attempt'):stroke+' '+(stroke===1?'stroke':'strokes')+(penalties?' · '+penalties+' penalty':'');
     $('trace').hidden=!active();
     $('back-home').disabled=active()||!!flyover;
     $('view-result').disabled=!!flyover;
@@ -1426,7 +1418,14 @@ function shoot(){
     shotHeading=heading;stroke++;
     if(daily){
         previousClub=$('club').value;previousAim=heading;
-        pendingShot={day:currentDay,club:previousClub,power:charge,heading:Math.atan2(Math.sin(heading),Math.cos(heading))};
+        const shot={day:currentDay,club:previousClub,power:charge,heading:Math.atan2(Math.sin(heading),Math.cos(heading))};
+        const earlier=readOfficial(currentDay);
+        practiceRetry=!!earlier;
+        if(!earlier){
+            const record={...shot,id:randomId(),...replayDailyShot(shot.day,shot.club,shot.power,shot.heading)};
+            writeOfficial(record);
+            syncOfficial(record).catch(()=>{});
+        }
     }
     trail=[];trailTime=0;shotStarted=0;
     mapTrail=[];waterMark=null;
@@ -1588,15 +1587,15 @@ function finishShot(){
         finished=true;trail=[];
         const holed=ball.mode==='holed',inPlay=ball.mode==='rest'||holed;
         const distance=holed?0:flatDistance(ball,settings.pin);
-        stats.attempts++;
-        if(inPlay&&(stats.best===null||distance<stats.best))stats.best=distance;
-        saveStats();
         const lie=inPlay?surface(ball.x,ball.z):ball.mode;
         const contact=contactSummary(lie);
         status.textContent=holed?'Hole in one!':inPlay
             ?contact+leave(distance)+' to the cup. '+lieNames[lie]+'.'
             :contact+(ball.mode==='water'?'Water.':'Out of play.');
-        showDailyResult(inPlay?{...pendingShot,ace:holed,distance}:null);
+        const practice=practiceRetry;
+        const result=practice?{outcome:inPlay?'in-play':ball.mode,ace:holed,
+            mm:inPlay?Math.round(distance*1000):null}:readOfficial(currentDay);
+        showDailyResult(result,practice);
         return;
     }
     if(ball.mode==='holed'){
@@ -1751,56 +1750,87 @@ function frame(now){
 }
 
 const scoreBands=['Ace','Inside 3 ft','3–under 10 ft','10–under 25 ft','25 ft or more'];
-const localOnly=location.protocol==='file:'||location.hostname==='gavinolearygh.github.io';
+const localOnly=location.protocol==='file:'||location.hostname.endsWith('.github.io');
 const leaderEndpoint=localOnly?null:new URL('api/leaderboard',location.href);
 const resultDialog=$('shot-result'),viewResult=$('view-result');
 const practiceSetupIds=['tee','wind','wind-speed','pin','green-speed','practice'];
 let practiceStart=null;
-let pendingShot=null,visibleResult=null,savingResult=null,boardState='loading',boardDate='',boardRequest=0;
+let practiceRetry=null,visibleResult=null,savingResult=null,boardDate='',boardRequest=0;
 function readBrowser(key){
     try{return JSON.parse(localStorage.getItem(key));}catch{return null;}
 }
 function saveBrowser(key,value){
     try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{return false;}
 }
-const localScorePrefix=day=>'springhaven-local-score:'+day+':';
-const playerNameKey=name=>name.normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
-const compareScores=(a,b)=>Number(b.ace)-Number(a.ace)||a.mm-b.mm;
-function localScores(day){
-    const scores=new Map();
-    const add=score=>{
-        if(!score||typeof score.name!=='string'||typeof score.ace!=='boolean'||
-            !Number.isSafeInteger(score.mm)||score.mm<0)return;
-        const key=playerNameKey(score.name);
-        if(!key)return;
-        const previous=scores.get(key);
-        if(!previous||compareScores(score,previous)<0)scores.set(key,score);
-    };
-    // Pick up the single named score saved by the earlier version.
-    add(readBrowser('springhaven-posted-'+day));
-    const prefix=localScorePrefix(day);
-    try{
-        for(let i=0;i<localStorage.length;i++){
-            const key=localStorage.key(i);
-            if(key?.startsWith(prefix))add(readBrowser(key));
-        }
-    }catch{}
-    return scores;
+const officialKey=day=>'irish-par-official:'+day;
+const sessionOfficial=new Map();
+const syncing=new Map();
+function readOfficial(day){return readBrowser(officialKey(day))||sessionOfficial.get(day);}
+function writeOfficial(record){
+    sessionOfficial.set(record.day,record);
+    saveBrowser(officialKey(record.day),record);
+}
+function randomId(){return Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
+function playerId(){
+    const saved=readBrowser('springhaven-player-id');
+    if(/^[a-f0-9]{32}$/.test(saved))return saved;
+    const id=randomId();
+    if(!saveBrowser('springhaven-player-id',id))throw Error('Allow browser storage to post your official shot.');
+    return id;
+}
+async function leaderboardPost(data){
+    const response=await fetch(leaderEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...data,player:playerId()}),signal:AbortSignal.timeout(8000)});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||'Could not reach the leaderboard.');
+    return result;
+}
+function syncOfficial(record){
+    if(!leaderEndpoint||record.synced||record.day!==dayKey())return Promise.resolve(record);
+    const key=record.day;
+    if(syncing.has(key))return syncing.get(key);
+    const request=leaderboardPost({action:'attempt',day:key,id:record.id,club:record.club,power:record.power,heading:record.heading})
+        .then(result=>{
+            const saved={...record,...result,synced:true};
+            writeOfficial(saved);
+            if(!$('welcome').hidden)renderStreak(dayKey());
+            return saved;
+        }).finally(()=>syncing.delete(key));
+    syncing.set(key,request);
+    return request;
+}
+function previousDay(day){return new Date(Date.parse(day+'T00:00:00Z')-86400000).toISOString().slice(0,10);}
+function streakFor(day){
+    let count=0;
+    for(let date=readOfficial(day)?day:previousDay(day);readOfficial(date);date=previousDay(date))count++;
+    return count;
+}
+function scoreText(score){return score.ace?'Hole in one':leave(score.mm/1000);}
+function resultText(score){
+    return score.outcome==='water'?'Water':score.outcome==='out'?'Out of play':scoreText(score);
+}
+function renderStreak(day){
+    const first=readOfficial(day),count=streakFor(day);
+    $('streak-count').textContent=count?count+'-day streak':'Start your streak';
+    $('streak-detail').textContent=first?' · Today’s official shot: '+resultText(first):
+        count?' · Play today to keep it going.':' · Your first shot counts.';
+    $('review-daily').hidden=!first;
+    $('open-daily').textContent=first?'Practice today’s setup':'Play Daily Challenge';
 }
 function localBoard(day){
-    const leaders=[...localScores(day).values()].sort(compareScores);
+    const first=readOfficial(day);
+    const leaders=first?.name?[first]:[];
     const counts=[0,0,0,0,0];
     for(const score of leaders)counts[score.ace?0:score.mm<914.4?1:score.mm<3048?2:score.mm<7620?3:4]++;
     return {total:leaders.length,counts,leaders};
 }
-function scoreText(score){return score.ace?'Hole in one':leave(score.mm/1000);}
 function renderScoreboard(board){
     const {leaders,total,counts}=board;
     $('leader-title').textContent=counts[0]?'Today’s Aces':'Today’s Leader';
     $('leader-name').textContent=leaders[0]?.name||'No scores yet';
     $('leader-detail').textContent=counts[0]>1?counts[0]+' players tied with an ace':
         leaders.length?(counts[0]?'Hole in one':scoreText(leaders[0])+' to the pin'):'Play today’s challenge to set the first mark.';
-    $('player-count').textContent=total+' '+(total===1?'player':'players')+(boardState==='local'?' · one best score per name':' · one best score each');
+    $('player-count').textContent=total+' '+(total===1?'player':'players')+' · official first shots';
     $('score-bands').replaceChildren(...scoreBands.map((label,index)=>{
         const li=document.createElement('li'),name=document.createElement('span');
         const bar=document.createElement('meter'),count=document.createElement('span');
@@ -1823,14 +1853,16 @@ function renderScoreboard(board){
     }));
 }
 function describeBoard(state){
-    boardState=state;
     $('board-source').textContent=state==='online'?'Shared leaderboard · Resets at midnight Eastern':
         state==='loading'?'Checking the shared leaderboard…':'Local leaderboard · Saved on this browser';
-    if(visibleResult&&savingResult!==visibleResult)$('post-score').textContent=state==='online'&&visibleResult.day===dayKey()?'Post score':'Save score';
+    $('post-score').textContent=leaderEndpoint?'Post score':'Save score';
 }
 async function refreshWelcome(){
     const day=dayKey(),target=challengeFor(day),tee=tees[target.tee],request=++boardRequest;
     boardDate=day;
+    renderStreak(day);
+    const first=readOfficial(day);
+    if(first)syncOfficial(first).catch(()=>{});
     const weather=target.mph?target.mph+' mph · '+windDirections[target.dir].toLowerCase():'Calm';
     $('welcome-setup').textContent=names[target.tee]+' tee · '+yards(flatDistance(tee,target.cup))+' yd · '+pinNames[target.pin]+' pin · '+weather;
     if(leaderEndpoint){
@@ -1861,7 +1893,7 @@ function backToWelcome(){
     $('welcome-title').focus();refreshWelcome();
 }
 function clearResult(){
-    visibleResult=null;pendingShot=null;
+    visibleResult=null;practiceRetry=null;
     viewResult.hidden=true;
     if(resultDialog.open)resultDialog.close();
     $('post-status').textContent='';$('post-score').disabled=false;
@@ -1871,18 +1903,19 @@ function openResult(){
     resultDialog.showModal();
     $('result-title').focus({preventScroll:true});
 }
-function showDailyResult(result){
-    visibleResult=result;
-    $('score-form').hidden=!result;
-    $('result-retry').textContent='Try again';
+function showDailyResult(result,practice=false){
+    visibleResult=practice?null:result;
+    const eligible=!practice&&result.outcome==='in-play'&&result.day===dayKey()&&!result.name;
+    $('score-form').hidden=!eligible;
+    $('result-retry').textContent='Try again for practice';
     $('result-random').hidden=true;
-    $('result-title').textContent=result?(result.ace?'Ace!':leave(result.distance)+' to the pin'):
-        ball.mode==='water'?'In the water':'Out of play';
-    $('result-detail').textContent=result?(result.ace?'Daily Challenge · Hole 6':lieNames[surface(ball.x,ball.z)]):
-        'Try again to post an in-play shot.';
+    $('result-title').textContent=result.ace?(practice?'Practice ace!':'Ace!'):
+        result.outcome==='in-play'?scoreText(result)+' to the pin':resultText(result);
+    $('result-detail').textContent=practice?'Practice attempt · Today’s official result is locked.':
+        'Official first shot · Counts toward your streak.';
     $('player-name').value=readBrowser('springhaven-player-name')||'';
-    $('post-score').textContent=boardState==='online'&&result?.day===dayKey()?'Post score':'Save score';
-    $('post-status').textContent='';
+    $('post-score').textContent=leaderEndpoint?'Post score':'Save score';
+    $('post-status').textContent=result.name?'Score '+(leaderEndpoint?'posted':'saved')+' for '+result.name+'.':'';
     viewResult.hidden=false;
     openResult();
 }
@@ -1905,47 +1938,43 @@ function restorePracticeStart(){
 async function submitResult(event){
     event.preventDefault();
     const score=visibleResult,name=$('player-name').value.trim().replace(/\s+/g,' ');
-    if(!score||savingResult||!name||name.length>28)return;
+    if(!score||score.name||score.outcome!=='in-play'||score.day!==dayKey()||savingResult||
+        !name||name.length>28||/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/u.test(name))return;
     const message=$('post-status');
     savingResult=score;$('post-score').disabled=true;
     try{
-        if(boardState==='online'&&score.day===dayKey()){
-            let player=readBrowser('springhaven-player-id');
-            if(!player){
-                player=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
-                if(!saveBrowser('springhaven-player-id',player))throw Error('Allow browser storage to keep one result per player.');
-            }
-            const response=await fetch(leaderEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({name,player,day:score.day,club:score.club,power:score.power,heading:score.heading}),
-                signal:AbortSignal.timeout(8000)});
-            const posted=await response.json();
-            if(!response.ok)throw Error(posted.error||'Could not post the score.');
-            saveBrowser('springhaven-player-name',name);
-            if(visibleResult===score){
-                message.textContent=posted.improved?'Score posted · '+scoreText(posted):'Your earlier score is still your best.';
-                $('score-form').hidden=true;
-                if(resultDialog.open)message.focus({preventScroll:true});
-            }
-        }else{
-            const player=playerNameKey(name),earlier=localScores(score.day).get(player);
-            const record={name,mm:Math.round(score.distance*1000),ace:score.ace};
-            const improved=!earlier||compareScores(record,earlier)<0;
-            if(improved&&!saveBrowser(localScorePrefix(score.day)+player,record))throw Error('This browser could not save the score.');
-            saveBrowser('springhaven-player-name',name);
-            if(visibleResult===score){
-                message.textContent=improved?'Score saved for '+name+'.':earlier.name+' already has an equal or better score.';
-                $('score-form').hidden=true;
-                if(resultDialog.open)message.focus({preventScroll:true});
-            }
+        let official=readOfficial(score.day);
+        if(!official)throw Error('The official shot is unavailable in this browser.');
+        if(leaderEndpoint)official=await syncOfficial(official);
+        if(official.id!==score.id||official.outcome!=='in-play'){
+            if(visibleResult===score)showDailyResult(official);
+            return;
+        }
+        const record=leaderEndpoint?await leaderboardPost({action:'publish',day:score.day,id:score.id,name}):{name};
+        writeOfficial({...official,...record});
+        saveBrowser('springhaven-player-name',record.name);
+        if(visibleResult===score){
+            message.textContent=(leaderEndpoint?'Score posted for ':'Score saved for ')+record.name+'.';
+            $('score-form').hidden=true;
+            if(resultDialog.open)message.focus({preventScroll:true});
         }
     }catch(error){
-        if(visibleResult===score)message.textContent=error.name==='TimeoutError'||error.name==='TypeError'?'Could not reach the leaderboard. Try posting again.':error.message;
+        if(visibleResult===score)message.textContent=error.name==='TimeoutError'||error.name==='TypeError'?
+            'Could not reach the leaderboard. Try posting again.':error.message;
     }finally{
         if(visibleResult===score)$('post-score').disabled=false;
         savingResult=null;
     }
 }
 $('open-daily').onclick=()=>openGame(true);
+$('review-daily').onclick=async()=>{
+    const first=readOfficial(dayKey());
+    if(!first)return;
+    openGame(true);
+    showDailyResult(first);
+    const official=await syncOfficial(first).catch(()=>first);
+    if(visibleResult===first&&(official.id!==first.id||official.outcome!==first.outcome))showDailyResult(official);
+};
 $('open-practice').onclick=()=>openGame(false);
 $('back-home').onclick=$('result-home').onclick=backToWelcome;
 viewResult.onclick=openResult;
@@ -1962,6 +1991,9 @@ $('result-random').onclick=()=>{
     randomPracticePosition();
 };
 $('score-form').onsubmit=submitResult;
+window.addEventListener('storage',event=>{
+    if(event.key===officialKey(dayKey())&&!$('welcome').hidden)refreshWelcome();
+});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('welcome').hidden)refreshWelcome();});
 setInterval(()=>{if(!$('welcome').hidden&&boardDate!==dayKey())refreshWelcome();},15000);
 
