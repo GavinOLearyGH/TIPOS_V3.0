@@ -16,6 +16,16 @@ export function makeAtlas(course){
         if(!course.shapes[kind])continue;
         c.fillStyle=surfaceColors[kind];c.fill(new Path2D(course.shapes[kind]));
     }
+    for(const feature of course.landforms??[]){
+        c.save();c.clip(new Path2D(feature.shape));
+        const step=feature.lies.cellSize/unit;
+        const bounds=course.bounds;
+        for(let x=Math.floor(bounds.minX/feature.lies.cellSize)*step;x<bounds.maxX/unit;x+=step)for(let z=Math.floor(bounds.minZ/feature.lies.cellSize)*step;z<bounds.maxZ/unit;z+=step){
+            const profile=course.lieAt((x+step/2)*unit,(z+step/2)*unit);
+            if(profile?.feature===feature.id){c.fillStyle=profile.color;c.fillRect(x,z,step+.3,step+.3);}
+        }
+        c.restore();
+    }
     c.save();c.clip(new Path2D(course.shapes.fairway));
     c.fillStyle='#efffc016';
     for(let x=b.minX/unit;x<b.maxX/unit;x+=38)c.fillRect(x,b.minZ/unit,19,(b.maxZ-b.minZ)/unit);

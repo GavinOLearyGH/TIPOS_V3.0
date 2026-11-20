@@ -5,7 +5,8 @@ const k=metresPerPlanUnit;
 const tee=(id,name,yards,z)=>({id,name,yards,z:z*k,
     x:(1495-Math.sqrt((yards*.9144/k)**2-(503-z)**2))*k});
 export const hole1={
-    id:'springhaven-1',number:1,name:'The Springhaven Club - Hole 1',par:4,
+    id:'springhaven-1',number:1,name:'The Springhaven Club - Hole 1',title:'The opening hole',par:4,
+    description:'A long fairway, a bunker on the left and church pews on the right. Finish on a green that slopes back to front.',
     plan:{width:1696,height:983,metresPerUnit:k},
     bounds:{minX:120*k,maxX:1630*k,minZ:350*k,maxZ:670*k},
     airClearance:16,renderStep:.8,pathWidth:1.8,

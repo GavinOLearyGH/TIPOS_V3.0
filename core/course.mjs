@@ -7,8 +7,10 @@ export function createCourse(definition){
     const contains=(key,x,z)=>paths[key]&&containsPoint(paths[key],x/unit,z/unit);
     const greenBounds={minX:Math.min(...paths.green.map(p=>p.minX))*unit,maxX:Math.max(...paths.green.map(p=>p.maxX))*unit,
         minZ:Math.min(...paths.green.map(p=>p.minZ))*unit,maxZ:Math.max(...paths.green.map(p=>p.maxZ))*unit};
-    const boundary=geometryPath(definition.outOfBounds)[0];
+    const boundary=definition.outOfBounds?geometryPath(definition.outOfBounds)[0]:null;
+    const landforms=(definition.landforms??[]).map(feature=>({...feature,outline:geometryPath(feature.shape)}));
     function isOutOfBounds(x,z){
+        if(!boundary)return false;
         const px=x/unit,pz=z/unit;
         for(let i=1;i<boundary.length;i++){
             const a=boundary[i-1],b=boundary[i];
@@ -30,7 +32,20 @@ export function createCourse(definition){
         }
         return closest;
     }
+    function featureAt(x,z){return landforms.find(feature=>containsPoint(feature.outline,x/unit,z/unit));}
+    function lieAt(x,z){
+        const feature=featureAt(x,z);if(!feature?.lies)return null;
+        const {cellSize,seed,profiles}=feature.lies;
+        const col=Math.floor(x/cellSize),row=Math.floor(z/cellSize);
+        // Spatially fixed patches: choosing another club never rerolls a lie.
+        const hash=(Math.imul(col,73856093)^Math.imul(row,19349663)^seed)>>>0;
+        return {...profiles[hash%profiles.length],feature:feature.id,featureName:feature.name};
+    }
+    function aimTarget(point){
+        return definition.aimPoints?.find(target=>target.x>point.x+30)??definition.pins[0];
+    }
     function surface(x,z){
+        const lie=lieAt(x,z);if(lie)return lie.material;
         if(definition.pathWidth&&distanceToLines(pathLines,x/unit,z/unit)<definition.pathWidth/2)return 'path';
         for(const kind of ['sand','green','tee','surround','fairway']){
             if(contains(kind,x,z))return kind;
@@ -43,7 +58,14 @@ export function createCourse(definition){
         const {terrain,green}=definition;
         let y=terrain.baseRipple*Math.sin(x/terrain.rippleLength);
         const nearGreen=Math.exp(-(((px-green.center[0])/green.blend[0])**4+((pz-green.center[1])/green.blend[1])**4));
-        y+=green.backToFrontRise*clamp((px-green.front)/green.depth,0,1)*nearGreen;
+        const depth=clamp((px-green.front)/green.depth,0,1);
+        y+=green.backToFrontRise*depth*nearGreen;
+        if(green.tiers)y+=green.tiers.rise*ease(.5+(depth-green.tiers.at)/green.tiers.width)*nearGreen;
+        for(const feature of landforms){
+            if(!containsPoint(feature.outline,px,pz))continue;
+            const edge=distanceToLines(feature.outline,px,pz);
+            y-=feature.depth*ease(edge/feature.bankWidth);
+        }
         const {pews}=definition;
         const ends=pews?ease((pz-pews.z+pews.length/2)/pews.width)*ease((pews.z+pews.length/2-pz)/pews.width):0;
         for(let i=0;i<(pews?.count??0);i++){
@@ -64,5 +86,5 @@ export function createCourse(definition){
                 radii:{x:h*.28,y:h*.4,z:h*.26},restitution:.05,retention:.48}
         ];
     });
-    return {...definition,greenBounds,ground,surface,isOutOfBounds,obstacles,wall:[],waterHeight:-Infinity};
+    return {...definition,greenBounds,ground,surface,lieAt,aimTarget,isOutOfBounds,obstacles,wall:[],waterHeight:-Infinity};
 }

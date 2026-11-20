@@ -79,15 +79,15 @@ for(const name of bag.slice(0,-1))calibrateClub(clubs[name]);
 function putterSpeed(power){
     return mix(clubs.Putter.minimum,clubs.Putter.speed,power**1.12);
 }
-function strike(point,ground,club,power,heading,lie){
+function strike(point,ground,club,power,heading,lie,lieProfile=null){
     const config=clubs[club],putt=club==='Putter';
     const speed=putt?putterSpeed(power):config.speed*(.12+.88*power**.87);
     const loftedWedge=config.loft>=33;
     const fromSand=lie==='sand',fromRough=lie==='rough';
-    const penalty=putt?1:fromSand?(loftedWedge?.74:.49):fromRough?.87:1;
-    const extraLaunch=!putt&&fromSand&&loftedWedge?6:0;
+    const penalty=putt?1:lieProfile?.speed??(fromSand?(loftedWedge?.74:.49):fromRough?.87:1);
+    const extraLaunch=(!putt&&fromSand&&loftedWedge?6:0)+(!putt?(lieProfile?.launch??0):0);
     const loft=((config.launch??config.loft)+extraLaunch)*Math.PI/180;
-    const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(fromRough?.52:fromSand?.63:1);
+    const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(lieProfile?.spin??(fromRough?.52:fromSand?.63:1));
     return {...newBall(point,ground),vx:Math.cos(heading)*speed*Math.cos(loft)*penalty,
         vy:Math.sin(loft)*speed*penalty,vz:Math.sin(heading)*speed*Math.cos(loft)*penalty,
         putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll,grassRelease:config.grassRelease??1,mode:putt?'roll':'air'};

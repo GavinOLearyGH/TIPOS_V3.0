@@ -1,7 +1,7 @@
 import {refreshParentWorker} from '../core/updates.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
-import {holeByNumber} from './catalog.mjs';
+import {holeByNumber,courseCatalog} from './catalog.mjs';
 import {createCourse} from '../core/course.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
@@ -18,11 +18,17 @@ const bearing=(a,b)=>Math.atan2(b.z-a.z,b.x-a.x);
 const resting=ball=>!['air','roll','drop'].includes(ball.mode);
 const lieNames={tee:'Tee box',fairway:'Fairway',rough:'Rough',green:'Green',surround:'Green surround',sand:'Bunker',path:'Cart path'};
 function options(id,items){for(const [value,label] of items)$(id).add(new Option(label,value));}
+options('hole',courseCatalog.map(hole=>[hole.number,'Hole '+hole.number+' · Par '+hole.par]));
+$('hole').value=String(course.number);
 options('tee',course.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
 options('club',fullBag.map(name=>[name,name+(clubs[name].carry?' · '+clubs[name].carry+' yd':'')]));
 options('wind',windDirections.map((name,index)=>[index,name]));
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
 $('hole-title').textContent=course.name;
+$('about-copy').textContent=course.number===2?'The barranca is playable, approximately 5 ft deep, with fixed patches of smooth, heavy and tight lies. Its banks and the green tiers are provisional. All holes share one engine and renderer.':'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
+for(const [key,id,allowed] of [['wind','wind',null],['mph','wind-speed',null],['speed','green-speed',['.8','1','1.24']]]){
+    const value=requested.get(key);if(value!==null&&(!allowed||allowed.includes(value)))$(id).value=value;
+}
 $('replay').textContent='Replay Hole '+course.number;
 document.title='The Irish Par · '+course.name;
 $('build-version').textContent='Build '+buildId;
@@ -43,7 +49,8 @@ function updateHUD(){
     if(!round)return;
     const ball=round.state.ball,pin=round.settings.pin,metres=distance(ball,pin);
     $('distance').textContent='Pin · '+(metres<27?feet(metres)+' ft':yards(metres)+' yd');
-    $('lie').textContent=lieNames[course.surface(ball.x,ball.z)]||ball.mode;
+    const profile=course.lieAt?.(ball.x,ball.z);
+    $('lie').textContent=profile?profile.featureName+' · '+profile.label:lieNames[course.surface(ball.x,ball.z)]||ball.mode;
     $('score-label').textContent=round.state.strokes+' '+(round.state.strokes===1?'stroke':'strokes')+
         (round.state.penalties?' · '+round.state.penalties+' penalty':'')+' · Par '+course.par;
     const wind=round.settings.wind,speed=Math.hypot(wind.x,wind.z)/.44704;
@@ -62,7 +69,7 @@ function updateHUD(){
     $('green-grid').hidden=!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
     const locked=active()||!!tour;
-    for(const id of ['club','reset','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
+    for(const id of ['club','reset','hole','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
     $('club').disabled=locked||round.state.complete||!renderer;
     $('reload-build').disabled=active();
     $('flyover').disabled=active()||!renderer||$('complete').open;
@@ -93,7 +100,7 @@ function startRound(){
         windMph:clamp(Number($('wind-speed').value)||0,0,25),greenSpeed:Number($('green-speed').value)});
     const tee=course.tees.find(item=>item.id===$('tee').value);
     $('setup-label').textContent=tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · Center pin';
-    heading=bearing(round.state.ball,round.settings.pin);
+    heading=bearing(round.state.ball,course.aimTarget(round.state.ball));
     trail=[];mapTrail=[];eye=null;target=null;accumulator=0;preview=null;
     $('shot-summary').hidden=true;
     suggestClub();updatePower();updateHUD();drawMap();
@@ -116,10 +123,10 @@ function finishShot(){
         $(id).textContent=(metrics[key]/unit).toFixed(1)+suffix;
     }
     $('shot-summary-title').textContent='Shot '+round.state.history.length+' · '+metrics.club;
-    $('shot-summary-detail').textContent=Math.round(metrics.power*100)+'% · From '+lieNames[metrics.startingLie]+
+    $('shot-summary-detail').textContent=Math.round(metrics.power*100)+'% · From '+(metrics.startingLieLabel??lieNames[metrics.startingLie])+
         (last.outcome==='out'?' · Out of bounds':last.outcome==='water'?' · Water':last.outcome==='holed'?' · Holed':'');
     $('shot-summary').hidden=false;
-    heading=bearing(ball,round.settings.pin);
+    heading=bearing(ball,course.aimTarget(ball));
     trail=[];eye=null;target=null;preview=null;
     if(round.state.complete){
         const relative=round.state.strokes-course.par;
@@ -129,13 +136,15 @@ function finishShot(){
         $('complete-detail').textContent=round.state.strokes+' strokes'+
             (round.state.penalties?' · '+round.state.penalties+' penalty strokes':'')+' · '+course.name;
         $('status').textContent='Holed out · '+score+'.';
+        const next=courseCatalog.find(hole=>hole.number>course.number);
+        $('next-hole').hidden=!next;if(next){$('next-hole').href=holeURL(next.number);$('next-hole').textContent='Play Hole '+next.number;}
         $('complete').showModal();$('replay').focus();
     }else{
         const penalty=['out','water'].includes(last.outcome);
         $('status').textContent=penalty?(last.outcome==='out'?'Out of bounds':'Water')+' · One penalty stroke. Replay from the previous position.':
             (ball.obstacle?'Hit '+ball.obstacle+'. ':'')+
             (distance(ball,round.settings.pin)<27?feet(distance(ball,round.settings.pin))+' ft':yards(distance(ball,round.settings.pin))+' yd')+
-            ' to the cup · '+lieNames[course.surface(ball.x,ball.z)]+'.';
+            ' to the cup · '+(course.lieAt?.(ball.x,ball.z)?.label??lieNames[course.surface(ball.x,ball.z)])+'.';
         suggestClub();
     }
     updateHUD();updatePower();drawMap();
@@ -296,8 +305,23 @@ window.addEventListener('blur',cancel);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel();lastTime=0;});
 $('green-grid').onclick=()=>{showGreenGrid=!showGreenGrid;updateHUD();};
 $('club').onchange=()=>{cancel();preview=null;updateHUD();};
-$('reset').onclick=$('apply').onclick=$('replay').onclick=()=>{
+function holeURL(number){
+    const query=new URLSearchParams({hole:number,tee:$('tee').value,wind:$('wind').value,
+        mph:$('wind-speed').value,speed:$('green-speed').value,build:buildId});
+    return './play.html?'+query;
+}
+$('hole').onchange=()=>{
+    const selected=$('tee').value,hole=holeByNumber($('hole').value);
+    $('tee').replaceChildren();options('tee',hole.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
+    if(hole.tees.some(tee=>tee.id===selected))$('tee').value=selected;
+};
+$('reset').onclick=$('replay').onclick=()=>{
     if(active()||tour)return;
+    $('hole').value=String(course.number);$('hole').onchange();startRound();canvas.focus({preventScroll:true});
+};
+$('apply').onclick=()=>{
+    if(active()||tour)return;
+    if(Number($('hole').value)!==course.number){location.assign(holeURL(Number($('hole').value)));return;}
     startRound();canvas.focus({preventScroll:true});
 };
 $('close-result').onclick=()=>{$('complete').close();updateHUD();canvas.focus({preventScroll:true});};

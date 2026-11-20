@@ -22,8 +22,10 @@ export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
         if(state.complete||!['rest'].includes(state.ball.mode))return false;
         if(!fullBag.includes(club)||!Number.isFinite(power)||power<.025||power>1||!Number.isFinite(heading))return false;
         from={x:state.ball.x,z:state.ball.z};
-        state.ball=strike(from,course.ground,club,power,heading,course.surface(from.x,from.z));
+        const profile=course.lieAt?.(from.x,from.z);
+        state.ball=strike(from,course.ground,club,power,heading,course.surface(from.x,from.z),profile);
         measurement={club,power,startingLie:course.surface(from.x,from.z),
+            startingLieLabel:profile?profile.featureName+' · '+profile.label:null,
             carry:0,bounceRoll:0,landed:club==='Putter'};
         state.strokes++;
         return true;
