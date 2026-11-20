@@ -2,11 +2,11 @@ const ballRadius = 0.02135;
 const cupRadius = 0.054;
 const stepTime = 1 / 240;
 const clubs = {
-    '3 Iron':{carry:184,loft:14,apex:70,roll:1.10},
-    '4 Iron':{carry:174,loft:15,apex:71,roll:1.08},
-    '5 Iron':{carry:161,loft:16.5,apex:73,roll:1.05},
-    '6 Iron':{carry:153,loft:18,apex:75,roll:1.02},
-    '7 Iron':{carry:145,loft:19.5,apex:76,roll:1.00},
+    '3 Iron':{grassRelease:.81,carry:184,loft:14,apex:70,roll:1.10},
+    '4 Iron':{grassRelease:.83,carry:174,loft:15,apex:71,roll:1.08},
+    '5 Iron':{grassRelease:.88,carry:161,loft:16.5,apex:73,roll:1.05},
+    '6 Iron':{grassRelease:.92,carry:153,loft:18,apex:75,roll:1.02},
+    '7 Iron':{grassRelease:.96,carry:145,loft:19.5,apex:76,roll:1.00},
     '8 Iron':{carry:135,loft:22.5,apex:76,roll:.92},
     '9 Iron':{carry:124,loft:25.5,apex:74,roll:.84},
     PW:{carry:110,loft:29,apex:73,roll:.72},
@@ -90,7 +90,7 @@ function strike(point,ground,club,power,heading,lie){
     const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(fromRough?.52:fromSand?.63:1);
     return {...newBall(point,ground),vx:Math.cos(heading)*speed*Math.cos(loft)*penalty,
         vy:Math.sin(loft)*speed*penalty,vz:Math.sin(heading)*speed*Math.cos(loft)*penalty,
-        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll,mode:putt?'roll':'air'};
+        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll,grassRelease:config.grassRelease??1,mode:putt?'roll':'air'};
 }
 function flagContact(from,to,pin){
     const dx=to.x-from.x,dz=to.z-from.z;
@@ -154,7 +154,9 @@ function landOnGrass(ball,lie,surface,ground,floor){
     const steep=ease((impact/Math.max(.01,Math.hypot(tx,ty,tz))-.20)/.8);
     const check=steep*clamp(.42+.45*spin,0,1);
     const material=surfaces[lie];
-    const retained=Math.min(1,material.forward*(ball.roll||1)*mix(.90,.49,check));
+    // Iron release is calibrated separately from carry and green checking.
+    const release=lie==='fairway'?(ball.grassRelease??1):1;
+    const retained=Math.min(1,material.forward*(ball.roll||1)*mix(.90,.49,check)*release);
     const rebound=impact*material.bounce*mix(1,.76,check);
     ball.vx=tx*retained+nx*rebound;
     ball.vz=tz*retained+nz*rebound;

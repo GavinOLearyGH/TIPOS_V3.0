@@ -8,3 +8,8 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 #pull-aim{background:linear-gradient(90deg,#f3cd79,#fff1b8);box-shadow:0 0 5px #eac67b44}
 
 #green-grid{position:absolute;left:12px;bottom:100px;background:#142018ec;font-size:14px;min-height:40px}#green-grid[aria-pressed=true]{color:var(--gold);border-color:#f5d48988}
+
+.shot-summary{margin:14px 0;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.shot-summary-heading{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}.shot-summary-heading span{color:var(--muted)}
+.shot-summary dl{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 8px}.shot-summary dt{font-size:14px;color:var(--muted)}.shot-summary dd{margin:4px 0 0;font-size:22px;color:var(--gold);font-variant-numeric:tabular-nums}.shot-summary p{margin:0;font-size:13px;color:var(--muted)}
+.build-line{display:flex;gap:12px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:13px}.build-line button{font-size:13px;min-height:36px;padding:4px 8px;margin-left:5px}

@@ -26,3 +26,13 @@ Hole 1 scale is calibrated to 419 yards between the black marker and green cente
 Grass impacts resolve velocity against the local terrain normal and tangent. Fairway and rough dissipate energy with distinct bounce, retention and rolling resistance; playing from rough reduces carry and spin without an extra rollout multiplier. Green and cup behavior is retained. The church pews use seven distinct 1.15 m provisional ridges with finer terrain sampling; their height is an art/physics calibration, not a surveyed measurement.
 
 The source branch rebuilds Hole 6 from these shared modules so it can join the full course without separate physics or green-read code. Publishing `course/` and `core/` to GitHub does not replace the standalone Daily Challenge deployment. A future Daily Challenge update must deploy the rebuilt client and matching server replay together.
+
+## Release packaging and shot measurement
+
+`node leaderboard/build.mjs` now packages a content-derived `0.3.0-…` course release. Publish the generated `public/course/` files and `public/core/` files to the course preview. The three generated HTML entry pages reference a complete snapshot under `course/releases/<build>/`. All relative imports stay within that release, including the single physics instance. Keep previously published release directories: cached HTML and open games still need them. `course/release.json` is checked without browser caching on page load/focus; an older running build offers Load update, disabled during a shot. The loaded build number appears on the landing and game pages. Landing-page Play links include that build number to refresh the game HTML.
+
+The generic round records horizontal carry before first ground contact, all subsequent horizontal travel as bounce + roll (including later hops and rollback), and their sum as total travel. It also retains straight-line net displacement for diagnostics. Putt carry is zero. Penalty records keep the original flight measurements before relief resets the ball. The course game displays the most recent shot, club, power and starting lie, with feet used for short shots.
+
+Long-iron fairway release is calibrated separately from airborne carry and green impact. Calm Hole 1 reference shots produce approximately: driver 230.5 yd carry + 9.7 yd release; a representative rough 4-iron from 223 yd, 137.4 + 16.4 yd; rough 7-iron from 178 yd, 114.1 + 13.2 yd. These are reproducible prototype checks, not surveyed course or real-world launch-monitor measurements.
+
+Run `node tests/hole-1-metrics.mjs` for the reported cases, 101 nearby rough positions, putt measurements and penalty retention. Run `node tests/course-release.mjs` to verify packaged entry points, release-relative imports and physics identity.

@@ -1,3 +1,4 @@
+import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
 import {holeByNumber} from './catalog.mjs';
 import {createCourse} from '../core/course.mjs';
@@ -23,6 +24,7 @@ if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested
 $('hole-title').textContent=course.name;
 $('replay').textContent='Replay Hole '+course.number;
 document.title='The Irish Par · '+course.name;
+$('build-version').textContent='Build '+buildId;
 
 const atlas=makeAtlas(course);
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
@@ -60,6 +62,7 @@ function updateHUD(){
     const locked=active()||!!tour;
     for(const id of ['club','reset','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
     $('club').disabled=locked||round.state.complete||!renderer;
+    $('reload-build').disabled=active();
     $('flyover').disabled=active()||!renderer||$('complete').open;
     $('flyover').textContent=tour?'Skip flyover':'Flyover';
 }
@@ -90,6 +93,7 @@ function startRound(){
     $('setup-label').textContent=tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · Center pin';
     heading=bearing(round.state.ball,round.settings.pin);
     trail=[];mapTrail=[];eye=null;target=null;accumulator=0;preview=null;
+    $('shot-summary').hidden=true;
     suggestClub();updatePower();updateHUD();drawMap();
     $('status').textContent='Ready. Pull back from the ball to play your tee shot.';
 }
@@ -99,11 +103,20 @@ function shoot(){
     cancel();
     if(!played)return;
     trail=[];mapTrail=[{...round.state.ball}];lastTrail=0;accumulator=0;
+    $('shot-summary').hidden=true;
     $('status').textContent='Ball in play.';
     updateHUD();
 }
 function finishShot(){
     const ball=round.state.ball,last=round.state.history.at(-1);
+    const metrics=last.metrics,unit=metrics.total<10?.3048:.9144,suffix=unit===.3048?' ft':' yd';
+    for(const [id,key] of [['shot-carry','carry'],['shot-roll','bounceRoll'],['shot-total','total']]){
+        $(id).textContent=(metrics[key]/unit).toFixed(1)+suffix;
+    }
+    $('shot-summary-title').textContent='Shot '+round.state.history.length+' · '+metrics.club;
+    $('shot-summary-detail').textContent=Math.round(metrics.power*100)+'% · From '+lieNames[metrics.startingLie]+
+        (last.outcome==='out'?' · Out of bounds':last.outcome==='water'?' · Water':last.outcome==='holed'?' · Holed':'');
+    $('shot-summary').hidden=false;
     heading=bearing(ball,round.settings.pin);
     trail=[];eye=null;target=null;preview=null;
     if(round.state.complete){
@@ -298,3 +311,23 @@ try{
     $('render-error').hidden=false;$('render-error').textContent=error.message;
     $('stage').hidden=true;$('status').textContent='Course graphics could not start.';
 }
+
+let availableBuild;
+async function checkBuild(){
+    try{
+        const response=await fetch(new URL('./release.json',document.baseURI),{cache:'no-store'});
+        if(!response.ok)return;
+        const release=await response.json();
+        if(typeof release.buildId!=='string'||release.buildId===buildId)return;
+        availableBuild=release.buildId;$('update-notice').hidden=false;
+        $('reload-build').disabled=active();
+    }catch{/* Local/offline play remains available without a release manifest. */}
+}
+$('reload-build').onclick=()=>{
+    if(active()||!availableBuild)return;
+    const url=new URL(location.href);url.searchParams.set('build',availableBuild);url.searchParams.set('tee',$('tee').value);
+    location.replace(url.href);
+};
+window.addEventListener('focus',checkBuild);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkBuild();});
+checkBuild();

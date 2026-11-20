@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./style.css"></head>
+<html lang="en"><head><meta name="course-build" content="0.3.0-d42e8cb10b"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-d42e8cb10b/course/style.css"></head>
 <body><main>
 <header><div><div class="brand">THE IRISH PAR · COURSE PLAY</div><h1 class="play-title" id="hole-title">The Springhaven Club</h1></div><a href="./">Course</a></header>
 <div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
@@ -15,6 +15,11 @@
 <span id="tour-label" hidden>Green read · Downhill direction</span><div id="fade" hidden></div>
 </div>
 <div class="under-game"><p id="instructions">Drag the ball down for power. Slide left to aim right, or right to aim left. Release to swing.<br>Keyboard: ← → aim · Hold Space for power · Release to hit · Esc cancels</p><button id="reset" type="button">Reset hole</button></div>
+<section class="shot-summary" id="shot-summary" aria-labelledby="shot-summary-title" hidden>
+<div class="shot-summary-heading"><strong id="shot-summary-title">Last shot</strong><span id="shot-summary-detail"></span></div>
+<dl><div><dt>Carry</dt><dd id="shot-carry"></dd></div><div><dt>Bounce + roll</dt><dd id="shot-roll"></dd></div><div><dt>Total travel</dt><dd id="shot-total"></dd></div></dl>
+<p>Horizontal travel before and after first contact, including later bounces and rollback.</p></section>
+<p class="build-line"><span id="build-version"></span><span id="update-notice" hidden>New build available. <button type="button" id="reload-build">Load update</button></span></p>
 <p id="status" role="status">Preparing the course…</p>
 <details><summary>Set up your round</summary><div class="setup settings">
 <label>Tee<select id="tee"></select></label>
@@ -24,4 +29,4 @@
 <button id="apply" type="button">Start new round</button></div></details>
 <details><summary>About this build</summary><p>This is the first 3D Hole 1 prototype. Tee names and yardages are confirmed. Terrain, bunker depths, tree positions, and green breaks are provisional. <a href="./hole-1/">Open the overhead layout review.</a></p></details>
 <dialog id="complete" aria-labelledby="complete-title"><p class="brand">HOLE COMPLETE</p><h2 id="complete-title"></h2><p id="complete-detail"></p><div class="actions"><button class="primary" id="replay">Replay Hole 1</button><a href="./">Back to course</a><button id="close-result">Close</button></div></dialog>
-</main><script type="module" src="./play.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-d42e8cb10b/course/play.mjs"></script></body></html>

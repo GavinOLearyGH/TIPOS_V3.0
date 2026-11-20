@@ -1,16 +1,19 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./style.css"></head>
+<html lang="en"><head><meta name="course-build" content="0.3.0-d42e8cb10b"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-d42e8cb10b/course/style.css"></head>
 <body><main class="home"><header><div class="brand">THE IRISH PAR</div><a href="https://www.theirishpar.com/DailyChallenge/">Daily Challenge</a></header>
 <section class="intro"><p class="brand">COURSE PLAY</p><h1>The Springhaven Club</h1><p class="muted">Play the course one hole at a time. Choose your tee, shape your approach, and play every shot through to the cup.</p></section>
 <article class="hole-card"><div class="hole-art" id="hole-art"></div><div><p class="brand">HOLE 1 · PAR 4</p><h2>The opening hole</h2><p class="muted">A long fairway, a bunker on the left, and the church pews on the right. Finish on a green that slopes back to front.</p>
 <div class="setup"><label>Your tee<select id="tee"></select></label></div><div class="actions"><a class="button" id="play" href="./play.html?hole=1">Play Hole 1</a><a href="./hole-1/">Review the layout</a></div></div></article>
-<p class="muted">Hole 1 prototype · Terrain and green contours are being refined.</p></main>
+<p class="muted">Hole 1 prototype · Terrain and green contours are being refined.</p>
+<p class="build-line" id="build-version"></p></main>
 <script type="module">
-import {courseCatalog} from './catalog.mjs';
-import {surfaceColors} from '../core/renderer.mjs';
+import {buildId} from './releases/0.3.0-d42e8cb10b/core/build-info.mjs';
+document.getElementById('build-version').textContent='Build '+buildId;
+import {courseCatalog} from './releases/0.3.0-d42e8cb10b/course/catalog.mjs';
+import {surfaceColors} from './releases/0.3.0-d42e8cb10b/core/renderer.mjs';
 const hole=courseCatalog[0],select=document.getElementById('tee');
 for(const tee of hole.tees)select.add(new Option(tee.name+' · '+tee.yards+' yd',tee.id));
-select.onchange=()=>{document.getElementById('play').href='./play.html?hole='+hole.number+'&tee='+select.value;};
+select.onchange=()=>{document.getElementById('play').href='./play.html?hole='+hole.number+'&tee='+select.value+'&build='+buildId;};
 select.onchange();
 const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
 svg.setAttribute('viewBox','130 350 1500 290');svg.setAttribute('role','img');svg.setAttribute('aria-label','Hole 1 overhead layout');
