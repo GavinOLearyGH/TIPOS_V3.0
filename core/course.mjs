@@ -5,6 +5,8 @@ export function createCourse(definition){
     const unit=definition.plan.metresPerUnit;
     const paths=Object.fromEntries(Object.entries(definition.shapes).map(([key,path])=>[key,geometryPath(path)]));
     const contains=(key,x,z)=>paths[key]&&containsPoint(paths[key],x/unit,z/unit);
+    const greenBounds={minX:Math.min(...paths.green.map(p=>p.minX))*unit,maxX:Math.max(...paths.green.map(p=>p.maxX))*unit,
+        minZ:Math.min(...paths.green.map(p=>p.minZ))*unit,maxZ:Math.max(...paths.green.map(p=>p.maxZ))*unit};
     const boundary=geometryPath(definition.outOfBounds)[0];
     function isOutOfBounds(x,z){
         const px=x/unit,pz=z/unit;
@@ -62,5 +64,5 @@ export function createCourse(definition){
                 radii:{x:h*.28,y:h*.4,z:h*.26},restitution:.05,retention:.48}
         ];
     });
-    return {...definition,ground,surface,isOutOfBounds,obstacles,wall:[],waterHeight:-Infinity};
+    return {...definition,greenBounds,ground,surface,isOutOfBounds,obstacles,wall:[],waterHeight:-Infinity};
 }

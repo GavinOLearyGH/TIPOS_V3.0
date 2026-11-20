@@ -1,7 +1,8 @@
-import {ballRadius,clamp,mix} from './physics.mjs';
+import {clamp} from './physics.mjs';
+import {createVisuals} from './visuals.mjs';
 
-export const surfaceColors={rough:'#4e6c40',tee:'#81a969',fairway:'#7fa65e',
-    surround:'#6c8f50',green:'#a0bc73',sand:'#dcc794',path:'#98998a'};
+export const surfaceColors={rough:'#4e6c40',tee:'#78a66b',fairway:'#7da65c',
+    surround:'#668a4f',green:'#92b864',sand:'#d7be88',path:'#98998a'};
 
 export function makeAtlas(course){
     const map=document.createElement('canvas');
@@ -38,20 +39,20 @@ export function createRenderer(canvas,course,atlas){
         uniform float ratio;varying vec3 world,color;varying float depth;
         void main(){
             vec3 d=a-eye;float z=dot(d,forward);
-            gl_Position=vec4(dot(d,right)*1.72/ratio,dot(d,up)*1.72,z*1.00015-.14,z);
+            gl_Position=vec4(dot(d,right)*1.72/ratio,dot(d,up)*1.72,z*1.0003-.14,z);
             world=a;color=c;depth=z;
         }`;
     const fragment=`
         precision highp float;varying vec3 world,color;varying float depth;
-        uniform sampler2D atlas;uniform float textured;
+        uniform sampler2D atlas;uniform float kind,opacity;
         void main(){
             vec3 ink=color;
-            if(textured>.5){
+            if(kind>.5){
                 vec2 uv=(world.xz-vec2(${b.minX.toFixed(5)},${b.minZ.toFixed(5)}))/vec2(${(b.maxX-b.minX).toFixed(5)},${(b.maxZ-b.minZ).toFixed(5)});
-                float grain=fract(sin(dot(floor(world.xz*40.),vec2(12.9898,78.233)))*43758.5453)*.035;
-                ink=texture2D(atlas,uv).rgb*color*(.98+grain);
+                float grain=fract(sin(dot(floor(world.xz*42.),vec2(12.9898,78.233)))*43758.5453)*.055;
+                ink=texture2D(atlas,uv).rgb*color*(.95+grain);
             }
-            gl_FragColor=vec4(mix(ink,vec3(.65,.78,.78),clamp((depth-155.)/400.,0.,.32)),1.);
+            gl_FragColor=vec4(mix(ink,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)),opacity);
         }`;
     const program=gl.createProgram();
     for(const [kind,source] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){
@@ -62,43 +63,23 @@ export function createRenderer(canvas,course,atlas){
     gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
     gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
-    const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','textured'].map(name=>[name,gl.getUniformLocation(program,name)]));
+    const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','kind','opacity'].map(name=>[name,gl.getUniformLocation(program,name)]));
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(uniforms.opacity,1);
     const attributes=['a','c'].map(name=>gl.getAttribLocation(program,name));
     const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,atlas);
     for(const axis of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,axis,gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-    const triangle=(mesh,a,b,c,color)=>{for(const p of [a,b,c])mesh.push(...p,...color);};
-    function quad(mesh,a,b,c,d,color){triangle(mesh,a,b,c,color);triangle(mesh,a,c,d,color);}
+    const visuals=createVisuals({gl,uniform:uniforms,draw,buffer:upload,mobile:()=>mobile,
+        ground:course.ground,surface:course.surface,greenBounds:course.greenBounds??course.bounds});
+    const {triangle,quad,disk,ellipsoid:sphere}=visuals;
     function box(mesh,x,y,z,w,h,d,color){
         const a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],c=[x+w/2,y,z+d/2],e=[x-w/2,y,z+d/2];
         const top=p=>[p[0],p[1]+h,p[2]];
         quad(mesh,a,b,top(b),top(a),color);quad(mesh,b,c,top(c),top(b),color.map(v=>v*.88));
         quad(mesh,c,e,top(e),top(c),color.map(v=>v*.94));quad(mesh,e,a,top(a),top(e),color);
         quad(mesh,top(a),top(b),top(c),top(e),color.map(v=>v*1.08));
-    }
-    function sphere(mesh,x,y,z,rx,ry,rz,color,slices=9,rings=5){
-        const point=(i,j)=>{
-            const a=i*Math.PI*2/slices,b=(j/rings-.5)*Math.PI;
-            return [x+Math.cos(a)*Math.cos(b)*rx,y+Math.sin(b)*ry,z+Math.sin(a)*Math.cos(b)*rz];
-        };
-        for(let j=0;j<rings;j++)for(let i=0;i<slices;i++){
-            const shade=color.map(v=>v*(.80+.14*Math.cos(i*Math.PI*2/slices)+j/rings*.17));
-            quad(mesh,point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),shade);
-        }
-    }
-    function disk(mesh,x,y,z,r,color){
-        for(let i=0;i<24;i++){
-            const a=i*Math.PI/12,b=(i+1)*Math.PI/12;
-            triangle(mesh,[x,y,z],[x+Math.cos(a)*r,y,z+Math.sin(a)*r],[x+Math.cos(b)*r,y,z+Math.sin(b)*r],color);
-        }
-    }
-    function line(mesh,a,b,width,color){
-        const dx=b[0]-a[0],dz=b[2]-a[2],length=Math.hypot(dx,dz)||1;
-        const sx=-dz/length*width,sz=dx/length*width;
-        quad(mesh,[a[0]-sx,a[1],a[2]-sz],[a[0]+sx,a[1],a[2]+sz],
-            [b[0]+sx,b[1],b[2]+sz],[b[0]-sx,b[1],b[2]-sz],color);
     }
     function upload(vertices){
         const handle=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,handle);
@@ -107,12 +88,17 @@ export function createRenderer(canvas,course,atlas){
     }
     const terrain=[],scenery=[];
     const unit=course.renderStep??1.15;
-    for(let x=b.minX;x<b.maxX;x+=unit)for(let z=b.minZ;z<b.maxZ;z+=unit){
-        const nx=Math.min(x+unit,b.maxX),nz=Math.min(z+unit,b.maxZ);
-        const p=(x,z)=>[x,course.ground(x,z),z];
-        const slope=(course.ground(nx,z)-course.ground(x,z))/unit;
-        const shade=clamp(1-slope*.22,.72,1.13);
-        quad(terrain,p(x,z),p(nx,z),p(nx,nz),p(x,nz),[shade,shade,shade]);
+    // Sample each terrain vertex once, including the finer church-pew relief.
+    const nx=Math.ceil((b.maxX-b.minX)/unit),nz=Math.ceil((b.maxZ-b.minZ)/unit);
+    const xs=Array.from({length:nx+1},(_,i)=>Math.min(b.minX+i*unit,b.maxX));
+    const zs=Array.from({length:nz+1},(_,i)=>Math.min(b.minZ+i*unit,b.maxZ));
+    const heights=xs.map(x=>zs.map(z=>course.ground(x,z)));
+    const point=(i,j)=>[xs[i],heights[i][j],zs[j]];
+    for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){
+        const slope=(heights[i+1][j]-heights[i][j])/(xs[i+1]-xs[i]);
+        const crossSlope=(heights[i][j+1]-heights[i][j])/(zs[j+1]-zs[j]);
+        const shade=clamp(1-slope*.25-crossSlope*.18,.74,1.12);
+        quad(terrain,point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1),[shade,shade,shade]);
     }
     for(const tree of course.scenery?.trees??[]){
         const y=course.ground(tree.x,tree.z),h=tree.height;
@@ -135,33 +121,14 @@ export function createRenderer(canvas,course,atlas){
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
     const normalize=a=>{const n=Math.hypot(...a);return a.map(v=>v/n);};
     let camera;
-    function draw(buffer,textured){
+    function draw(buffer,kind){
         gl.bindBuffer(gl.ARRAY_BUFFER,buffer.handle);
         for(let i=0;i<2;i++){
             gl.enableVertexAttribArray(attributes[i]);gl.vertexAttribPointer(attributes[i],3,gl.FLOAT,false,24,i*12);
         }
-        gl.uniform1f(uniforms.textured,textured);gl.drawArrays(gl.TRIANGLES,0,buffer.count);
+        gl.uniform1f(uniforms.kind,kind);gl.drawArrays(gl.TRIANGLES,0,buffer.count);
     }
-    function greenRead(mesh,time){
-        const sample=.12;
-        const center=course.pins[0],radius=course.green.readRadius??22;
-        for(let x=center.x-radius;x<center.x+radius;x+=2)for(let z=center.z-radius;z<center.z+radius;z+=2){
-            if(course.surface(x,z)!=='green')continue;
-            const gx=(course.ground(x+sample,z)-course.ground(x-sample,z))/(2*sample);
-            const gz=(course.ground(x,z+sample)-course.ground(x,z-sample))/(2*sample);
-            const grade=Math.hypot(gx,gz);if(grade<.0015)continue;
-            const dx=-gx/grade,dz=-gz/grade;
-            const phase=(time*.0003+x*.17+z*.11)%1,span=(phase-.5)*.9;
-            const px=x+span*dx,pz=z+span*dz;
-            if(course.surface(px,pz)!=='green')continue;
-            const a=[px,course.ground(px,pz)+.06,pz];
-            for(const side of [-1,1]){
-                const bx=px-dx*.34-dz*.2*side,bz=pz-dz*.34+dx*.2*side;
-                if(course.surface(bx,bz)==='green')line(mesh,a,[bx,course.ground(bx,bz)+.06,bz],.035,[.96,.89,.57]);
-            }
-        }
-    }
-    function frame({eye,target,ball,pin,aim,trail=[],greenGrid=false,time=0,flying=false}){
+    function frame({eye,target,ball,pin,aim,trail=[],greenGrid=false,time=0,flying=false,readOpacity=null}){
         const ratio=Math.min(devicePixelRatio||1,1.5);
         const width=Math.max(1,Math.round(canvas.clientWidth*ratio)),height=Math.max(1,Math.round(canvas.clientHeight*ratio));
         if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
@@ -172,29 +139,8 @@ export function createRenderer(canvas,course,atlas){
         gl.uniform1f(uniforms.ratio,camera.ratio);
         gl.clearColor(.58,.76,.83,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
         draw(groundBuffer,1);draw(sceneryBuffer,0);
-        const dynamic=[],base=course.ground(pin.x,pin.z);
-        if(greenGrid)greenRead(dynamic,time);
-        disk(dynamic,pin.x,base+.012,pin.z,.054,[.07,.11,.07]);
-        box(dynamic,pin.x,base,pin.z,.025,1.95,.025,[.98,.96,.85]);
-        triangle(dynamic,[pin.x,base+1.94,pin.z],[pin.x,base+1.43,pin.z],[pin.x,base+1.67,pin.z+.65],[.96,.44,.25]);
-        if(ball.mode!=='holed'){
-            const r=flying?.09:.046;
-            sphere(dynamic,ball.x,ball.y+(ball.mode==='rest'?.022:0),ball.z,r,r,r,[1,1,.97],10,5);
-            if(ball.mode!=='drop')disk(dynamic,ball.x,course.ground(ball.x,ball.z)+.012,ball.z,.09,[.31,.43,.23]);
-        }
-        if(aim){
-            for(let d=1;d<aim.length;d+=1){
-                const x=ball.x+Math.cos(aim.heading)*d,z=ball.z+Math.sin(aim.heading)*d;
-                const nx=x+Math.cos(aim.heading)*.45,nz=z+Math.sin(aim.heading)*.45;
-                line(dynamic,[x,course.ground(x,z)+.035,z],[nx,course.ground(nx,nz)+.035,nz],.035,[.96,.84,.53]);
-            }
-        }
-        for(let i=1;i<trail.length;i++){
-            const a=trail[i-1],b=trail[i];
-            quad(dynamic,[a.x,a.y-.025,a.z],[a.x,a.y+.025,a.z],[b.x,b.y+.025,b.z],[b.x,b.y-.025,b.z],[.98,.86,.5]);
-        }
-        gl.bindBuffer(gl.ARRAY_BUFFER,mobile);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(dynamic),gl.DYNAMIC_DRAW);
-        draw({handle:mobile,count:dynamic.length/6},0);
+        visuals.drawFrame({pin,ball,aim,trail,flying,
+            gridTick:greenGrid?Math.floor(time/50):null,readOpacity});
     }
     function project(point){
         if(!camera)return null;

@@ -8,7 +8,7 @@ export const hole1={
     id:'springhaven-1',number:1,name:'The Springhaven Club - Hole 1',par:4,
     plan:{width:1696,height:983,metresPerUnit:k},
     bounds:{minX:120*k,maxX:1630*k,minZ:350*k,maxZ:670*k},
-    airClearance:16,renderStep:1.05,pathWidth:1.8,
+    airClearance:16,renderStep:.8,pathWidth:1.8,
     scenery:{
         trees:[
             [335,585,9],[440,578,10],[545,590,9],[650,610,11],[887,593,10],[1040,605,10],[1180,613,11],[1330,625,9],[1565,593,9],
@@ -37,7 +37,7 @@ export const hole1={
         'M159 653Q458 623 698 603Q995 582 1223 621L1459 632L1604 626'
     ],
     outOfBounds:'M294 350Q514 349 638 361Q949 364 1204 385L1612 387',
-    pews:{count:7,x:727,z:558,spacing:18,length:48,width:8,height:.5},
+    pews:{count:7,x:727,z:558,spacing:18,length:48,width:6,height:1.15},
     terrain:{baseRipple:.08,rippleLength:65,bunkerDepth:.6,bunkerBlend:1.8},
     green:{front:1448,depth:96,center:[1495,503],blend:[95,82],backToFrontRise:.4,localBreaks:null},
     provisional:['Terrain elevations','Bunker depth and lips','Exact OB boundary','Green contours','Tee marker positions within pads'],

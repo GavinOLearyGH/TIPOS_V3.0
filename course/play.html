@@ -7,9 +7,10 @@
 <div class="stage" id="stage">
 <canvas id="scene" tabindex="0" aria-label="First-person course view. Drag down from the ball for power, slide left to aim right, and release to swing." aria-describedby="instructions"></canvas>
 <div class="hud"><span id="distance"></span><span id="lie"></span><span id="wind-label"></span><span id="slope" hidden></span></div>
+<button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button>
 <button id="flyover" type="button">Flyover</button>
 <div class="map"><canvas id="map" width="180" height="510" role="img" aria-label="Overhead hole map. Tee at the bottom, green at the top, with live ball position."></canvas></div>
-<div id="ball-ring" hidden></div><div id="aim-ring" hidden></div><div id="pull-handle" hidden></div><div id="pull-line" hidden></div>
+<div id="ball-ring" hidden></div><div id="aim-ring" hidden></div><div id="pull-handle" hidden></div><div id="pull-line" hidden></div><div id="pull-aim" hidden></div>
 <div class="shot-controls"><label>Club · carry<select id="club"></select></label><label class="power-panel"><span id="power-label">Power · 0%</span><progress id="power" max="100" value="0"></progress></label></div>
 <span id="tour-label" hidden>Green read · Downhill direction</span><div id="fade" hidden></div>
 </div>

@@ -1,3 +1,4 @@
+import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
 import {holeByNumber} from './catalog.mjs';
 import {createCourse} from '../core/course.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
@@ -25,7 +26,7 @@ document.title='The Irish Par · '+course.name;
 
 const atlas=makeAtlas(course);
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
-let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,preview=null,animationId,frameNumber=0;
+let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,preview=null,animationId,frameNumber=0,showGreenGrid=true;
 const active=()=>round&&!resting(round.state.ball);
 const editable=()=>renderer&&round&&!active()&&!tour&&!round.state.complete&&!$('complete').open;
 
@@ -54,6 +55,8 @@ function updateHUD(){
         $('slope').textContent=Math.abs(rise*100).toFixed(1)+'% '+(rise>=0?'uphill':'downhill')+
             (Math.abs(across)<.002?' · little side break':across>0?' · breaks left':' · breaks right');
     }
+    $('green-grid').hidden=!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
+    $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
     const locked=active()||!!tour;
     for(const id of ['club','reset','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
     $('club').disabled=locked||round.state.complete||!renderer;
@@ -76,7 +79,7 @@ function setPower(value){charge=Math.round(clamp(value,0,1)*2000)/2000;updatePow
 function cancel(){
     drag=null;keyStarted=null;setPower(0);
     $('ball-ring').classList.remove('grabbed');
-    for(const id of ['pull-handle','pull-line'])$(id).hidden=true;
+    for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
 }
 function startRound(){
     cancel();tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
@@ -155,12 +158,7 @@ function marker(id,point){
 }
 function cameraForBall(){
     const ball=round.state.ball,near=$('club').value==='Putter';
-    const moving=active(),dx=Math.cos(heading),dz=Math.sin(heading);
-    const back=moving?7:near?1.8:2.7;
-    const pos=[ball.x-dx*back,moving?Math.max(ball.y+1,course.ground(ball.x-dx*back,ball.z-dz*back)+2.6):course.ground(ball.x,ball.z)+(near?1.1:1.55),ball.z-dz*back];
-    const look=moving?5:near?5.5:11;
-    const target=[ball.x+dx*look,moving?ball.y-.25:course.ground(ball.x,ball.z)-(near?1.7:2.15),ball.z+dz*look];
-    return {eye:pos,target};
+    return shotCamera(ball,course.ground,drag?drag.heading:heading,near,active()&&ball.time>.3&&ball.mode!=='drop');
 }
 function stopTour(){
     tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
@@ -192,20 +190,27 @@ function tourView(now){
     const tx=tour.tee.x+dx*targetDistance,tz=tour.tee.z+dz*targetDistance;
     const greenGrid=elapsed>=arrival&&elapsed<departure;
     $('tour-label').hidden=!greenGrid;
-    return {eye:[x,y,z],target:[tx,course.ground(tx,tz)+mix(-2,.1,u),tz],greenGrid};
+    return {eye:[x,y,z],target:[tx,course.ground(tx,tz)+mix(-2,.1,u),tz],greenGrid,
+        readOpacity:ease((elapsed-arrival)/.35)*ease((departure-elapsed)/.35)};
 }
 function pullGraphics(anchor){
-    for(const id of ['pull-handle','pull-line'])$(id).hidden=true;
+    for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
     if(!drag||!anchor)return;
-    const ball=round.state.ball;
-    const ahead=renderer.project({x:ball.x+Math.cos(heading)*6,y:ball.y+.022,z:ball.z+Math.sin(heading)*6});
+    const ball=round.state.ball,near=$('club').value==='Putter';
+    const distance=(near?12:36)*charge**.82;
+    const ahead=renderer.project({x:ball.x+Math.cos(heading)*Math.max(1,distance),
+        y:ball.y+.022,z:ball.z+Math.sin(heading)*Math.max(1,distance)});
     if(!ahead)return;
-    const length=Math.hypot(ahead.x-anchor.x,ahead.y-anchor.y);if(length<1)return;
-    const dx=(ahead.x-anchor.x)/length,dy=(ahead.y-anchor.y)/length,back=drag.depth*55;
-    marker('pull-handle',{x:anchor.x-dx*back,y:anchor.y-dy*back});
-    const line=$('pull-line');line.hidden=back<8;
-    line.style.left=anchor.x-dx*back+'px';line.style.top=anchor.y-dy*back+'px';
-    line.style.width=back+'px';line.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
+    const guide=pullGuideGeometry(anchor,ahead,drag.depth,canvas.clientWidth,canvas.clientHeight,distance);
+    if(!guide)return;
+    const {dx,dy,angle,forward,back}=guide;
+    const position=(id,x,y,length)=>{
+        const line=$(id);line.hidden=false;line.style.left=x+'px';line.style.top=y+'px';
+        line.style.width=length+'px';line.style.transform='translateY(-50%) rotate('+angle+'rad)';
+    };
+    if(forward>=13)position('pull-aim',anchor.x+dx*10,anchor.y+dy*10,forward-10);
+    if(back>=6)marker('pull-handle',{x:anchor.x-dx*back,y:anchor.y-dy*back});
+    if(back>=17)position('pull-line',anchor.x-dx*(back-8),anchor.y-dy*(back-8),back-16);
 }
 function frame(now){
     const dt=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));lastTime=now;
@@ -222,13 +227,15 @@ function frame(now){
         if(!active())finishShot();
     }
     const view=tour?tourView(now):null;
-    const desired=view||cameraForBall(),smoothing=active()?1-Math.exp(-dt*8):1;
+    const desired=view||cameraForBall(),smoothing=active()?1-Math.exp(-dt*9):1;
     eye=eye?eye.map((v,i)=>mix(v,desired.eye[i],smoothing)):desired.eye;
     target=target?target.map((v,i)=>mix(v,desired.target[i],smoothing)):desired.target;
     const ball=round.state.ball,near=$('club').value==='Putter',ready=editable();
     const aimLength=drag?Math.max(1,(near?5:32)*charge**.82):near?Math.min(8,distance(ball,round.settings.pin)):28;
     renderer.frame({eye,target,ball,pin:round.settings.pin,heading,trail,time:now,
-        aim:ready?{heading,length:aimLength}:null,greenGrid:view?.greenGrid||ready&&near&&course.surface(ball.x,ball.z)==='green',flying:active()});
+        aim:ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength,
+            y:course.ground(ball.x+Math.cos(heading)*aimLength,ball.z+Math.sin(heading)*aimLength),near}:null,
+        readOpacity:view?.readOpacity??null,greenGrid:view?.greenGrid||showGreenGrid&&ready&&near&&course.surface(ball.x,ball.z)==='green',flying:active()});
     const anchor=ready?renderer.project({x:ball.x,y:ball.y+.022,z:ball.z}):null;
     marker('ball-ring',anchor);
     const ahead=ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength}:null;
@@ -238,12 +245,9 @@ function frame(now){
     animationId=requestAnimationFrame(frame);
 }
 function previewDrag(event){
-    const dx=event.clientX-drag.x,width=Math.abs(dx);
-    const turn=-Math.sign(dx)*(.00025*width+.000014*Math.max(0,width-16)**2);
-    heading=drag.heading+clamp(turn,-.55,.55);
+    heading=dragHeading(drag.heading,bearing(round.state.ball,round.settings.pin),event.clientX-drag.x);
     drag.depth=clamp((event.clientY-drag.y)/drag.travel,0,1);
-    const d=drag.depth;
-    setPower($('club').value==='Putter'?d:d<=.42?.8*d/.42:.8+.2*(d-.42)/.58);
+    setPower(dragPower(drag.depth,$('club').value==='Putter'));
 }
 canvas.addEventListener('pointerdown',event=>{
     if(!editable()||drag||keyStarted!==null||event.button>0)return;
@@ -275,6 +279,7 @@ window.addEventListener('keyup',event=>{
 });
 window.addEventListener('blur',cancel);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel();lastTime=0;});
+$('green-grid').onclick=()=>{showGreenGrid=!showGreenGrid;updateHUD();};
 $('club').onchange=()=>{cancel();preview=null;updateHUD();};
 $('reset').onclick=$('apply').onclick=$('replay').onclick=()=>{
     if(active()||tour)return;

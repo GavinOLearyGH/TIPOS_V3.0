@@ -18,8 +18,8 @@ const clubs = {
 const bag=Object.keys(clubs);
 const surfaces = {
     tee:{bounce:.32,brake:.46,forward:.7736,entry:1},
-    fairway:{bounce:.39,brake:.53,forward:.8072,entry:1},
-    rough:{bounce:.14,brake:1.75,forward:.56,entry:.84},
+    fairway:{bounce:.14,brake:1.2,forward:.60,entry:1},
+    rough:{bounce:.075,brake:2.8,forward:.42,entry:.74},
     surround:{bounce:.23,brake:.78,forward:.7304,entry:.94},
     green:{bounce:.30,brake:.36,forward:.434,entry:1},
     sand:{bounce:.025,brake:2.75,forward:.15,entry:.63},
@@ -90,7 +90,7 @@ function strike(point,ground,club,power,heading,lie){
     const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(fromRough?.52:fromSand?.63:1);
     return {...newBall(point,ground),vx:Math.cos(heading)*speed*Math.cos(loft)*penalty,
         vy:Math.sin(loft)*speed*penalty,vz:Math.sin(heading)*speed*Math.cos(loft)*penalty,
-        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll*(!putt&&fromRough?1.19:1),mode:putt?'roll':'air'};
+        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll,mode:putt?'roll':'air'};
 }
 function flagContact(from,to,pin){
     const dx=to.x-from.x,dz=to.z-from.z;
@@ -131,19 +131,19 @@ function crossing(a,b,c,d){
     return t>0&&t<=1&&u>=0&&u<=1?t:null;
 }
 
-function surroundGrade(surface,ground,x,z,floor,dx,dz){
+function surfaceGrade(surface,ground,x,z,floor,dx,dz,lie){
     const sample=.045;
-    const ahead=surface(x+dx*sample,z+dz*sample)==='surround';
-    const behind=surface(x-dx*sample,z-dz*sample)==='surround';
+    const ahead=surface(x+dx*sample,z+dz*sample)===lie;
+    const behind=surface(x-dx*sample,z-dz*sample)===lie;
     if(!ahead&&!behind)return 0;
     const high=ahead?ground(x+dx*sample,z+dz*sample):floor;
     const low=behind?ground(x-dx*sample,z-dz*sample):floor;
     return clamp((high-low)/(sample*(Number(ahead)+Number(behind))),-4,4);
 }
-function landOnSurround(ball,surface,ground,floor){
+function landOnGrass(ball,lie,surface,ground,floor){
     const {x,z,vx,vy,vz}=ball;
-    const gx=surroundGrade(surface,ground,x,z,floor,1,0);
-    const gz=surroundGrade(surface,ground,x,z,floor,0,1);
+    const gx=surfaceGrade(surface,ground,x,z,floor,1,0,lie);
+    const gz=surfaceGrade(surface,ground,x,z,floor,0,1,lie);
     const normalLength=Math.hypot(gx,1,gz);
     const nx=-gx/normalLength,ny=1/normalLength,nz=-gz/normalLength;
     const approach=vx*nx+vy*ny+vz*nz;
@@ -153,18 +153,19 @@ function landOnSurround(ball,surface,ground,floor){
     const spin=ball.spin||0;
     const steep=ease((impact/Math.max(.01,Math.hypot(tx,ty,tz))-.20)/.8);
     const check=steep*clamp(.42+.45*spin,0,1);
-    const surround=surfaces.surround;
-    const retained=Math.min(1,surround.forward*(ball.roll||1)*mix(.90,.49,check));
-    const rebound=impact*surround.bounce*mix(1,.76,check);
+    const material=surfaces[lie];
+    const retained=Math.min(1,material.forward*(ball.roll||1)*mix(.90,.49,check));
+    const rebound=impact*material.bounce*mix(1,.76,check);
     ball.vx=tx*retained+nx*rebound;
     ball.vz=tz*retained+nz*rebound;
     ball.vy=ty*retained+ny*rebound;
-    ball.firstLie??='surround';
+    ball.firstLie??=lie;
     ball.y=floor+ballRadius;
     ball.spin=spin*.60;
     if(rebound*normalLength<.48){ball.mode='roll';ball.vy=0;}
 }
 function land(ball,lie,surface,ground,from,floor){
+    ball.firstContact??={x:ball.x,y:floor,z:ball.z,vx:ball.vx,vy:ball.vy,vz:ball.vz};
     const material=surfaces[lie]||surfaces.rough;
     const horizontal=Math.hypot(ball.vx,ball.vz);
     const descent=clamp(-ball.vy/Math.max(.01,horizontal),0,1.5);
@@ -208,8 +209,8 @@ function land(ball,lie,surface,ground,from,floor){
             bounce=Math.min(bounce,.12);
         }
     }
-    if(lie==='surround'&&!hitBunkerLip){
-        landOnSurround(ball,surface,ground,floor);
+    if(['tee','fairway','rough','surround'].includes(lie)&&!hitBunkerLip){
+        landOnGrass(ball,lie,surface,ground,floor);
         return;
     }
     const retained=Math.min(1,forward*(ball.roll||1));
