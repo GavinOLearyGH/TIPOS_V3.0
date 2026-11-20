@@ -36,3 +36,9 @@ The generic round records horizontal carry before first ground contact, all subs
 Long-iron fairway release is calibrated separately from airborne carry and green impact. Calm Hole 1 reference shots produce approximately: driver 230.5 yd carry + 9.7 yd release; a representative rough 4-iron from 223 yd, 137.4 + 16.4 yd; rough 7-iron from 178 yd, 114.1 + 13.2 yd. These are reproducible prototype checks, not surveyed course or real-world launch-monitor measurements.
 
 Run `node tests/hole-1-metrics.mjs` for the reported cases, 101 nearby rough positions, putt measurements and penalty retention. Run `node tests/course-release.mjs` to verify packaged entry points, release-relative imports and physics identity.
+
+### Parent-site offline cache boundary
+
+The TIPOS coaching PWA's root `sw.js` previously cached every GET request first, including old course HTML and the original renderer. Immutable release files alone cannot correct a legacy HTML entry already captured by that worker. On the GitHub preview, apply `protectCourseRoutes` from `scripts/patch-preview-worker.mjs` to the current root worker: it leaves `/course/` and `/core/` requests to the browser and preserves the coaching shell's cache behavior. Patch the current worker in place; do not replace its coaching asset list with a game-owned copy. Course entry modules request an update of an existing controlling worker without registering another worker or interrupting a hole.
+
+`node tests/course-cache.mjs` verifies the route boundary (optionally pass the current worker file as its argument). `node tests/green-visuals.mjs` checks the shared putting grid and small moving dashes, flyover-only chevrons, and return to putting. Set up your round uses the same round controller and renderer; future hole definitions supply geometry and contours, not a separate green renderer or physics engine.

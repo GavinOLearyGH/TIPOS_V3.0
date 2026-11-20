@@ -1,3 +1,4 @@
+import {refreshParentWorker} from '../core/updates.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
 import {holeByNumber} from './catalog.mjs';
@@ -25,6 +26,7 @@ $('hole-title').textContent=course.name;
 $('replay').textContent='Replay Hole '+course.number;
 document.title='The Irish Par · '+course.name;
 $('build-version').textContent='Build '+buildId;
+refreshParentWorker();
 
 const atlas=makeAtlas(course);
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
