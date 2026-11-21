@@ -25,7 +25,7 @@ options('club',fullBag.map(name=>[name,name+(clubs[name].carry?' · '+clubs[name
 options('wind',windDirections.map((name,index)=>[index,name]));
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
 $('hole-title').textContent=course.name;
-$('about-copy').textContent=course.number===2?'The barranca is playable, approximately 5 ft deep, with fixed patches of smooth, heavy and tight lies. Its banks and the green tiers are provisional. All holes share one engine and renderer.':'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
+$('about-copy').textContent=course.about??'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
 for(const [key,id,allowed] of [['wind','wind',null],['mph','wind-speed',null],['speed','green-speed',['.8','1','1.24']]]){
     const value=requested.get(key);if(value!==null&&(!allowed||allowed.includes(value)))$(id).value=value;
 }

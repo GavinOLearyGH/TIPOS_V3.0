@@ -5,6 +5,7 @@ const tee=(id,name,yards,z)=>({id,name,yards,z:z*k,x:(1780-Math.sqrt((yards*.914
 export const hole2={
     id:'springhaven-2',number:2,name:'The Springhaven Club - Hole 2',title:'The barranca',par:5,
     description:'A long par 5. Position your approach to carry the playable barranca and reach a two-tier green guarded by two bunkers.',
+    about:'The barranca is playable, approximately 5 ft deep, with fixed patches of smooth, heavy and tight lies. Its banks and the green tiers are provisional. All holes share one engine and renderer.',
     plan:{width:2004,height:1133,metresPerUnit:k},
     bounds:{minX:125*k,maxX:1930*k,minZ:460*k,maxZ:745*k},
     airClearance:16,renderStep:.9,pathWidth:1.8,
