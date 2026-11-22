@@ -1,3 +1,4 @@
+import {resolveExecution} from './execution.mjs';
 import {clubs,calibrateClub,newBall,strike,advance,stepTime,windVector} from './physics.mjs';
 
 // Carry targets for the first course prototype. Existing iron calibration is reused.
@@ -18,13 +19,15 @@ export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
     const settings={pin:{...startingPin},wind:windVector(windDirection,windMph),greenSpeed};
     const state={ball:newBall(startingTee,course.ground),strokes:0,penalties:0,history:[],complete:false};
     let from,measurement;
-    function hit(club,power,heading){
+    function hit(club,power,heading,position=0){
+        if(!Number.isFinite(position)||Math.abs(position)>1)return false;
         if(state.complete||!['rest'].includes(state.ball.mode))return false;
         if(!fullBag.includes(club)||!Number.isFinite(power)||power<.025||power>1||!Number.isFinite(heading))return false;
         from={x:state.ball.x,z:state.ball.z};
         const profile=course.lieAt?.(from.x,from.z);
-        state.ball=strike(from,course.ground,club,power,heading,course.surface(from.x,from.z),profile);
-        measurement={club,power,startingLie:course.surface(from.x,from.z),
+        const contact=resolveExecution(club,power,position,profile?.id??course.surface(from.x,from.z));
+        state.ball=strike(from,course.ground,club,contact.power,heading+contact.heading,course.surface(from.x,from.z),profile);
+        measurement={club,power,contact:contact.label,startingLie:course.surface(from.x,from.z),
             startingLieLabel:profile?profile.featureName+' · '+profile.label:null,
             carry:0,bounceRoll:0,landed:club==='Putter'};
         state.strokes++;

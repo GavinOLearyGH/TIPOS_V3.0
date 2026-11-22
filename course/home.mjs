@@ -1,3 +1,4 @@
+import {newSeries} from '../core/series.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
 import {courseCatalog} from './catalog.mjs';
@@ -28,3 +29,10 @@ for(const hole of courseCatalog){
     }
     card.querySelector('.hole-art').append(svg);document.getElementById('holes').append(card);
 }
+
+document.getElementById('play-three').onclick=()=>{
+    const id=String(Date.now()),setup={tee:document.getElementById('series-tee').value,wind:'0',mph:'0',speed:'1'};
+    try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(newSeries(id,setup)));}
+    catch{document.getElementById('play-three').textContent='Enable browser storage to play a three-hole round';return;}
+    location.href='./play.html?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
+};
