@@ -1,8 +1,9 @@
+import {drawShotMap,updatePowerRail} from '../core/shot-hud.mjs';
 import {recommendClub,clubLie} from '../core/club-lie.mjs';
 import {gameLinks} from '../core/navigation.mjs';
 import {dayKey,read,write,threeKey,aceKey,startOfficial,submitOfficialShot,publishThree,officialURL,appRoot,totalScore} from '../core/daily-client.mjs';
 import {restoreCompetitionRound,dailyAceSetup} from '../core/competition.mjs';
-import {turnHeading,powerHeight} from '../core/view-controls.mjs';
+import {turnHeading} from '../core/view-controls.mjs';
 import {randomWindSetup,windSetup,windReading} from '../core/wind.mjs';
 import {executionWindow,strikePosition} from '../core/execution.mjs';
 import {newSeries,recordHole,seriesScore,setupKey} from '../core/series.mjs';
@@ -168,9 +169,8 @@ function updateHUD(){
     showSeries();
 }
 function updatePower(){
-    $('power').setAttribute('aria-valuenow',String(Math.round(charge*100)));
-    $('power-fill').style.height=powerHeight(charge)+'%';
-    $('power-label').textContent=Math.round(charge*100)+'%';$('putt-roll').textContent='';
+    updatePowerRail($,charge);
+    $('putt-roll').textContent='';
     if($('club').value!=='Putter'||!editable()){
         return;
     }
@@ -266,34 +266,11 @@ function finishShot(){
     }
     updateHUD();updatePower();drawMap();
 }
-function pointOnMap(point){
-    const b=course.bounds;
-    return {x:12+(point.z-b.minZ)/(b.maxZ-b.minZ)*(minimap.width-24),
-        y:12+(1-(point.x-b.minX)/(b.maxX-b.minX))*(minimap.height-24)};
-}
 function drawMap(){
     if(!round)return;
-    const c=minimap.getContext('2d'),b=course.bounds;
-    c.clearRect(0,0,minimap.width,minimap.height);
-    c.save();
-    c.translate(12,minimap.height-12);
-    c.transform(0,-(minimap.height-24)/atlas.width,(minimap.width-24)/atlas.height,0,0,0);
-    const ab=course.atlasBounds??b;
-    c.drawImage(atlas,(b.minX-ab.minX)/(ab.maxX-ab.minX)*atlas.width,(b.minZ-ab.minZ)/(ab.maxZ-ab.minZ)*atlas.height,
-        (b.maxX-b.minX)/(ab.maxX-ab.minX)*atlas.width,(b.maxZ-b.minZ)/(ab.maxZ-ab.minZ)*atlas.height,0,0,atlas.width,atlas.height);c.restore();
-    for(const feature of course.mapFeatures??[]){c.fillStyle=feature.color;c.beginPath();feature.points.forEach((point,index)=>{const p=pointOnMap(point);if(index)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});c.closePath();c.fill();}
-    if(mapTrail.length){
-        c.strokeStyle='#ffe4a0';c.lineWidth=2.5;c.beginPath();
-        mapTrail.forEach((point,index)=>{const p=pointOnMap(point);if(index)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});
-        c.stroke();
-    }
-    const pin=pointOnMap(round.settings.pin),ball=pointOnMap(round.state.ball);
-    c.fillStyle='#f3cc74';c.beginPath();c.arc(pin.x,pin.y,6,0,Math.PI*2);c.fill();
-    if(editable()){
-        const aim=pointOnMap({x:round.state.ball.x+Math.cos(heading)*28,z:round.state.ball.z+Math.sin(heading)*28});
-        c.strokeStyle='#fff4b8';c.lineWidth=2;c.beginPath();c.moveTo(ball.x,ball.y);c.lineTo(aim.x,aim.y);c.stroke();
-    }
-    c.fillStyle='white';c.strokeStyle='#213322';c.lineWidth=2;c.beginPath();c.arc(ball.x,ball.y,5,0,Math.PI*2);c.fill();c.stroke();
+    const ball=round.state.ball;
+    const aim=editable()?{x:ball.x+Math.cos(heading)*28,z:ball.z+Math.sin(heading)*28}:null;
+    drawShotMap(minimap,atlas,course,{ball,trail:mapTrail,targets:[round.settings.pin],aim});
 }
 function marker(id,point){
     const element=$(id);
