@@ -369,6 +369,7 @@ export const hole6={id:'springhaven-6',number:6,name:'The Springhaven Club - Hol
  mapFeatures:[{points:bridgeCorners,color:'#b6ad95'}],
  atlasBounds:{minX:0,minZ:0,maxX:courseWidth,maxZ:courseDepth},meshes,
  pins:Object.entries(pins).map(([id,p])=>({id,...p})),paths:[],pathWidth:1.8,
+ green:{readRadius:greenComplex.frame.width*scale/2},
  greenBounds:{minX:1120*scale,maxX:1310*scale,minZ:155*scale,maxZ:325*scale},
  aimTarget:(_point,pin)=>pin??pins.middle};}
 };

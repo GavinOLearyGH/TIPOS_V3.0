@@ -64,7 +64,7 @@ export function dailyAceSetup(day){
  const index=((Math.floor(Date.parse(day+'T00:00:00Z')/86400000)%4)+4)%4;
  const options=[['forward','middle',0,0,1],['middle','back',3,6,1.24,189.16,34.66],['forward','back',7,8,1.24],['back','back',0,8,.8,197.15,36.05]];
  const [tee,pin,dir,mph,speed,x,z]=options[index];
- return {tee,pin,speed:String(speed),windModel:'clock-v1',windAngle:String(dir*45),mph:String(mph),windSeed:'ace-v2:'+day,...(x===undefined?{}:{cup:{x,z}})};
+ return {tee,pin,speed:speed===.8?'.8':String(speed),windModel:'clock-v1',windAngle:String(dir*45),mph:String(mph),windSeed:'ace-v2:'+day,...(x===undefined?{}:{cup:{x,z}})};
 }
 function newAceCompetition(day,build,id){
  const setup=dailyAceSetup(day),session={kind:'ace',version:'ace-v2',day,build,id,setup,hole:6,results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};

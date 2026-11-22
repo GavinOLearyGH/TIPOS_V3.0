@@ -76,7 +76,7 @@ if(series){
 }
 if(officialSession){
     weatherSetup=windSetup(officialSession.setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
-    $('tee').value=officialSession.setup.tee;$('pin').value=officialSession.setup.pin??course.pins[0].id;$('green-speed').value=officialSession.setup.speed;
+    $('tee').value=officialSession.setup.tee;$('pin').value=officialSession.setup.pin??course.pins[0].id;$('green-speed').value=Number(officialSession.setup.speed)===.8?'.8':String(Number(officialSession.setup.speed));
     $('course-home').href=appRoot().href;$('course-home').textContent='Daily Challenge';
     $('complete-home').href=appRoot().href;$('complete-home').textContent='Daily Challenge';
     $('round-settings').hidden=true;$('reset').textContent='Daily Challenge';
@@ -86,7 +86,7 @@ if(officialSession){
 if(!officialSession&&requested.has('practiceAce')&&course.number===6){
     const setup=dailyAceSetup(requested.get('practiceAce'));
     weatherSetup=windSetup(setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
-    $('tee').value=setup.tee;$('green-speed').value=setup.speed;
+    $('tee').value=setup.tee;$('green-speed').value=Number(setup.speed)===.8?'.8':String(Number(setup.speed));
     if(setup.cup){course.pins.push({id:'daily',...setup.cup});$('pin').add(new Option('Daily pin','daily'));}
     $('pin').value=setup.cup?'daily':setup.pin;
 }
@@ -321,7 +321,7 @@ function tourView(now){
     $('fade').style.opacity=returning?1-ease((elapsed-9.35)/.35):ease((elapsed-departure)/.35);
     if(returning){$('tour-label').hidden=true;return {...cameraForBall(),greenGrid:false};}
     const u=ease(elapsed/arrival),dx=Math.cos(tour.heading),dz=Math.sin(tour.heading);
-    const breadth=(course.green.readRadius??22)*2;
+    const breadth=(course.green?.readRadius??22)*2;
     const framing=breadth*Math.max(1,1.1/(canvas.clientWidth/canvas.clientHeight));
     const along=mix(-4,tour.distance-framing*.62,u);
     const x=tour.tee.x+dx*along,z=tour.tee.z+dz*along;

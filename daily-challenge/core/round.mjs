@@ -19,6 +19,7 @@ export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
     const startingPin=course.pins.find(item=>item.id===pin);
     if(!startingTee||!startingPin)throw Error('Unknown tee or pin');
     const weather=windProfile?createWind(windProfile):null;
+    greenSpeed=Number.isFinite(Number(greenSpeed))&&Number(greenSpeed)>0?Number(greenSpeed):1;
     const settings={pin:{...startingPin},wind:relativeWind(windDirection,windMph,course.bearing??0),greenSpeed};
     const initialWindTick=Number(windTick);
     const state={ball:newBall(startingTee,course.ground),strokes:0,penalties:0,history:[],complete:false,windTick:Number.isFinite(initialWindTick)?Math.max(0,Math.floor(initialWindTick)):0};
