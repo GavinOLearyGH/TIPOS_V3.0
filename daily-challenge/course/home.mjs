@@ -2,7 +2,7 @@ import {randomWindSetup} from '../core/wind.mjs';
 import {newSeries} from '../core/series.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
-import {courseCatalog} from './catalog.mjs';
+import {playableHoles as courseCatalog} from './catalog.mjs';
 import {surfaceColors} from '../core/renderer.mjs';
 refreshParentWorker();
 document.getElementById('build-version').textContent='Build '+buildId;
@@ -22,7 +22,7 @@ for(const hole of courseCatalog){
     svg.setAttribute('viewBox',[b.minX/k,b.minZ/k,(b.maxX-b.minX)/k,(b.maxZ-b.minZ)/k].join(' '));
     svg.setAttribute('role','img');svg.setAttribute('aria-label','Hole '+hole.number+' overhead layout');
     const shape=(d,fill)=>{const p=document.createElementNS(ns,'path');p.setAttribute('d',d);p.setAttribute('fill',fill);svg.append(p);};
-    for(const kind of ['tee','fairway','surround','green','sand'])if(hole.shapes[kind])shape(hole.shapes[kind],surfaceColors[kind]);
+    for(const kind of ['tee','fairway','surround','water','green','sand','bridge'])if(hole.shapes[kind])shape(hole.shapes[kind],surfaceColors[kind]);
     for(const feature of hole.landforms??[])shape(feature.shape,'#87764d');
     if(hole.pews)for(let i=0;i<hole.pews.count;i++){
         const p=hole.pews,line=document.createElementNS(ns,'path');line.setAttribute('d',`M${p.x+i*p.spacing} ${p.z-p.length/2}v${p.length}`);

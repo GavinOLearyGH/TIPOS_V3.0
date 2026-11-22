@@ -1,5 +1,5 @@
-import {dayKey,read,write,threeKey,startOfficial,submitOfficialShot,publishThree,officialURL,appRoot,totalScore} from '../core/daily-client.mjs';
-import {restoreCompetitionRound} from '../core/competition.mjs';
+import {dayKey,read,write,threeKey,aceKey,startOfficial,submitOfficialShot,publishThree,officialURL,appRoot,totalScore} from '../core/daily-client.mjs';
+import {restoreCompetitionRound,dailyAceSetup} from '../core/competition.mjs';
 import {turnHeading,powerHeight} from '../core/view-controls.mjs';
 import {randomWindSetup,windSetup,windReading} from '../core/wind.mjs';
 import {executionWindow,strikePosition} from '../core/execution.mjs';
@@ -7,7 +7,7 @@ import {newSeries,recordHole,seriesScore,setupKey} from '../core/series.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
-import {holeByNumber,courseCatalog} from './catalog.mjs';
+import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
 import {createCourse} from '../core/course.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
@@ -16,11 +16,12 @@ import {clubs,ballRadius,stepTime,clamp,mix,ease,estimatePutt} from '../core/phy
 const $=id=>document.getElementById(id);
 const requested=new URLSearchParams(location.search);
 let officialSession=null,officialBusy=false,pendingShot=null;
-if(requested.has('official')){
+const officialDay=requested.get('ace')??requested.get('official'),isAce=requested.has('ace');
+if(officialDay){
     $('course-home').href=appRoot().href;$('course-home').textContent='Daily Challenge';
     try{
-        if(requested.get('official')!==dayKey())throw Error('This daily challenge has closed. Return to Daily Challenge to play today.');
-        officialSession=await startOfficial();
+        if(officialDay!==dayKey())throw Error('This daily challenge has closed. Return to Daily Challenge to play today.');
+        officialSession=await startOfficial(isAce?'ace':'three');
         if(officialSession.build!==buildId){location.replace(officialURL(officialSession));throw Error('Opening your saved round version…');}
     }catch(error){$('render-error').hidden=false;$('render-error').textContent=error.message;$('stage').hidden=true;throw error;}
 }
@@ -34,9 +35,10 @@ const bearing=(a,b)=>Math.atan2(b.z-a.z,b.x-a.x);
 const resting=ball=>!['air','roll','drop'].includes(ball.mode);
 const lieNames={tee:'Tee box',fairway:'Fairway',rough:'Rough',green:'Green',surround:'Green surround',sand:'Bunker',path:'Cart path'};
 function options(id,items){for(const [value,label] of items)$(id).add(new Option(label,value));}
-options('hole',courseCatalog.map(hole=>[hole.number,'Hole '+hole.number+' · Par '+hole.par]));
+options('hole',playableHoles.map(hole=>[hole.number,'Hole '+hole.number+' · Par '+hole.par]));
 $('hole').value=String(course.number);
 options('tee',course.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
+options('pin',course.pins.map(pin=>[pin.id,pin.id.replace(/([A-Z])/g,' $1')]));
 options('club',fullBag.map(name=>[name,name+(clubs[name].carry?' · '+clubs[name].carry+' yd':'')]));
 options('wind',Array.from({length:12},(_,index)=>[index*30,(index||12)+' o’clock'+(index===0?' · toward green':index===3?' · right':index===6?' · toward tee':index===9?' · left':'')]));
 function setWindAngle(value){
@@ -74,26 +76,34 @@ if(series){
 }
 if(officialSession){
     weatherSetup=windSetup(officialSession.setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
-    $('tee').value=officialSession.setup.tee;$('green-speed').value=officialSession.setup.speed;
+    $('tee').value=officialSession.setup.tee;$('pin').value=officialSession.setup.pin??course.pins[0].id;$('green-speed').value=officialSession.setup.speed;
     $('course-home').href=appRoot().href;$('course-home').textContent='Daily Challenge';
     $('complete-home').href=appRoot().href;$('complete-home').textContent='Daily Challenge';
     $('round-settings').hidden=true;$('reset').textContent='Daily Challenge';
-    const pending=read('irish-par-three-pending:'+officialSession.day);
+    const pending=read(pendingKey());
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
+}
+if(!officialSession&&requested.has('practiceAce')&&course.number===6){
+    const setup=dailyAceSetup(requested.get('practiceAce'));
+    weatherSetup=windSetup(setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
+    $('tee').value=setup.tee;$('green-speed').value=setup.speed;
+    if(setup.cup){course.pins.push({id:'daily',...setup.cup});$('pin').add(new Option('Daily pin','daily'));}
+    $('pin').value=setup.cup?'daily':setup.pin;
 }
 const requestedWindTick=Number(series?.windStarts?.[course.number]??series?.windTick??requested.get('windTick'));
 const holeWindTick=Number.isFinite(requestedWindTick)?Math.max(0,Math.floor(requestedWindTick)):0;
 if(series&&series.results.length<course.number-1)location.replace(holeURL(series.results.length+1));
+function pendingKey(){return 'irish-par-'+(officialSession?.kind==='ace'?'ace':'three')+'-pending:'+officialSession.day;}
 function saveSeries(){try{sessionStorage.setItem('irish-par-series-'+series.id,JSON.stringify(series));}catch{}}
 function showSeries(){
     if(officialSession){
-        $('series-status').hidden=false;$('series-status').textContent='Official Three-Hole Challenge · Par 12 · Hole '+officialSession.hole+' of 3 · '+totalScore(officialSession)+' strokes';
-        for(const id of ['hole','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
+        $('series-status').hidden=false;$('series-status').textContent=officialSession.kind==='ace'?'Official Hole-in-One Challenge · Hole 6 · First shot counts':'Official Three-Hole Challenge · Par 12 · Hole '+officialSession.hole+' of 3 · '+totalScore(officialSession)+' strokes';
+        for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
         return;
     }
     if(!series)return;
     const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));$('series-status').textContent='Play 3 · Par 12 · Hole '+course.number+' of 3 · '+running+' strokes';
-    for(const id of ['hole','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
+    for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
 }
 function drawStrike(now){
     const show=editable()&&strikeStarted!==null&&$('club').value!=='Putter';
@@ -143,7 +153,7 @@ function updateHUD(){
     $('green-grid').hidden=!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
     const locked=active()||!!tour||officialBusy;
-    for(const id of ['club','reset','hole','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
+    for(const id of ['club','reset','hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
     $('club').disabled=locked||round.state.complete||!renderer;
     $('reload-build').disabled=active();
     $('face-pin').disabled=!editable()||!!drag||!!turnDrag;
@@ -175,11 +185,11 @@ function startRound(){
     cancel();tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
     if($('complete').open)$('complete').close();
     weatherSetup=windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value});
-    round=officialSession?restoreCompetitionRound(officialSession):createRound(course,{tee:$('tee').value,windProfile:weatherSetup,windTick:holeWindTick,
+    round=officialSession?restoreCompetitionRound(officialSession):createRound(course,{tee:$('tee').value,pin:$('pin').value,windProfile:weatherSetup,windTick:holeWindTick,
         greenSpeed:Number($('green-speed').value)});
     const tee=course.tees.find(item=>item.id===$('tee').value);
-    $('setup-label').textContent=tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · Center pin';
-    heading=bearing(round.state.ball,course.aimTarget(round.state.ball));
+    $('setup-label').textContent=tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · '+round.settings.pin.id+' pin';
+    heading=bearing(round.state.ball,course.aimTarget(round.state.ball,round.settings.pin));
     trail=[];mapTrail=[];eye=null;target=null;accumulator=0;preview=null;
     $('shot-summary').hidden=true;
     suggestClub();updatePower();updateHUD();drawMap();
@@ -191,12 +201,12 @@ function shoot(){
     const position=strikeStarted===null?0:strikePosition(performance.now()-strikeStarted);
     if(officialSession){
         pendingShot={hole:course.number,club:$('club').value,power:charge,heading:Math.atan2(Math.sin(heading),Math.cos(heading)),position,releaseTick:round.state.windTick};
-        try{write('irish-par-three-pending:'+officialSession.day,{id:officialSession.id,revision:officialSession.revision,shot:pendingShot});}
+        try{write(pendingKey(),{id:officialSession.id,revision:officialSession.revision,shot:pendingShot});}
         catch{$('status').textContent='Allow browser storage before taking an official shot.';pendingShot=null;cancel();return;}
     }
     const played=round.hit($('club').value,charge,heading,position);
     cancel();
-    if(!played){if(officialSession){pendingShot=null;try{localStorage.removeItem('irish-par-three-pending:'+officialSession.day);}catch{}}return;}
+    if(!played){if(officialSession){pendingShot=null;try{localStorage.removeItem(pendingKey());}catch{}}return;}
     trail=[];mapTrail=[{...round.state.ball}];lastTrail=0;accumulator=0;
     $('shot-summary').hidden=true;
     $('status').textContent='Ball in play.';
@@ -213,7 +223,7 @@ function finishShot(){
     $('shot-summary-detail').textContent=Math.round(metrics.power*100)+'% · '+metrics.contact+' · From '+(metrics.startingLieLabel??lieNames[metrics.startingLie])+
         (last.outcome==='out'?' · Out of bounds':last.outcome==='water'?' · Water':last.outcome==='holed'?' · Holed':'');
     $('shot-summary').hidden=false;
-    heading=bearing(ball,course.aimTarget(ball));
+    heading=bearing(ball,course.aimTarget(ball,round.settings.pin));
     trail=[];eye=null;target=null;preview=null;
     if(round.state.complete){
         const relative=round.state.strokes-course.par;
@@ -264,7 +274,10 @@ function drawMap(){
     c.save();
     c.translate(12,minimap.height-12);
     c.transform(0,-(minimap.height-24)/atlas.width,(minimap.width-24)/atlas.height,0,0,0);
-    c.drawImage(atlas,0,0);c.restore();
+    const ab=course.atlasBounds??b;
+    c.drawImage(atlas,(b.minX-ab.minX)/(ab.maxX-ab.minX)*atlas.width,(b.minZ-ab.minZ)/(ab.maxZ-ab.minZ)*atlas.height,
+        (b.maxX-b.minX)/(ab.maxX-ab.minX)*atlas.width,(b.maxZ-b.minZ)/(ab.maxZ-ab.minZ)*atlas.height,0,0,atlas.width,atlas.height);c.restore();
+    for(const feature of course.mapFeatures??[]){c.fillStyle=feature.color;c.beginPath();feature.points.forEach((point,index)=>{const p=pointOnMap(point);if(index)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});c.closePath();c.fill();}
     if(mapTrail.length){
         c.strokeStyle='#ffe4a0';c.lineWidth=2.5;c.beginPath();
         mapTrail.forEach((point,index)=>{const p=pointOnMap(point);if(index)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});
@@ -429,6 +442,7 @@ function holeURL(number){
 }
 $('hole').onchange=()=>{
     const selected=$('tee').value,hole=holeByNumber($('hole').value);
+    $('pin').replaceChildren();options('pin',createCourse(hole).pins.map(pin=>[pin.id,pin.id]));
     $('tee').replaceChildren();options('tee',hole.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
     if(hole.tees.some(tee=>tee.id===selected))$('tee').value=selected;
 };
@@ -448,24 +462,27 @@ $('complete').addEventListener('close',()=>updateHUD());
 
 function startDailyPractice(){
     const setup=officialSession.setup,id=String(Date.now());
+    if(officialSession.kind==='ace'){location.href=new URL('course/play.html',appRoot()).href+'?hole=6&practiceAce='+officialSession.day+'&build='+buildId;return;}
     try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(newSeries(id,setup)));}
     catch{$('status').textContent='Allow browser storage to play a practice round.';return;}
     location.href=new URL('course/play.html',appRoot()).href+'?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 }
 function showOfficialDialog(){
-    const completed=officialSession.status==='completed';
-    $('complete-title').textContent=completed?'Official result':'Hole '+course.number+' complete';
-    $('complete-detail').textContent=completed?totalScore(officialSession)+' strokes · '+(totalScore(officialSession)-12===0?'Even par':(totalScore(officialSession)>12?'+':'')+(totalScore(officialSession)-12))+' · Par 12':
+    const completed=officialSession.status==='completed',aceMode=officialSession.kind==='ace';
+    $('complete-title').textContent=aceMode?'Official result':completed?'Official result':'Hole '+course.number+' complete';
+    $('complete-detail').textContent=aceMode?(officialSession.ace?'Hole in one!':officialSession.outcome==='in-play'?(officialSession.mm/304.8).toFixed(1)+' ft to the pin':(officialSession.outcome==='water'?'Water':'Out of play')+' · Streak kept'):completed?totalScore(officialSession)+' strokes · '+(totalScore(officialSession)-12===0?'Even par':(totalScore(officialSession)>12?'+':'')+(totalScore(officialSession)-12))+' · Par 12':
         totalScore(officialSession)+' strokes so far · Your round is saved.';
     $('series-replay').hidden=$('series-new').hidden=true;$('series-best').textContent='';
     $('series-card').replaceChildren();
     for(const row of officialSession.results){const line=document.createElement('p');line.textContent='Hole '+row.hole+' · '+row.strokes+' strokes'+(row.penalties?' · '+row.penalties+' penalties':'');$('series-card').append(line);}
     $('official-result').hidden=!completed;
+    $('official-detail').hidden=aceMode;
     $('official-detail').textContent='Hole 3 tee-shot tiebreaker: '+(officialSession.tieValid?(officialSession.tieMM===0?'Hole in one':(officialSession.tieMM/304.8).toFixed(1)+' ft'):'Penalty · behind in-play results');
     $('official-name').value=officialSession.name||read('springhaven-player-name')||'';
+    $('publish-official').hidden=aceMode&&officialSession.outcome!=='in-play';$('official-name').hidden=$('publish-official').hidden;
     $('publish-official').disabled=Boolean(officialSession.name);$('official-name').disabled=Boolean(officialSession.name);
     $('official-post-status').textContent=officialSession.name?'Official score saved.':'Your official result is saved. Add a name to appear on the leaderboard.';
-    $('official-board').href=new URL('?board=three#leaderboards',appRoot()).href;
+    $('official-board').href=new URL('?board='+(aceMode?'ace':'three')+'#leaderboards',appRoot()).href;
     $('next-hole').hidden=completed;$('next-hole').href=officialURL(officialSession);$('next-hole').textContent='Play Hole '+officialSession.hole;
     $('replay').textContent='Play again for practice';$('review-official').hidden=false;
     if(!$('complete').open)$('complete').showModal();
@@ -475,12 +492,12 @@ async function finishOfficialShot(){
     officialBusy=true;$('retry-official').hidden=true;$('status').textContent='Saving your official shot…';updateHUD();
     try{
         const next=await submitOfficialShot(officialSession,pendingShot);officialSession=next;pendingShot=null;
-        try{localStorage.removeItem('irish-par-three-pending:'+next.day);}catch{}
+        try{localStorage.removeItem(pendingKey());}catch{}
         if(next.hole!==course.number||next.status==='completed'){
             round.state.complete=true;showOfficialDialog();
-            $('status').textContent=next.status==='completed'?'Official round complete · Streak kept.':'Hole complete · Saved. Continue when ready.';
+            $('status').textContent=next.status==='completed'?(next.kind==='ace'?'Official shot complete · Streak kept.':'Official round complete · Streak kept.'):'Hole complete · Saved. Continue when ready.';
         }else{
-            round=restoreCompetitionRound(next);heading=bearing(round.state.ball,course.aimTarget(round.state.ball));
+            round=restoreCompetitionRound(next);heading=bearing(round.state.ball,course.aimTarget(round.state.ball,round.settings.pin));
             const metrics=round.state.history.at(-1)?.metrics;
             if(metrics){$('shot-summary-title').textContent='Official shot '+round.state.history.length+' · '+metrics.club;
                 $('shot-summary-detail').textContent=metrics.contact+' · Saved';

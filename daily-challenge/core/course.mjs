@@ -2,6 +2,7 @@ import {geometryPath,containsPoint} from './geometry.mjs';
 import {clamp,ease} from './physics.mjs';
 
 export function createCourse(definition){
+    if(definition.create)return definition.create();
     const unit=definition.plan.metresPerUnit;
     const paths=Object.fromEntries(Object.entries(definition.shapes).map(([key,path])=>[key,geometryPath(path)]));
     const contains=(key,x,z)=>paths[key]&&containsPoint(paths[key],x/unit,z/unit);

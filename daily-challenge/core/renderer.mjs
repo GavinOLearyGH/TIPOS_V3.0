@@ -2,17 +2,17 @@ import {clamp} from './physics.mjs';
 import {createVisuals} from './visuals.mjs';
 
 export const surfaceColors={rough:'#4e6c40',tee:'#78a66b',fairway:'#7da65c',
-    surround:'#668a4f',green:'#92b864',sand:'#d7be88',path:'#98998a'};
+    bridge:'#a69677',water:'#356a7e',teeArea:'#577b46',surround:'#668a4f',green:'#92b864',sand:'#d7be88',path:'#98998a'};
 
 export function makeAtlas(course){
     const map=document.createElement('canvas');
     map.width=2048;map.height=512;
-    const c=map.getContext('2d'),b=course.bounds,unit=course.plan.metresPerUnit;
+    const c=map.getContext('2d'),b=course.atlasBounds??course.bounds,unit=course.plan.metresPerUnit;
     c.scale(map.width/(b.maxX-b.minX),map.height/(b.maxZ-b.minZ));
     c.translate(-b.minX,-b.minZ);
     c.fillStyle=surfaceColors.rough;c.fillRect(b.minX,b.minZ,b.maxX-b.minX,b.maxZ-b.minZ);
     c.save();c.scale(unit,unit);
-    for(const kind of ['tee','fairway','surround','green','sand']){
+    for(const kind of ['teeArea','tee','fairway','surround','water','green','sand']){
         if(!course.shapes[kind])continue;
         c.fillStyle=surfaceColors[kind];c.fill(new Path2D(course.shapes[kind]));
     }
@@ -43,7 +43,7 @@ export function makeAtlas(course){
 export function createRenderer(canvas,course,atlas){
     const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
     if(!gl)throw Error('This browser could not start 3D graphics. Enable graphics acceleration and reload.');
-    const b=course.bounds;
+    const b=course.atlasBounds??course.bounds;
     const vertex=`
         attribute vec3 a,c;uniform vec3 eye,right,up,forward;
         uniform float ratio;varying vec3 world,color;varying float depth;
@@ -60,7 +60,10 @@ export function createRenderer(canvas,course,atlas){
             if(kind>.5){
                 vec2 uv=(world.xz-vec2(${b.minX.toFixed(5)},${b.minZ.toFixed(5)}))/vec2(${(b.maxX-b.minX).toFixed(5)},${(b.maxZ-b.minZ).toFixed(5)});
                 float grain=fract(sin(dot(floor(world.xz*42.),vec2(12.9898,78.233)))*43758.5453)*.055;
-                ink=texture2D(atlas,uv).rgb*color*(.95+grain);
+                vec3 sampleColor=texture2D(atlas,uv).rgb;
+                bool pond=sampleColor.b>sampleColor.g+.035&&sampleColor.b>sampleColor.r+.12;
+                if(kind>1.5&&kind<3.5){if(kind<2.5&&!pond)discard;float ripple=sin(world.x*5.4+sin(world.z*3.6))*sin(world.z*5.4)*.035;ink=vec3(.22,.45,.53)+ripple;}
+                else{if(${course.meshes?'true':'false'}&&kind<1.5&&pond)discard;if(pond)sampleColor=vec3(.36,.49,.30);ink=sampleColor*color*(.95+grain);}
             }
             gl_FragColor=vec4(mix(ink,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)),opacity);
         }`;
@@ -97,6 +100,7 @@ export function createRenderer(canvas,course,atlas){
         return {handle,count:vertices.length/6};
     }
     const terrain=[],scenery=[];
+    const custom=course.meshes?.({...visuals,post:visuals.post});
     const unit=course.renderStep??1.15;
     // Sample each terrain vertex once, including the finer church-pew relief.
     const nx=Math.ceil((b.maxX-b.minX)/unit),nz=Math.ceil((b.maxZ-b.minZ)/unit);
@@ -104,7 +108,7 @@ export function createRenderer(canvas,course,atlas){
     const zs=Array.from({length:nz+1},(_,i)=>Math.min(b.minZ+i*unit,b.maxZ));
     const heights=xs.map(x=>zs.map(z=>course.ground(x,z)));
     const point=(i,j)=>[xs[i],heights[i][j],zs[j]];
-    for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){
+    if(!custom)for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){
         const slope=(heights[i+1][j]-heights[i][j])/(xs[i+1]-xs[i]);
         const crossSlope=(heights[i][j+1]-heights[i][j])/(zs[j+1]-zs[j]);
         const shade=clamp(1-slope*.25-crossSlope*.18,.74,1.12);
@@ -126,6 +130,7 @@ export function createRenderer(canvas,course,atlas){
         quad(scenery,left,right,corners[2],corners[3],[.39,.39,.34]);
     }
     for(const stake of course.boundaryStakes??[])box(scenery,stake.x,course.ground(stake.x,stake.z),stake.z,.1,.7,.1,[.94,.94,.84]);
+    const customBuffers=custom?.map(mesh=>({buffer:upload(mesh.vertices),kind:mesh.kind}));
     const groundBuffer=upload(terrain),sceneryBuffer=upload(scenery),mobile=gl.createBuffer();
     const dot=(a,b)=>a.reduce((s,n,i)=>s+n*b[i],0);
     const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -148,7 +153,7 @@ export function createRenderer(canvas,course,atlas){
         for(const name of ['eye','forward','right','up'])gl.uniform3fv(uniforms[name],camera[name]);
         gl.uniform1f(uniforms.ratio,camera.ratio);
         gl.clearColor(.58,.76,.83,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-        draw(groundBuffer,1);draw(sceneryBuffer,0);
+        if(customBuffers){for(const item of customBuffers)draw(item.buffer,item.kind);}else draw(groundBuffer,1);draw(sceneryBuffer,0);
         visuals.drawFrame({pin,ball,aim,trail,flying,
             gridTick:greenGrid?Math.floor(time/50):null,readOpacity});
     }
