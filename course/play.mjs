@@ -1,5 +1,5 @@
 import {turnHeading,powerHeight} from '../core/view-controls.mjs';
-import {randomWind} from '../core/wind-setup.mjs';
+import {randomWindSetup,windSetup,windReading} from '../core/wind.mjs';
 import {executionWindow,strikePosition} from '../core/execution.mjs';
 import {newSeries,recordHole,seriesScore,setupKey} from '../core/series.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
@@ -9,7 +9,7 @@ import {holeByNumber,courseCatalog} from './catalog.mjs';
 import {createCourse} from '../core/course.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
-import {clubs,ballRadius,stepTime,clamp,mix,ease,windDirections,estimatePutt} from '../core/physics.mjs';
+import {clubs,ballRadius,stepTime,clamp,mix,ease,estimatePutt} from '../core/physics.mjs';
 
 const $=id=>document.getElementById(id);
 const requested=new URLSearchParams(location.search),definition=holeByNumber(requested.get('hole')||1);
@@ -26,14 +26,18 @@ options('hole',courseCatalog.map(hole=>[hole.number,'Hole '+hole.number+' · Par
 $('hole').value=String(course.number);
 options('tee',course.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
 options('club',fullBag.map(name=>[name,name+(clubs[name].carry?' · '+clubs[name].carry+' yd':'')]));
-options('wind',['Toward Hole 1 green','Hole 1 green / right','Across Hole 1 right','Hole 1 tee / right','Toward Hole 1 tee','Hole 1 tee / left','Across Hole 1 left','Hole 1 green / left'].map((name,index)=>[index,name]));
+options('wind',Array.from({length:12},(_,index)=>[index*30,(index||12)+' o’clock'+(index===0?' · toward green':index===3?' · right':index===6?' · toward tee':index===9?' · left':'')]));
+function setWindAngle(value){
+    if(![...$('wind').options].some(option=>option.value===String(value)))$('wind').add(new Option(value+'° · previous setup',value));
+    $('wind').value=String(value);
+}
+let weatherSetup=(!requested.has('windAngle')&&!requested.has('wind')&&!requested.has('mph'))?
+    randomWindSetup():windSetup(Object.fromEntries(requested),'practice-'+Date.now());
+setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
 $('hole-title').textContent='Hole '+course.number+' · Par '+course.par;
 $('about-copy').textContent=course.about??'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
-if(!requested.has('wind')&&!requested.has('mph')){const wind=randomWind();$('wind').value=wind.wind;$('wind-speed').value=wind.mph;}
-for(const [key,id,allowed] of [['wind','wind',null],['mph','wind-speed',null],['speed','green-speed',['.8','1','1.24']]]){
-    const value=requested.get(key);if(value!==null&&(!allowed||allowed.includes(value)))$(id).value=value;
-}
+if(['.8','1','1.24'].includes(requested.get('speed')))$('green-speed').value=requested.get('speed');
 $('replay').textContent='Replay Hole '+course.number;
 document.title='The Irish Par · '+course.name;
 $('build-version').textContent='Build '+buildId;
@@ -41,7 +45,7 @@ refreshParentWorker();
 
 const atlas=makeAtlas(course);
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
-let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,preview=null,animationId,frameNumber=0,showGreenGrid=true;
+let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,preview=null,animationId,frameNumber=0,showGreenGrid=true,windPaused=document.hidden;
 const active=()=>round&&!resting(round.state.ball);
 const editable=()=>renderer&&round&&!active()&&!tour&&!round.state.complete&&!$('complete').open;
 
@@ -50,10 +54,14 @@ try{series=JSON.parse(sessionStorage.getItem('irish-par-series-'+requested.get('
 catch{}
 if(series&&(!series.setup||!Array.isArray(series.results)||!requested.get('series')||series.id!==requested.get('series')))series=null;
 if(series){
-    if(series.results.length<course.number-1){location.replace(holeURL(series.results.length+1));}
-    for(const [key,id] of [['tee','tee'],['wind','wind'],['mph','wind-speed'],['speed','green-speed']])$(id).value=series.setup[key];
+    series.setup={...series.setup,...windSetup(series.setup,'series-'+series.id)};delete series.setup.wind;
+    weatherSetup=windSetup(series.setup);setWindAngle(weatherSetup.windAngle);
+    for(const [key,id] of [['tee','tee'],['mph','wind-speed'],['speed','green-speed']])$(id).value=series.setup[key];
     $('series-status').hidden=false;
 }
+const requestedWindTick=Number(series?.windStarts?.[course.number]??series?.windTick??requested.get('windTick'));
+const holeWindTick=Number.isFinite(requestedWindTick)?Math.max(0,Math.floor(requestedWindTick)):0;
+if(series&&series.results.length<course.number-1)location.replace(holeURL(series.results.length+1));
 function saveSeries(){try{sessionStorage.setItem('irish-par-series-'+series.id,JSON.stringify(series));}catch{}}
 function showSeries(){
     if(!series)return;
@@ -69,7 +77,7 @@ function drawStrike(now){
 }
 function replaySeries(random=false){
     const id=String(Date.now()),setup={...series.setup};
-    if(random)Object.assign(setup,randomWind());
+    if(random)Object.assign(setup,randomWindSetup());
     const fresh=newSeries(id,setup);try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(fresh));}catch{return;}
     location.href='./play.html?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 }
@@ -80,6 +88,13 @@ function suggestClub(){
     $('club').value=lie==='green'?'Putter':lie==='sand'?'SW':
         [...fullBag].reverse().find(name=>clubs[name].carry>=carry)||'Driver';
 }
+function updateWindDisplay(){
+    if(!round)return;
+    const reading=windReading(round.settings.wind,heading);
+    $('wind-arrow').style.transform='rotate('+reading.rotation+'deg)';$('wind-arrow').hidden=reading.calm;
+    $('wind-text').textContent=reading.text;
+    $('wind-label').setAttribute('aria-label',reading.text+'; direction the wind blows relative to your aim');
+}
 function updateHUD(){
     if(!round)return;
     const ball=round.state.ball,pin=round.settings.pin,metres=distance(ball,pin);
@@ -88,10 +103,7 @@ function updateHUD(){
     $('lie').textContent=profile?profile.featureName+' · '+profile.label:lieNames[course.surface(ball.x,ball.z)]||ball.mode;
     $('score-label').textContent=round.state.strokes+' '+(round.state.strokes===1?'stroke':'strokes')+
         (round.state.penalties?' · '+round.state.penalties+' penalty':'');
-    const wind=round.settings.wind,speed=Math.hypot(wind.x,wind.z)/.44704;
-    const relative=Math.atan2(wind.z,wind.x)-heading;
-    const labels=['tailwind','tail/right','left to right','head/right','headwind','head/left','right to left','tail/left'];
-    $('wind-label').textContent=speed<.01?'Calm':['↑','↗','→','↘','↓','↙','←','↖'][((Math.round(relative/(Math.PI/4))%8)+8)%8]+' '+Math.round(speed)+' mph · '+labels[((Math.round(relative/(Math.PI/4))%8)+8)%8];
+    updateWindDisplay();
     const putting=$('club').value==='Putter',onGreen=course.surface(ball.x,ball.z)==='green';
     $('slope').hidden=!putting||!onGreen||active()||!!tour;
     if(putting&&onGreen){
@@ -132,11 +144,12 @@ function cancel(){
     for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
 }
 function startRound(){
-    if(series){series={...series,results:series.results.filter(row=>row.hole<course.number)};saveSeries();}
+    if(series){series={...series,windStarts:{...Object.fromEntries(Object.entries(series.windStarts??{}).filter(([hole])=>Number(hole)<course.number)),[course.number]:holeWindTick},results:series.results.filter(row=>row.hole<course.number)};saveSeries();}
     cancel();tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
     if($('complete').open)$('complete').close();
-    round=createRound(course,{tee:$('tee').value,windDirection:Number($('wind').value),
-        windMph:clamp(Number($('wind-speed').value)||0,0,25),greenSpeed:Number($('green-speed').value)});
+    weatherSetup=windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value});
+    round=createRound(course,{tee:$('tee').value,windProfile:weatherSetup,windTick:holeWindTick,
+        greenSpeed:Number($('green-speed').value)});
     const tee=course.tees.find(item=>item.id===$('tee').value);
     $('setup-label').textContent=tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · Center pin';
     heading=bearing(round.state.ball,course.aimTarget(round.state.ball));
@@ -179,7 +192,7 @@ function finishShot(){
         const next=courseCatalog.find(hole=>hole.number>course.number);
         $('next-hole').hidden=!next;if(next){$('next-hole').href=holeURL(next.number);$('next-hole').textContent='Play Hole '+next.number;}
         if(series){
-            series=recordHole(series,course.number,round.state.strokes,round.state.penalties);saveSeries();
+            series=recordHole(series,course.number,round.state.strokes,round.state.penalties);series.windTick=round.state.windTick;saveSeries();
             const total=seriesScore(series),card=$('series-card');card.replaceChildren();
             const table=document.createElement('table');
             for(const row of [{hole:'Hole',strokes:'Strokes',penalties:'Penalties'},...series.results]){
@@ -296,9 +309,12 @@ function frame(now){
     const dt=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));lastTime=now;
     if(!renderer)return;
     if(keyStarted!==null)setPower((now-keyStarted)/1350);
-    if(active()){
+    const wasActive=active();
+    if(!windPaused&&!document.hidden&&!tour&&!round.state.complete&&!$('complete').open){
         accumulator+=dt;
-        while(accumulator>=stepTime&&active()){round.step();accumulator-=stepTime;}
+        while(accumulator>=stepTime&&!round.state.complete){round.step();accumulator-=stepTime;}
+    }else accumulator=0;
+    if(wasActive){
         const ball=round.state.ball;
         if(ball.time-lastTrail>.04){
             lastTrail=ball.time;trail.push({...ball});mapTrail.push({...ball});
@@ -322,6 +338,7 @@ function frame(now){
     const ahead=ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength}:null;
     marker('aim-ring',ahead?renderer.project({...ahead,y:course.ground(ahead.x,ahead.z)+.06}):null);
     pullGraphics(anchor);
+    updateWindDisplay();
     if(frameNumber++%5===0){updateHUD();drawMap();}
     animationId=requestAnimationFrame(frame);
 }
@@ -362,14 +379,16 @@ window.addEventListener('keydown',event=>{
 window.addEventListener('keyup',event=>{
     if(event.code==='Space'&&keyStarted!==null){event.preventDefault();keyStarted=null;shoot();}
 });
-window.addEventListener('blur',cancel);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel();lastTime=0;});
+window.addEventListener('blur',()=>{windPaused=true;lastTime=0;cancel();});
+window.addEventListener('focus',()=>{windPaused=document.hidden;lastTime=0;});
+document.addEventListener('visibilitychange',()=>{windPaused=document.hidden;accumulator=0;if(document.hidden)cancel();lastTime=0;});
+$('next-hole').addEventListener('click',()=>{const next=courseCatalog.find(hole=>hole.number>course.number);if(next)$('next-hole').href=holeURL(next.number);});
 $('face-pin').onclick=()=>{if(!editable()||drag||turnDrag)return;heading=bearing(round.state.ball,round.settings.pin);preview=null;updatePower();updateHUD();};
 $('green-grid').onclick=()=>{showGreenGrid=!showGreenGrid;updateHUD();};
 $('club').onchange=()=>{cancel();preview=null;updateHUD();};
 function holeURL(number){
-    const query=new URLSearchParams({hole:number,tee:$('tee').value,wind:$('wind').value,
-        mph:$('wind-speed').value,speed:$('green-speed').value,build:buildId});
+    const query=new URLSearchParams({hole:number,tee:$('tee').value,...windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value}),
+        windTick:round?.state.windTick??holeWindTick,speed:$('green-speed').value,build:buildId});
     if(series)query.set('series',series.id);
     return './play.html?'+query;
 }
