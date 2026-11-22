@@ -91,7 +91,7 @@ function updateHUD(){
     const wind=round.settings.wind,speed=Math.hypot(wind.x,wind.z)/.44704;
     const relative=Math.atan2(wind.z,wind.x)-heading;
     const labels=['tailwind','tail/right','left to right','head/right','headwind','head/left','right to left','tail/left'];
-    $('wind-label').textContent=speed<.01?'Calm':['↑','↗','→','↘','↓','↙','←','↖'][(Math.round(relative/(Math.PI/4))+8)%8]+' '+Math.round(speed)+' mph · '+labels[(Math.round(relative/(Math.PI/4))+8)%8];
+    $('wind-label').textContent=speed<.01?'Calm':['↑','↗','→','↘','↓','↙','←','↖'][((Math.round(relative/(Math.PI/4))%8)+8)%8]+' '+Math.round(speed)+' mph · '+labels[((Math.round(relative/(Math.PI/4))%8)+8)%8];
     const putting=$('club').value==='Putter',onGreen=course.surface(ball.x,ball.z)==='green';
     $('slope').hidden=!putting||!onGreen||active()||!!tour;
     if(putting&&onGreen){
