@@ -155,6 +155,7 @@ function updateHUD(){
     }
     $('green-grid').hidden=!tour?.reading&&!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
+    $('green-grid').textContent=showGreenGrid?'Hide green grid':'Show green grid';
     const locked=active()||!!tour||officialBusy;
     for(const id of ['club','reset','hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
     $('club').disabled=locked||round.state.complete||!renderer;
@@ -162,7 +163,6 @@ function updateHUD(){
     $('face-pin').disabled=!editable()||!!drag||!!turnDrag;
     $('flyover').disabled=active()||!renderer||$('complete').open||officialBusy||Boolean(officialSession&&pendingShot);
     $('flyover').textContent=tour?.reading?'Back to shot':tour?'Skip flyover':'Flyover';
-    $('read-green').disabled=!editable();
     if(tour?.reading)$('stage').classList.add('reading-green');
     else $('stage').classList.remove('reading-green');
     showSeries();
@@ -314,13 +314,6 @@ $('flyover').onclick=()=>{
     cancel();
     const tee=course.tees.find(t=>t.id===$('tee').value),pin=round.settings.pin;
     tour={start:null,tee,heading:bearing(tee,pin)};
-    updateHUD();
-};
-$('read-green').onclick=()=>{
-    if(!editable()||drag||turnDrag||keyStarted!==null)return;
-    cancel();
-    const tee=course.tees.find(t=>t.id===$('tee').value),pin=round.settings.pin;
-    tour={reading:true,heading:bearing(tee,pin)};
     updateHUD();
 };
 function tourView(now){
