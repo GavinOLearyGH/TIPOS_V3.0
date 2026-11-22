@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-18e4394cc0"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-18e4394cc0/course/style.css"></head>
+<html lang="en"><head><meta name="course-build" content="0.3.0-8dd6313126"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-8dd6313126/course/style.css"></head>
 <body><main>
 <header><div><div class="brand">THE IRISH PAR · COURSE PLAY</div><h1 class="play-title" id="hole-title">The Springhaven Club</h1></div><a href="./">Course</a></header>
 <div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
@@ -7,7 +7,9 @@
 <div id="render-error" hidden role="alert"></div>
 <div class="stage" id="stage">
 <canvas id="scene" tabindex="0" aria-label="First-person course view. Drag down from the ball for power, slide left to aim right, and release to swing." aria-describedby="instructions"></canvas>
-<div class="left-hud"><div class="hud"><span id="distance"></span><span id="lie"></span><span id="wind-label"></span><span id="slope" hidden></span></div><label class="power-panel"><span id="power-label">Power · 0%</span><progress id="power" max="100" value="0"></progress></label></div>
+<div class="left-hud"><div class="hud"><span id="distance"></span><span id="lie"></span><span id="wind-label"></span><span id="slope" hidden></span></div></div>
+<div class="power-rail" aria-label="Shot power"><span id="power-label">0%</span><div id="power" role="progressbar" aria-label="Shot power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="power-fill"></i></div><span id="putt-roll"></span></div>
+<button id="face-pin" type="button">Face pin</button>
 <button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button>
 <button id="flyover" type="button">Flyover</button>
 <div class="map"><canvas id="map" width="180" height="510" role="img" aria-label="Overhead hole map. Tee at the bottom, green at the top, with live ball position."></canvas></div>
@@ -16,7 +18,7 @@
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 <span id="tour-label" hidden>Green read · Downhill direction</span><div id="fade" hidden></div>
 </div>
-<div class="under-game"><p id="instructions">Drag the ball down for power. Slide left to aim right, or right to aim left. Release to swing. Hold your pull and release when the strike marker is in the green zone. Higher power is harder.<br>Keyboard: ← → aim · Hold Space for power · Release to hit · Esc cancels</p><button id="reset" type="button">Reset hole</button></div>
+<div class="under-game"><p id="instructions">Swipe away from the ball to turn and aim. Drag the ball down for power. Slide left to aim right, or right to aim left. Release to swing. Hold your pull and release when the strike marker is in the green zone. Higher power is harder.<br>Keyboard: ← → aim · Hold Space for power · Release to hit · Esc cancels</p><button id="reset" type="button">Reset hole</button></div>
 <section class="shot-summary" id="shot-summary" aria-labelledby="shot-summary-title" hidden>
 <div class="shot-summary-heading"><strong id="shot-summary-title">Last shot</strong><span id="shot-summary-detail"></span></div>
 <dl><div><dt>Carry</dt><dd id="shot-carry"></dd></div><div><dt>Bounce + roll</dt><dd id="shot-roll"></dd></div><div><dt>Total travel</dt><dd id="shot-total"></dd></div></dl>
@@ -32,4 +34,4 @@
 <button id="apply" type="button">Start new round</button></div></details>
 <details><summary>About this build</summary><p id="about-copy"></p></details>
 <dialog id="complete" aria-labelledby="complete-title"><p class="brand">HOLE COMPLETE</p><h2 id="complete-title"></h2><p id="complete-detail"></p><div id="series-card"></div><p id="series-best"></p><div class="actions"><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><button class="primary" id="replay">Replay hole</button><a class="button" id="next-hole" hidden>Next hole</a><a href="./">Back to course</a><button id="close-result">Close</button></div></dialog>
-</main><script type="module" src="./releases/0.3.0-18e4394cc0/course/play.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-8dd6313126/course/play.mjs"></script></body></html>

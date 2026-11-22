@@ -42,7 +42,9 @@ export function createCourse(definition){
         return {...profiles[hash%profiles.length],feature:feature.id,featureName:feature.name};
     }
     function aimTarget(point){
-        return definition.aimPoints?.find(target=>target.x>point.x+30)??definition.pins[0];
+        const pin=definition.pins[0],remaining=Math.hypot(pin.x-point.x,pin.z-point.z);
+        const lookAhead=Math.min(120,remaining*.5);
+        return definition.aimPoints?.find(target=>target.x>point.x+lookAhead)??pin;
     }
     function surface(x,z){
         const lie=lieAt(x,z);if(lie)return lie.material;

@@ -1,3 +1,4 @@
+import {turnHeading,powerHeight} from '../core/view-controls.mjs';
 import {randomWind} from '../core/wind-setup.mjs';
 import {executionWindow,strikePosition} from '../core/execution.mjs';
 import {newSeries,recordHole,seriesScore,setupKey} from '../core/series.mjs';
@@ -44,7 +45,7 @@ let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,preview=null,anima
 const active=()=>round&&!resting(round.state.ball);
 const editable=()=>renderer&&round&&!active()&&!tour&&!round.state.complete&&!$('complete').open;
 
-let strikeStarted=null,series=null;
+let strikeStarted=null,series=null,turnDrag=null;
 try{series=JSON.parse(sessionStorage.getItem('irish-par-series-'+requested.get('series')));}
 catch{}
 if(series&&(!series.setup||!Array.isArray(series.results)||!requested.get('series')||series.id!==requested.get('series')))series=null;
@@ -106,25 +107,27 @@ function updateHUD(){
     for(const id of ['club','reset','hole','tee','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
     $('club').disabled=locked||round.state.complete||!renderer;
     $('reload-build').disabled=active();
+    $('face-pin').disabled=!editable()||!!drag||!!turnDrag;
     $('flyover').disabled=active()||!renderer||$('complete').open;
     $('flyover').textContent=tour?'Skip flyover':'Flyover';
     showSeries();
 }
 function updatePower(){
-    $('power').value=charge*100;
+    $('power').setAttribute('aria-valuenow',String(Math.round(charge*100)));
+    $('power-fill').style.height=powerHeight(charge)+'%';
+    $('power-label').textContent=Math.round(charge*100)+'%';$('putt-roll').textContent='';
     if($('club').value!=='Putter'||!editable()){
-        $('power-label').textContent='Power · '+Math.round(charge*100)+'%';return;
+        return;
     }
     const ball=round.state.ball;
     if(preview?.ball!==ball||preview.heading!==heading||preview.charge!==charge){
         preview={ball,heading,charge,...estimatePutt(ball,course,heading,charge,round.settings.greenSpeed)};
     }
-    $('power-label').textContent=feet(distance(ball,round.settings.pin))+' ft to cup · '+Math.round(charge*100)+'%'+
-        (charge>=.025?' · est. '+feet(preview.finish)+' ft roll':'');
+    $('putt-roll').textContent=charge>=.025?'Est. '+feet(preview.finish)+' ft':'';
 }
 function setPower(value){charge=Math.round(clamp(value,0,1)*2000)/2000;updatePower();}
 function cancel(){
-    drag=null;keyStarted=null;strikeStarted=null;$('strike-panel').hidden=true;setPower(0);
+    drag=null;turnDrag=null;keyStarted=null;strikeStarted=null;$('strike-panel').hidden=true;setPower(0);
     $('ball-ring').classList.remove('grabbed');
     for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
 }
@@ -328,26 +331,30 @@ function previewDrag(event){
     setPower(dragPower(drag.depth,$('club').value==='Putter'));
 }
 canvas.addEventListener('pointerdown',event=>{
-    if(!editable()||drag||keyStarted!==null||event.button>0)return;
+    if(!editable()||drag||turnDrag||keyStarted!==null||event.button>0||event.isPrimary===false)return;
     const rect=canvas.getBoundingClientRect(),point=renderer.project({...round.state.ball,y:round.state.ball.y+.022});
-    if(!point||Math.hypot(event.clientX-rect.left-point.x,event.clientY-rect.top-point.y)>70)return;
+    if(!point||Math.hypot(event.clientX-rect.left-point.x,event.clientY-rect.top-point.y)>55){
+        event.preventDefault();canvas.setPointerCapture(event.pointerId);
+        turnDrag={id:event.pointerId,x:event.clientX,heading};return;
+    }
     event.preventDefault();canvas.focus({preventScroll:true});canvas.setPointerCapture(event.pointerId);
     drag={id:event.pointerId,x:event.clientX,y:event.clientY,heading,depth:0,
         travel:clamp((window.visualViewport?.height||innerHeight)-event.clientY-20,110,200)};
     strikeStarted=performance.now();$('ball-ring').classList.add('grabbed');setPower(0);
 });
-canvas.addEventListener('pointermove',event=>{if(drag?.id===event.pointerId){event.preventDefault();previewDrag(event);}});
+canvas.addEventListener('pointermove',event=>{if(turnDrag?.id===event.pointerId){event.preventDefault();heading=turnHeading(turnDrag.heading,event.clientX-turnDrag.x);preview=null;updatePower();return;}if(drag?.id===event.pointerId){event.preventDefault();previewDrag(event);}});
 canvas.addEventListener('pointerup',event=>{
+    if(turnDrag?.id===event.pointerId){heading=turnHeading(turnDrag.heading,event.clientX-turnDrag.x);turnDrag=null;preview=null;updatePower();return;}
     if(drag?.id!==event.pointerId)return;
     previewDrag(event);
     if(event.clientY-drag.y<8){cancel();return;}
     drag=null;shoot();
 });
-for(const name of ['pointercancel','lostpointercapture'])canvas.addEventListener(name,event=>{if(drag?.id===event.pointerId)cancel();});
+for(const name of ['pointercancel','lostpointercapture'])canvas.addEventListener(name,event=>{if(turnDrag?.id===event.pointerId){heading=turnDrag.heading;turnDrag=null;}if(drag?.id===event.pointerId)cancel();});
 window.addEventListener('keydown',event=>{
     if(event.code==='Escape'){if(tour)stopTour();else cancel();return;}
     if(event.target.matches('input,select,button,a')||!editable())return;
-    if(event.code==='Space'){event.preventDefault();if(keyStarted===null&&!drag){keyStarted=performance.now();strikeStarted=keyStarted;}}
+    if(event.code==='Space'){event.preventDefault();if(keyStarted===null&&!drag&&!turnDrag){keyStarted=performance.now();strikeStarted=keyStarted;}}
     if((event.code==='ArrowLeft'||event.code==='ArrowRight')&&!drag){
         event.preventDefault();heading+=(event.code==='ArrowLeft'?-1:1)*($('club').value==='Putter'?.007:.005);
     }
@@ -357,6 +364,7 @@ window.addEventListener('keyup',event=>{
 });
 window.addEventListener('blur',cancel);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cancel();lastTime=0;});
+$('face-pin').onclick=()=>{if(!editable()||drag||turnDrag)return;heading=bearing(round.state.ball,round.settings.pin);preview=null;updatePower();updateHUD();};
 $('green-grid').onclick=()=>{showGreenGrid=!showGreenGrid;updateHUD();};
 $('club').onchange=()=>{cancel();preview=null;updateHUD();};
 function holeURL(number){
