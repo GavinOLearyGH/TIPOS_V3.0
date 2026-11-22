@@ -12,7 +12,13 @@ export function resolveExecution(club,power,position=0,lie='fairway'){
     const error=Math.abs(signed);
     const carry=clubs[club]?.carry??100;
     const curveScale=carry>170?.0013:carry>110?.0008:.0003;
-    return {heading:signed*.045,power:power*(1-.12*error**1.3),error,
-        curve:signed*curveScale,spin:1-.4*error,lift:1-.08*error,
+    // Preserve forgiveness at the clean-zone boundary, then progressively
+    // amplify direction and curvature. Controlled swings reduce both effects.
+    // Keep contact power/spin/lift penalties independent of this lateral ramp.
+    const effort=.55+.45*power**2;
+    const direction=signed*(1+1.25*error)*effort;
+    const curvature=signed*(1+1.5*error)*effort;
+    return {heading:direction*.045,power:power*(1-.12*error**1.3),error,
+        curve:curvature*curveScale,spin:1-.4*error,lift:1-.08*error,
         label:error===0?'Clean strike':(signed<0?'Early · draws left':'Late · fades right')+' · reduced spin'};
 }
