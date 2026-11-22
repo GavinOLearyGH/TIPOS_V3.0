@@ -22,7 +22,7 @@ let officialSession=null,officialBusy=false,pendingShot=null;
 const officialDay=requested.get('ace')??requested.get('official'),isAce=requested.has('ace');
 if(officialDay){
     try{
-        if(officialDay!==dayKey())throw Error('This daily challenge has closed. Return to Daily Challenge to play today.');
+        if(officialDay!==dayKey())throw Error('This daily challenge has closed. Return Home to play today.');
         officialSession=await startOfficial(isAce?'ace':'three');
         if(officialSession.build!==buildId){location.replace(officialURL(officialSession));throw Error('Opening your saved round version…');}
     }catch(error){$('render-error').hidden=false;$('render-error').textContent=error.message;$('stage').hidden=true;throw error;}
@@ -79,7 +79,7 @@ if(series){
 if(officialSession){
     weatherSetup=windSetup(officialSession.setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
     $('tee').value=officialSession.setup.tee;$('pin').value=officialSession.setup.pin??course.pins[0].id;$('green-speed').value=Number(officialSession.setup.speed)===.8?'.8':String(Number(officialSession.setup.speed));
-    $('round-settings').hidden=true;$('reset').textContent='Daily Challenge';
+    $('round-settings').hidden=true;$('reset').textContent='Home';
     const pending=read(pendingKey());
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
 }
@@ -102,7 +102,7 @@ function showSeries(){
         return;
     }
     if(!series)return;
-    const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));$('series-status').textContent='Play 3 · Par 12 · Hole '+course.number+' of 3 · '+running+' strokes';
+    const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));$('series-status').textContent='Three-hole practice · Par 12 · Hole '+course.number+' of 3 · '+running+' strokes';
     for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
 }
 function drawStrike(now){
@@ -196,7 +196,7 @@ function startRound(){
     $('status').textContent='Ready. Pull back from the ball to play your tee shot.';
 }
 function shoot(){
-    if(officialSession&&officialSession.day!==dayKey()){cancel();$('status').textContent='This daily challenge has closed. Return to Daily Challenge to play today.';return;}
+    if(officialSession&&officialSession.day!==dayKey()){cancel();$('status').textContent='This daily challenge has closed. Return Home to play today.';return;}
     if(!editable()||charge<.025){cancel();return;}
     const position=strikeStarted===null?0:strikePosition(performance.now()-strikeStarted);
     if(officialSession){
@@ -243,7 +243,7 @@ function finishShot(){
                 const tr=document.createElement('tr');for(const value of [row.hole,row.strokes,row.penalties]){const td=document.createElement('td');td.textContent=String(value);tr.append(td);}table.append(tr);
             }card.append(table);
             if(total.complete){
-                $('complete-title').textContent='Play 3 complete';
+                $('complete-title').textContent='Three-hole practice complete';
                 $('complete-detail').textContent=total.total+' strokes · '+(total.relative===0?'Even par':(total.relative>0?'+':'')+total.relative)+' · Par 12';
                 $('series-replay').hidden=$('series-new').hidden=false;
                 try{const key='irish-par-best-'+setupKey(series.setup),best=Number(localStorage.getItem(key))||Infinity;
@@ -473,13 +473,13 @@ function tidyPracticeResult(hasNext,seriesComplete){
     $('replay').hidden=seriesComplete;$('replay').textContent='Replay hole';
     $('next-hole').className=hasNext?'button primary':'button';$('next-hole').textContent=series?'Continue practice round':$('next-hole').textContent;
     $('replay').className=hasNext?'':'primary';$('series-replay').className='primary';
-    $('complete-home').textContent='Daily Challenge';
+    $('complete-home').textContent='Home';
 }
 function showOfficialDialog(){
     const completed=officialSession.status==='completed',aceMode=officialSession.kind==='ace';
     $('result-kind').textContent=completed?'OFFICIAL RESULT':'ROUND SAVED';
     $('practice-home').hidden=true;
-    $('complete-home').textContent=completed?'Daily Challenge':'Save and exit';
+    $('complete-home').textContent=completed?'Home':'Save and exit';
     $('replay').hidden=!completed;
     $('complete-title').textContent=aceMode?'Official result':completed?'Official result':'Hole '+course.number+' complete';
     $('complete-detail').textContent=aceMode?(officialSession.ace?'Hole in one!':officialSession.outcome==='in-play'?(officialSession.mm/304.8).toFixed(1)+' ft to the pin':(officialSession.outcome==='water'?'Water':'Out of play')+' · Streak kept'):completed?totalScore(officialSession)+' strokes · '+(totalScore(officialSession)-12===0?'Even par':(totalScore(officialSession)>12?'+':'')+(totalScore(officialSession)-12))+' · Par 12':
@@ -489,14 +489,14 @@ function showOfficialDialog(){
     for(const row of officialSession.results){const line=document.createElement('p');line.textContent='Hole '+row.hole+' · '+row.strokes+' strokes'+(row.penalties?' · '+row.penalties+' penalties':'');$('series-card').append(line);}
     $('official-result').hidden=!completed;
     $('official-detail').hidden=aceMode;
-    $('official-detail').textContent='Hole 3 tee-shot tiebreaker: '+(officialSession.tieValid?(officialSession.tieMM===0?'Hole in one':(officialSession.tieMM/304.8).toFixed(1)+' ft'):'Penalty · behind in-play results');
+    $('official-detail').textContent='Hole 3 first tee shot · Tiebreaker: '+(officialSession.tieValid?(officialSession.tieMM===0?'Hole in one':(officialSession.tieMM/304.8).toFixed(1)+' ft'):'Penalty · behind in-play results');
     $('official-name').value=officialSession.name||read('springhaven-player-name')||'';
     const eligible=!aceMode||officialSession.outcome==='in-play',posted=Boolean(officialSession.name);
     $('publish-official').hidden=!eligible||posted;$('official-name-label').hidden=!eligible||posted;
     $('official-board').className=posted?'button primary':'button';
     $('next-hole').className='button primary';$('replay').className=completed&&!eligible?'primary':'';
     $('publish-official').disabled=Boolean(officialSession.name);$('official-name').disabled=Boolean(officialSession.name);
-    $('official-post-status').textContent=officialSession.name?'Official score saved.':eligible?'Your official result is saved. Add a name to appear on the leaderboard.':'Result saved · Streak kept.';
+    $('official-post-status').textContent=officialSession.name?'Added to '+(location.hostname.endsWith('.github.io')||location.protocol==='file:'?'this browser’s preview leaderboard.':'today’s leaderboard.'):eligible?'Your official result is saved. Add a name to appear on the leaderboard.':'Result saved · Streak kept.';
     $('official-board').href=new URL('?board='+(aceMode?'ace':'three')+'&build='+buildId+'#leaderboards',appRoot()).href;
     $('next-hole').hidden=completed;$('next-hole').href=officialURL(officialSession);$('next-hole').textContent='Continue to Hole '+officialSession.hole;
     $('replay').textContent='Play again for practice';$('review-official').hidden=false;
