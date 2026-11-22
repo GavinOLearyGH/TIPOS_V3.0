@@ -84,13 +84,15 @@ if(officialSession){
     const pending=read(pendingKey());
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
 }
-if(!officialSession&&requested.has('practiceAce')&&course.number===6){
-    const setup=dailyAceSetup(requested.get('practiceAce'));
+const practiceAceDay=!officialSession&&course.number===6?requested.get('practiceAce'):null;
+function applyPracticeAceSetup(){
+    const setup=dailyAceSetup(practiceAceDay);
     weatherSetup=windSetup(setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
     $('tee').value=setup.tee;$('green-speed').value=Number(setup.speed)===.8?'.8':String(Number(setup.speed));
-    if(setup.cup){course.pins.push({id:'daily',...setup.cup});$('pin').add(new Option('Daily pin','daily'));}
+    if(setup.cup){if(!course.pins.some(pin=>pin.id==='daily'))course.pins.push({id:'daily',...setup.cup});if(![...$('pin').options].some(option=>option.value==='daily'))$('pin').add(new Option('Daily pin','daily'));}
     $('pin').value=setup.cup?'daily':setup.pin;
 }
+if(practiceAceDay){applyPracticeAceSetup();$('round-settings').hidden=true;}
 const requestedWindTick=Number(series?.windStarts?.[course.number]??series?.windTick??requested.get('windTick'));
 const holeWindTick=Number.isFinite(requestedWindTick)?Math.max(0,Math.floor(requestedWindTick)):0;
 if(series&&series.results.length<course.number-1)location.replace(holeURL(series.results.length+1));
@@ -102,8 +104,8 @@ function showSeries(){
         for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
         return;
     }
-    if(!series)return;
-    const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));$('series-status').textContent='Three-hole practice · Par 12 · Hole '+course.number+' of 3 · '+running+' strokes';
+    if(!series){$('series-status').hidden=false;$('series-status').textContent=practiceAceDay?'Practice · '+(practiceAceDay===dayKey()?'Today’s Hole-in-One setup':'Hole-in-One setup · '+practiceAceDay):'Practice · Hole '+course.number;return;}
+    const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));$('series-status').textContent=(series.practiceDay?'Practice · '+(series.practiceDay===dayKey()?'Today’s Three-Hole setup':'Three-Hole setup · '+series.practiceDay):'Three-hole practice')+' · Par 12 · Hole '+course.number+' of 3 · '+running+' strokes';
     for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
 }
 function drawStrike(now){
@@ -116,7 +118,7 @@ function drawStrike(now){
 function replaySeries(random=false){
     const id=String(Date.now()),setup={...series.setup};
     if(random)Object.assign(setup,randomWindSetup());
-    const fresh=newSeries(id,setup);try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(fresh));}catch{return;}
+    const fresh={...newSeries(id,setup),...(!random&&series.practiceDay?{practiceDay:series.practiceDay}:{})};try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(fresh));}catch{return;}
     location.href=links.player+'?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 }
 $('series-replay').onclick=()=>replaySeries();$('series-new').onclick=()=>replaySeries(true);
@@ -183,6 +185,7 @@ function cancel(){
 }
 function startRound(){
     if(series){series={...series,windStarts:{...Object.fromEntries(Object.entries(series.windStarts??{}).filter(([hole])=>Number(hole)<course.number)),[course.number]:holeWindTick},results:series.results.filter(row=>row.hole<course.number)};saveSeries();}
+    if(practiceAceDay)applyPracticeAceSetup();
     cancel();tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
     if($('complete').open)$('complete').close();
     weatherSetup=windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value});
@@ -465,7 +468,7 @@ $('complete').addEventListener('close',()=>updateHUD());
 function startDailyPractice(){
     const setup=officialSession.setup,id=String(Date.now());
     if(officialSession.kind==='ace'){location.href=new URL('course/play.html',appRoot()).href+'?hole=6&practiceAce='+officialSession.day+'&build='+buildId;return;}
-    try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(newSeries(id,setup)));}
+    try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify({...newSeries(id,setup),practiceDay:officialSession.day}));}
     catch{$('status').textContent='Allow browser storage to play a practice round.';return;}
     location.href=new URL('course/play.html',appRoot()).href+'?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 }
