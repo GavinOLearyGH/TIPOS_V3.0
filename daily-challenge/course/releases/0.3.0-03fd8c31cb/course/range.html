@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta name="course-build" content="0.3.0-03fd8c31cb"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./style.css"><style>
+.range-controls,.range-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin:.75rem 0}
+.range-controls label{flex:1;min-width:8rem}
+.range-controls select{display:block;width:100%;margin-top:.25rem}
+.range-meter{width:100%;height:.75rem;accent-color:#e9d193}
+.range-timing{position:relative;height:.6rem;background:#435047;border-radius:4px;margin:.4rem 0}
+.range-timing span,.range-timing b{position:absolute;height:100%;background:#a4cb73}
+.range-timing b{width:3px;background:#fff}
+.range-stage{position:relative}
+.range-stage canvas{width:100%;height:clamp(340px,58svh,660px);display:block;touch-action:none}
+</style></head>
+<body><main class="course-play">
+<header><div><div class="brand">THE IRISH PAR</div><h1 class="play-title">Driving range</h1></div><a href="../#practice-title">Practice</a></header>
+<p>Springhaven Club · 240 yards</p>
+<div class="range-controls"><label>Club<select id="range-club"></select></label><label>Lie<select id="range-lie"></select></label></div>
+<div class="stage range-stage"><canvas id="range-scene" tabindex="0" aria-label="Range view. Drag down and release to swing."></canvas></div>
+<label>Power <output id="range-power-value">0%</output><progress class="range-meter" id="range-power" max="1" value="0"></progress></label>
+<div class="range-timing" id="range-timing" hidden aria-hidden="true"><span id="range-zone"></span><b id="range-marker"></b></div>
+<p id="range-result" role="status">Drag down for power, slide to aim, and release in the green zone. Keyboard: hold Space, then release.</p>
+<div class="range-actions"><button id="range-overview" type="button">Range overview</button><button id="range-next" type="button" disabled>Next ball</button></div>
+</main><script type="module" src="./range.mjs"></script></body></html>
