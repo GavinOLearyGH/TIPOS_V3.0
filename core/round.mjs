@@ -1,3 +1,4 @@
+import {relativeWind} from './wind-setup.mjs';
 import {resolveExecution} from './execution.mjs';
 import {clubs,calibrateClub,newBall,strike,advance,stepTime,windVector} from './physics.mjs';
 
@@ -16,7 +17,7 @@ export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
     const startingTee=course.tees.find(item=>item.id===tee);
     const startingPin=course.pins.find(item=>item.id===pin);
     if(!startingTee||!startingPin)throw Error('Unknown tee or pin');
-    const settings={pin:{...startingPin},wind:windVector(windDirection,windMph),greenSpeed};
+    const settings={pin:{...startingPin},wind:relativeWind(windDirection,windMph,course.bearing??0),greenSpeed};
     const state={ball:newBall(startingTee,course.ground),strokes:0,penalties:0,history:[],complete:false};
     let from,measurement;
     function hit(club,power,heading,position=0){
@@ -27,6 +28,9 @@ export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
         const profile=course.lieAt?.(from.x,from.z);
         const contact=resolveExecution(club,power,position,profile?.id??course.surface(from.x,from.z));
         state.ball=strike(from,course.ground,club,contact.power,heading+contact.heading,course.surface(from.x,from.z),profile);
+        state.ball.spin*=contact.spin??1;
+        state.ball.lift*=contact.lift??1;
+        state.ball.curve=contact.curve??0;
         measurement={club,power,contact:contact.label,startingLie:course.surface(from.x,from.z),
             startingLieLabel:profile?profile.featureName+' · '+profile.label:null,
             carry:0,bounceRoll:0,landed:club==='Putter'};

@@ -25,7 +25,7 @@ options('hole',courseCatalog.map(hole=>[hole.number,'Hole '+hole.number+' · Par
 $('hole').value=String(course.number);
 options('tee',course.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
 options('club',fullBag.map(name=>[name,name+(clubs[name].carry?' · '+clubs[name].carry+' yd':'')]));
-options('wind',windDirections.map((name,index)=>[index,name]));
+options('wind',['Toward Hole 1 green','Hole 1 green / right','Across Hole 1 right','Hole 1 tee / right','Toward Hole 1 tee','Hole 1 tee / left','Across Hole 1 left','Hole 1 green / left'].map((name,index)=>[index,name]));
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
 $('hole-title').textContent=course.name;
 $('about-copy').textContent=course.about??'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';

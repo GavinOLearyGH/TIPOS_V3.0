@@ -46,6 +46,11 @@ function flightStep(ball,wind,dt){
     ball.vx-=dx*drag*dt;
     ball.vz-=dz*drag*dt;
     ball.vy-=(9.81+ball.vy*drag-ball.lift*Math.hypot(ball.vx,ball.vz)**2)*dt;
+    // Rotate horizontal velocity without adding energy. Curvature fades with speed.
+    if(ball.curve){
+        const turn=ball.curve*Math.hypot(ball.vx,ball.vz)*dt,c=Math.cos(turn),s=Math.sin(turn),vx=ball.vx;
+        ball.vx=vx*c-ball.vz*s;ball.vz=vx*s+ball.vz*c;
+    }
 }
 function flightProfile(speed,angle,lift){
     const ball={vx:speed*Math.cos(angle),vy:speed*Math.sin(angle),vz:0,lift};
