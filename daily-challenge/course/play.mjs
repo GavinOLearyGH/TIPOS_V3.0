@@ -153,7 +153,7 @@ function updateHUD(){
         $('slope').textContent='At the ball · '+Math.abs(rise*100).toFixed(1)+'% '+(rise>=0?'uphill':'downhill')+
             (Math.abs(across)<.002?' · Minimal break':across>0?' · breaks left':' · breaks right');
     }
-    $('green-grid').hidden=!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
+    $('green-grid').hidden=!tour?.reading&&!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
     const locked=active()||!!tour||officialBusy;
     for(const id of ['club','reset','hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=locked||!renderer;
@@ -161,7 +161,8 @@ function updateHUD(){
     $('reload-build').disabled=active();
     $('face-pin').disabled=!editable()||!!drag||!!turnDrag;
     $('flyover').disabled=active()||!renderer||$('complete').open||officialBusy||Boolean(officialSession&&pendingShot);
-    $('flyover').textContent=tour?'Skip flyover':'Flyover';
+    $('flyover').textContent=tour?.reading?'Back to shot':tour?'Skip flyover':'Flyover';
+    $('read-green').disabled=!editable();
     showSeries();
 }
 function updatePower(){
@@ -310,29 +311,36 @@ $('flyover').onclick=()=>{
     if(active()||drag||keyStarted!==null||!renderer)return;
     cancel();
     const tee=course.tees.find(t=>t.id===$('tee').value),pin=round.settings.pin;
-    tour={start:null,tee,pin,distance:distance(tee,pin),heading:bearing(tee,pin)};
-    $('fade').hidden=false;$('fade').style.opacity=0;
+    tour={start:null,tee,heading:bearing(tee,pin)};
+    updateHUD();
+};
+$('read-green').onclick=()=>{
+    if(!editable()||drag||turnDrag||keyStarted!==null)return;
+    cancel();
+    const tee=course.tees.find(t=>t.id===$('tee').value),pin=round.settings.pin;
+    tour={reading:true,heading:bearing(tee,pin)};
     updateHUD();
 };
 function tourView(now){
     tour.start??=now;
-    const elapsed=(now-tour.start)/1000,arrival=6,departure=9;
-    if(elapsed>=9.7){stopTour();return null;}
-    const returning=elapsed>=9.35;
-    $('fade').style.opacity=returning?1-ease((elapsed-9.35)/.35):ease((elapsed-departure)/.35);
-    if(returning){$('tour-label').hidden=true;return {...cameraForBall(),greenGrid:false};}
-    const u=ease(elapsed/arrival),dx=Math.cos(tour.heading),dz=Math.sin(tour.heading);
-    const breadth=(course.green?.readRadius??22)*2;
+    const elapsed=(now-tour.start)/1000,arrival=6;
+    if(!tour.reading&&elapsed>=arrival){
+        tour.reading=true;
+        updateHUD();
+    }
+    const u=tour.reading?1:ease(elapsed/arrival);
+    const dx=Math.cos(tour.heading),dz=Math.sin(tour.heading);
+    const {minX,maxX,minZ,maxZ}=course.greenBounds;
+    const center={x:(minX+maxX)/2,z:(minZ+maxZ)/2};
+    const breadth=Math.max(Math.hypot(maxX-minX,maxZ-minZ)+6,(course.green?.readRadius??22)*2);
     const framing=breadth*Math.max(1,1.1/(canvas.clientWidth/canvas.clientHeight));
-    const along=mix(-4,tour.distance-framing*.62,u);
-    const x=tour.tee.x+dx*along,z=tour.tee.z+dz*along;
-    const y=mix(course.ground(tour.tee.x,tour.tee.z)+1.55,course.ground(tour.pin.x,tour.pin.z)+framing*.85,u)+30*Math.sin(Math.PI*u);
-    const targetDistance=Math.min(tour.distance,along+mix(24,framing*.62,u));
-    const tx=tour.tee.x+dx*targetDistance,tz=tour.tee.z+dz*targetDistance;
-    const greenGrid=elapsed>=arrival&&elapsed<departure;
+    const endEye=[center.x-dx*framing*.58,course.ground(center.x,center.z)+framing*.9,center.z-dz*framing*.58];
+    const greenGrid=tour.reading&&showGreenGrid;
     $('tour-label').hidden=!greenGrid;
-    return {eye:[x,y,z],target:[tx,course.ground(tx,tz)+mix(-2,.1,u),tz],greenGrid,
-        readOpacity:ease((elapsed-arrival)/.35)*ease((departure-elapsed)/.35)};
+    if(tour.reading)return {eye:endEye,target:[center.x,course.ground(center.x,center.z),center.z],greenGrid,readOpacity:1};
+    const {tee}=tour,teeY=course.ground(tee.x,tee.z);
+    return {eye:[mix(tee.x-dx*4,endEye[0],u),mix(teeY+1.55,endEye[1],u)+30*Math.sin(Math.PI*u),mix(tee.z-dz*4,endEye[2],u)],
+        target:[mix(tee.x+dx*20,center.x,u),mix(teeY-2,course.ground(center.x,center.z),u),mix(tee.z+dz*20,center.z,u)],greenGrid:false};
 }
 function pullGraphics(anchor){
     for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
