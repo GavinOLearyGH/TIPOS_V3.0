@@ -41,11 +41,23 @@ const newBall = (point, ground) => ({...point,y:ground(point.x,point.z)+ballRadi
     vx:0,vy:0,vz:0,mode:'rest',wall:false,time:0,cupCooldown:0});
 
 function flightStep(ball,wind,dt){
-    const dx=ball.vx-wind.x,dz=ball.vz-wind.z;
-    const drag=.0032*Math.hypot(dx,ball.vy,dz);
-    ball.vx-=dx*drag*dt;
-    ball.vz-=dz*drag*dt;
-    ball.vy-=(9.81+ball.vy*drag-ball.lift*Math.hypot(ball.vx,ball.vz)**2)*dt;
+    const vx=ball.vx,vy=ball.vy,vz=ball.vz;
+    const speed=Math.hypot(vx,vy,vz),drag=.0032*speed;
+    // Retain the calibrated calm trajectory, including its integration order.
+    ball.vx-=vx*drag*dt;
+    ball.vz-=vz*drag*dt;
+    ball.vy-=(9.81+vy*drag-ball.lift*Math.hypot(ball.vx,ball.vz)**2)*dt;
+    if(wind.x||wind.z){
+        const dx=vx-wind.x,dz=vz-wind.z,airSpeed=Math.hypot(dx,vy,dz);
+        // Add moving-air minus calm aerodynamic forces. Lift responds to airflow
+        // and acts perpendicular to it; the horizontal terms matter on ascent
+        // and descent. These effective coefficients tune our simplified model,
+        // without recalibrating every club or changing ground/putting physics.
+        const windDrag=.008,windLift=ball.lift*2.5;
+        ball.vx+=(-windDrag*(dx*airSpeed-vx*speed)+windLift*vy*wind.x)*dt;
+        ball.vz+=(-windDrag*(dz*airSpeed-vz*speed)+windLift*vy*wind.z)*dt;
+        ball.vy+=(-windDrag*vy*(airSpeed-speed)+windLift*(dx*dx+dz*dz-vx*vx-vz*vz))*dt;
+    }
     // Rotate horizontal velocity without adding energy. Curvature fades with speed.
     if(ball.curve){
         const turn=ball.curve*Math.hypot(ball.vx,ball.vz)*dt,c=Math.cos(turn),s=Math.sin(turn),vx=ball.vx;
