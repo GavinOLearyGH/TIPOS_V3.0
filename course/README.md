@@ -54,3 +54,9 @@ Landforms and lie profiles are generic optional course data. Hole 1 does not acq
 ## Hole 3
 
 The par-three Hole 3 is traced from the supplied markup, with 193/151/137/117-yard tees, a separate rear pad and long main tee pad, rough corridor, short-mown approach, narrow surround and three greenside bunkers. Green contours, elevations and bunker depths remain provisional. Hole 3 uses the same engine, controls, renderer, green grid and round controller, and appears after Hole 2 in the existing completion navigation. Run `node tests/hole-3.mjs` for tee distances, surface boundaries, bunker recovery, cup capture and terrain checks.
+
+## Play 3 and strike timing
+
+The course landing offers Play 3 (par 12) with a tee choice. A tab-local series records completed holes and penalties across navigation; resetting a hole invalidates that hole and later results. The final card offers the same setup or a new wind setup. Personal bests are stored on the browser per tee/wind/speed combination. Browser storage is required for the three-hole series; individual holes remain available.
+
+The course player shows a deterministic 1.4-second strike sweep while pulling/charging. Release inside the green zone executes the aimed shot cleanly. Outside the window, signed error changes heading and reduces effective power. High power, long clubs and heavy lies narrow the window. The shared round controller applies the execution result before the existing flight simulation and records contact feedback. Putts bypass execution timing. Existing callers default to centered contact, including physics regressions. This update is course-preview only; the live Daily Challenge is separate.

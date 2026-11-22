@@ -1,3 +1,4 @@
+import {randomWind} from '../core/wind-setup.mjs';
 import {executionWindow,strikePosition} from '../core/execution.mjs';
 import {newSeries,recordHole,seriesScore,setupKey} from '../core/series.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
@@ -28,6 +29,7 @@ options('wind',windDirections.map((name,index)=>[index,name]));
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
 $('hole-title').textContent=course.name;
 $('about-copy').textContent=course.about??'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
+if(!requested.has('wind')&&!requested.has('mph')){const wind=randomWind();$('wind').value=wind.wind;$('wind-speed').value=wind.mph;}
 for(const [key,id,allowed] of [['wind','wind',null],['mph','wind-speed',null],['speed','green-speed',['.8','1','1.24']]]){
     const value=requested.get(key);if(value!==null&&(!allowed||allowed.includes(value)))$(id).value=value;
 }
@@ -66,7 +68,7 @@ function drawStrike(now){
 }
 function replaySeries(random=false){
     const id=String(Date.now()),setup={...series.setup};
-    if(random){setup.wind=String(Math.floor(Math.random()*8));setup.mph=String(4+Math.floor(Math.random()*9));}
+    if(random)Object.assign(setup,randomWind());
     const fresh=newSeries(id,setup);try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(fresh));}catch{return;}
     location.href='./play.html?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 }
@@ -88,7 +90,7 @@ function updateHUD(){
     const wind=round.settings.wind,speed=Math.hypot(wind.x,wind.z)/.44704;
     const relative=Math.atan2(wind.z,wind.x)-heading;
     const labels=['tailwind','tail/right','left to right','head/right','headwind','head/left','right to left','tail/left'];
-    $('wind-label').textContent=speed<.01?'Calm':Math.round(speed)+' mph · '+labels[(Math.round(relative/(Math.PI/4))+8)%8];
+    $('wind-label').textContent=speed<.01?'Calm':['↑','↗','→','↘','↓','↙','←','↖'][(Math.round(relative/(Math.PI/4))+8)%8]+' '+Math.round(speed)+' mph · '+labels[(Math.round(relative/(Math.PI/4))+8)%8];
     const putting=$('club').value==='Putter',onGreen=course.surface(ball.x,ball.z)==='green';
     $('slope').hidden=!putting||!onGreen||active()||!!tour;
     if(putting&&onGreen){
