@@ -1,3 +1,4 @@
+import {gameRoot} from './navigation.mjs';
 import {dayKey,newCompetition,applyCompetitionShot,totalScore} from './competition.mjs';
 import {buildId} from './build-info.mjs';
 export {dayKey,totalScore};
@@ -8,7 +9,7 @@ export function read(key){try{return JSON.parse(localStorage.getItem(key));}catc
 export function write(key,value){localStorage.setItem(key,JSON.stringify(value));}
 export function randomId(){return Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
 export function playerId(){let id=read('springhaven-player-id');if(!/^[a-f0-9]{32}$/.test(id)){id=randomId();write('springhaven-player-id',id);}return id;}
-export function appRoot(){const url=new URL(location.href),index=url.pathname.indexOf('/course/');return index>=0?new URL(url.pathname.slice(0,index+1),url):new URL('./',url);}
+export function appRoot(){return gameRoot(location.href);}
 export function localOnly(){return location.protocol==='file:'||location.hostname.endsWith('.github.io');}
 async function request(action,data={},kind='three'){
  const response=await fetch(new URL(kind==='ace'?'api/ace':'api/three',appRoot()),{method:'POST',headers:{'Content-Type':'application/json'},

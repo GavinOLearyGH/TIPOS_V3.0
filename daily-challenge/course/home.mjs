@@ -1,9 +1,12 @@
+import {gameLinks} from '../core/navigation.mjs';
 import {randomWindSetup} from '../core/wind.mjs';
 import {newSeries} from '../core/series.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
 import {playableHoles as courseCatalog} from './catalog.mjs';
 import {surfaceColors} from '../core/renderer.mjs';
+const links=gameLinks(location.href);
+document.getElementById('daily-home').href=links.home;
 refreshParentWorker();
 document.getElementById('build-version').textContent='Build '+buildId;
 const ns='http://www.w3.org/2000/svg';
@@ -17,7 +20,7 @@ for(const hole of courseCatalog){
     select.setAttribute('aria-label','Tee for Hole '+hole.number);
     for(const tee of hole.tees)select.add(new Option(tee.name+' · '+tee.yards+' yd',tee.id));
     play.textContent='Play Hole '+hole.number;
-    select.onchange=()=>{play.href='./play.html?hole='+hole.number+'&tee='+select.value+'&build='+buildId;};select.onchange();
+    select.onchange=()=>{play.href=links.player+'?hole='+hole.number+'&tee='+select.value+'&build='+buildId;};select.onchange();
     const svg=document.createElementNS(ns,'svg'),b=hole.bounds,k=hole.plan.metresPerUnit;
     svg.setAttribute('viewBox',[b.minX/k,b.minZ/k,(b.maxX-b.minX)/k,(b.maxZ-b.minZ)/k].join(' '));
     svg.setAttribute('role','img');svg.setAttribute('aria-label','Hole '+hole.number+' overhead layout');
@@ -35,7 +38,5 @@ document.getElementById('play-three').onclick=()=>{
     const id=String(Date.now()),setup={tee:document.getElementById('series-tee').value,...randomWindSetup(),speed:'1'};
     try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(newSeries(id,setup)));}
     catch{document.getElementById('play-three').textContent='Enable browser storage to play a three-hole round';return;}
-    location.href='./play.html?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
+    location.href=links.player+'?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 };
-
-if(location.pathname.includes('/daily-challenge/')||location.pathname.includes('/DailyChallenge/')){const link=document.createElement('a');link.href='../';link.textContent='← Daily Challenge';document.querySelector('main').prepend(link);}

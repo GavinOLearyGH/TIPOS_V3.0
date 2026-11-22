@@ -67,3 +67,17 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 #wind-arrow{display:inline-block;flex:none;font-size:18px;line-height:1;transform-origin:center;color:var(--gold)}
 #wind-text{font-variant-numeric:tabular-nums}
 @media(max-width:390px){#wind-label{flex:1 1 auto}#wind-text{font-size:10px}}
+
+/* Shared navigation and result actions across practice and official modes. */
+.game-nav{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:flex-end;font-size:14px}
+#complete{width:min(480px,calc(100% - 24px));max-height:calc(100dvh - 28px);overflow:auto;padding:22px}
+.result-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.result-heading p{margin:0}.result-heading button{font-size:24px;line-height:1;min-width:44px;padding:4px;background:transparent}
+#complete .actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:18px}
+#complete .actions>a,#complete .actions>button{text-align:center;text-decoration:none;min-height:44px;border-radius:8px;padding:10px 14px}
+#complete-home,#practice-home{color:var(--gold)}
+#official-result{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:14px;margin-top:16px}
+#official-result p{margin:0;font-size:14px;color:var(--muted)}
+#official-name{width:100%;min-height:44px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:10px;font:inherit}
+#series-card p{margin:6px 0;font-size:14px}
+@media(max-width:650px){.game-nav{font-size:12px;gap:8px;flex-direction:column;align-items:flex-end}.course-play header{gap:10px}#complete{padding:18px}}
