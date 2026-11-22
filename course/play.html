@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-d934c01f10"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-d934c01f10/course/style.css"></head>
+<html lang="en"><head><meta name="course-build" content="0.3.0-b4e44bea53"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-b4e44bea53/course/style.css"></head>
 <body class="course-play"><main>
-<header><div><div class="brand">THE IRISH PAR · COURSE PLAY</div><div class="club-name">The Springhaven Club</div><h1 class="play-title" id="hole-title">Hole</h1></div><a href="./">Course</a></header>
+<header><div><div class="brand">THE IRISH PAR · COURSE PLAY</div><div class="club-name">The Springhaven Club</div><h1 class="play-title" id="hole-title">Hole</h1></div><a id="course-home" href="./">Course</a></header>
 <div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
 <p id="series-status" class="muted" hidden></p>
 <div id="render-error" hidden role="alert"></div>
@@ -26,8 +26,9 @@
 <dl><div><dt>Carry</dt><dd id="shot-carry"></dd></div><div><dt>Bounce + roll</dt><dd id="shot-roll"></dd></div><div><dt>Total travel</dt><dd id="shot-total"></dd></div></dl>
 <p>Horizontal travel before and after first contact, including later bounces and rollback.</p></section>
 <p class="build-line"><span id="build-version"></span><span id="update-notice" hidden>New build available. <button type="button" id="reload-build">Load update</button></span></p>
+<button id="retry-official" type="button" hidden>Retry saving shot</button><button id="review-official" type="button" hidden>View official result</button>
 <p id="status" role="status">Preparing the course…</p>
-<details><summary>Set up your round</summary><div class="setup settings">
+<details id="round-settings"><summary>Set up your round</summary><div class="setup settings">
 <label>Hole<select id="hole"></select></label>
 <label>Tee<select id="tee"></select></label>
 <label>Prevailing wind · Hole 1 clock<select id="wind"></select></label>
@@ -35,5 +36,5 @@
 <label>Green speed<select id="green-speed"><option value=".8">Slow</option><option value="1" selected>Medium</option><option value="1.24">Fast</option></select></label>
 <button id="apply" type="button">Start new round</button></div><p>Clock directions show where wind blows: 12 toward the Hole 1 green, 3 right, 6 toward its tee, 9 left. Wind shifts up to 15° either side and varies gently in strength. The on-screen arrow is relative to your current aim.</p></details>
 <details><summary>About this build</summary><p id="about-copy"></p></details>
-<dialog id="complete" aria-labelledby="complete-title"><p class="brand">HOLE COMPLETE</p><h2 id="complete-title"></h2><p id="complete-detail"></p><div id="series-card"></div><p id="series-best"></p><div class="actions"><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><button class="primary" id="replay">Replay hole</button><a class="button" id="next-hole" hidden>Next hole</a><a href="./">Back to course</a><button id="close-result">Close</button></div></dialog>
-</main><script type="module" src="./releases/0.3.0-d934c01f10/course/play.mjs"></script></body></html>
+<dialog id="complete" aria-labelledby="complete-title"><p class="brand">HOLE COMPLETE</p><h2 id="complete-title"></h2><p id="complete-detail"></p><div id="series-card"></div><p id="series-best"></p><section id="official-result" hidden><p id="official-detail"></p><label>Display name<input id="official-name" maxlength="28" autocomplete="nickname"></label><button id="publish-official" class="primary" type="button">Save to leaderboard</button><p id="official-post-status" role="status"></p><a id="official-board" class="button">View leaderboard</a></section><div class="actions"><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><button class="primary" id="replay">Replay hole</button><a class="button" id="next-hole" hidden>Next hole</a><a id="complete-home" href="./">Back to course</a><button id="close-result">Close</button></div></dialog>
+</main><script type="module" src="./releases/0.3.0-b4e44bea53/course/play.mjs"></script></body></html>

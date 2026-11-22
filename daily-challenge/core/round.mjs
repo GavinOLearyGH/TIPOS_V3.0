@@ -1,3 +1,6 @@
+import {createWind} from './wind.mjs';
+import {relativeWind} from './wind-setup.mjs';
+import {resolveExecution} from './execution.mjs';
 import {clubs,calibrateClub,newBall,strike,advance,stepTime,windVector} from './physics.mjs';
 
 // Carry targets for the first course prototype. Existing iron calibration is reused.
@@ -11,28 +14,52 @@ for(const [name,carry,loft,apex,roll] of [
 export const fullBag=['Driver','3 Wood','4 Hybrid','4 Iron','5 Iron','6 Iron','7 Iron','8 Iron','9 Iron','PW','GW','SW','LW','Putter'];
 
 export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
-    windDirection=0,windMph=0,greenSpeed=1}={}){
+    windDirection=0,windMph=0,greenSpeed=1,windProfile=null,windTick=0}={}){
     const startingTee=course.tees.find(item=>item.id===tee);
     const startingPin=course.pins.find(item=>item.id===pin);
     if(!startingTee||!startingPin)throw Error('Unknown tee or pin');
-    const settings={pin:{...startingPin},wind:windVector(windDirection,windMph),greenSpeed};
-    const state={ball:newBall(startingTee,course.ground),strokes:0,penalties:0,history:[],complete:false};
-    let from;
-    function hit(club,power,heading){
+    const weather=windProfile?createWind(windProfile):null;
+    const settings={pin:{...startingPin},wind:relativeWind(windDirection,windMph,course.bearing??0),greenSpeed};
+    const initialWindTick=Number(windTick);
+    const state={ball:newBall(startingTee,course.ground),strokes:0,penalties:0,history:[],complete:false,windTick:Number.isFinite(initialWindTick)?Math.max(0,Math.floor(initialWindTick)):0};
+    if(weather)settings.wind=weather.sample(state.windTick*stepTime,course.bearing??0);
+    let from,measurement;
+    function hit(club,power,heading,position=0){
+        if(!Number.isFinite(position)||Math.abs(position)>1)return false;
         if(state.complete||!['rest'].includes(state.ball.mode))return false;
         if(!fullBag.includes(club)||!Number.isFinite(power)||power<.025||power>1||!Number.isFinite(heading))return false;
         from={x:state.ball.x,z:state.ball.z};
-        state.ball=strike(from,course.ground,club,power,heading,course.surface(from.x,from.z));
+        const profile=course.lieAt?.(from.x,from.z);
+        const contact=resolveExecution(club,power,position,profile?.id??course.surface(from.x,from.z));
+        state.ball=strike(from,course.ground,club,contact.power,heading+contact.heading,course.surface(from.x,from.z),profile);
+        state.ball.spin*=contact.spin??1;
+        state.ball.lift*=contact.lift??1;
+        state.ball.curve=contact.curve??0;
+        measurement={club,power,wind:weather?{...weather.setup,releaseTick:state.windTick,x:settings.wind.x,z:settings.wind.z}:null,contact:contact.label,startingLie:course.surface(from.x,from.z),
+            startingLieLabel:profile?profile.featureName+' · '+profile.label:null,
+            carry:0,bounceRoll:0,landed:club==='Putter'};
         state.strokes++;
         return true;
     }
     function step(){
+        if(state.complete)return;
+        if(weather){state.windTick++;settings.wind=weather.sample(state.windTick*stepTime,course.bearing??0);}
         if(!['air','roll','drop'].includes(state.ball.mode))return;
+        const previous={x:state.ball.x,z:state.ball.z};
         advance(state.ball,course,settings,stepTime);
+        const travel=Math.hypot(state.ball.x-previous.x,state.ball.z-previous.z);
+        // Horizontal travel before first contact is carry; all subsequent hops,
+        // roll and rollback count as bounce + roll. Putts start on the ground.
+        measurement[measurement.landed?'bounceRoll':'carry']+=travel;
+        if(state.ball.firstContact)measurement.landed=true;
         if(['air','roll','drop'].includes(state.ball.mode))return;
         if(state.ball.mode==='rest'&&course.isOutOfBounds?.(state.ball.x,state.ball.z))state.ball.mode='out';
         const outcome=state.ball.mode;
-        state.history.push({from,to:{x:state.ball.x,z:state.ball.z},outcome});
+        const {landed,...metrics}=measurement;
+        metrics.total=metrics.carry+metrics.bounceRoll;
+        metrics.netDistance=Math.hypot(state.ball.x-from.x,state.ball.z-from.z);
+        metrics.firstContact=state.ball.firstContact?{...state.ball.firstContact}:null;
+        state.history.push({from,to:{x:state.ball.x,z:state.ball.z},outcome,metrics});
         if(outcome==='holed')state.complete=true;
         if(['out','water'].includes(outcome)){
             // Stroke and distance for OB. Water relief can be supplied by a hole.

@@ -12,5 +12,5 @@ self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys
 self.addEventListener('fetch',event=>{
   // Course release boundary.
   const requestURL=new URL(event.request.url),scopeURL=new URL('./',self.registration.scope);
-  if(requestURL.origin===scopeURL.origin&&['course/','core/'].some(route=>requestURL.pathname.startsWith(scopeURL.pathname+route)))return;
+  if(requestURL.origin===scopeURL.origin&&['course/','core/','daily-challenge/'].some(route=>requestURL.pathname.startsWith(scopeURL.pathname+route)))return;
   if(event.request.method!=='GET')return;event.respondWith(caches.match(event.request).then(cached=>{if(cached)return cached;return fetch(event.request).then(response=>{if(!response||response.status!==200||response.type==='opaque')return response;const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(event.request,copy)).catch(()=>{});return response;}).catch(()=>{if(event.request.mode==='navigate')return caches.match('./index.html');throw new Error('Offline and asset not cached');});}));});

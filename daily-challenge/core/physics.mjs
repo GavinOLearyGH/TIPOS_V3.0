@@ -2,11 +2,11 @@ const ballRadius = 0.02135;
 const cupRadius = 0.054;
 const stepTime = 1 / 240;
 const clubs = {
-    '3 Iron':{carry:184,loft:14,apex:70,roll:1.10},
-    '4 Iron':{carry:174,loft:15,apex:71,roll:1.08},
-    '5 Iron':{carry:161,loft:16.5,apex:73,roll:1.05},
-    '6 Iron':{carry:153,loft:18,apex:75,roll:1.02},
-    '7 Iron':{carry:145,loft:19.5,apex:76,roll:1.00},
+    '3 Iron':{grassRelease:.81,carry:184,loft:14,apex:70,roll:1.10},
+    '4 Iron':{grassRelease:.83,carry:174,loft:15,apex:71,roll:1.08},
+    '5 Iron':{grassRelease:.88,carry:161,loft:16.5,apex:73,roll:1.05},
+    '6 Iron':{grassRelease:.92,carry:153,loft:18,apex:75,roll:1.02},
+    '7 Iron':{grassRelease:.96,carry:145,loft:19.5,apex:76,roll:1.00},
     '8 Iron':{carry:135,loft:22.5,apex:76,roll:.92},
     '9 Iron':{carry:124,loft:25.5,apex:74,roll:.84},
     PW:{carry:110,loft:29,apex:73,roll:.72},
@@ -18,12 +18,13 @@ const clubs = {
 const bag=Object.keys(clubs);
 const surfaces = {
     tee:{bounce:.32,brake:.46,forward:.7736,entry:1},
-    fairway:{bounce:.39,brake:.53,forward:.8072,entry:1},
-    rough:{bounce:.14,brake:1.75,forward:.56,entry:.84},
+    fairway:{bounce:.14,brake:1.2,forward:.60,entry:1},
+    rough:{bounce:.075,brake:2.8,forward:.42,entry:.74},
     surround:{bounce:.23,brake:.78,forward:.7304,entry:.94},
     green:{bounce:.30,brake:.36,forward:.434,entry:1},
     sand:{bounce:.025,brake:2.75,forward:.15,entry:.63},
-    bridge:{bounce:.46,brake:.6,forward:.8408,entry:1}
+    bridge:{bounce:.46,brake:.6,forward:.8408,entry:1},
+    path:{bounce:.5,brake:.55,forward:.86,entry:1}
 };
 const windDirections=['Toward green','Toward green and right','Left to right','Toward tee and right','Toward tee','Toward tee and left','Right to left','Toward green and left'];
 const mphToMetresPerSecond=.44704;
@@ -40,11 +41,28 @@ const newBall = (point, ground) => ({...point,y:ground(point.x,point.z)+ballRadi
     vx:0,vy:0,vz:0,mode:'rest',wall:false,time:0,cupCooldown:0});
 
 function flightStep(ball,wind,dt){
-    const dx=ball.vx-wind.x,dz=ball.vz-wind.z;
-    const drag=.0032*Math.hypot(dx,ball.vy,dz);
-    ball.vx-=dx*drag*dt;
-    ball.vz-=dz*drag*dt;
-    ball.vy-=(9.81+ball.vy*drag-ball.lift*Math.hypot(ball.vx,ball.vz)**2)*dt;
+    const vx=ball.vx,vy=ball.vy,vz=ball.vz;
+    const speed=Math.hypot(vx,vy,vz),drag=.0032*speed;
+    // Retain the calibrated calm trajectory, including its integration order.
+    ball.vx-=vx*drag*dt;
+    ball.vz-=vz*drag*dt;
+    ball.vy-=(9.81+vy*drag-ball.lift*Math.hypot(ball.vx,ball.vz)**2)*dt;
+    if(wind.x||wind.z){
+        const dx=vx-wind.x,dz=vz-wind.z,airSpeed=Math.hypot(dx,vy,dz);
+        // Add moving-air minus calm aerodynamic forces. Lift responds to airflow
+        // and acts perpendicular to it; the horizontal terms matter on ascent
+        // and descent. These effective coefficients tune our simplified model,
+        // without recalibrating every club or changing ground/putting physics.
+        const windDrag=.008,windLift=ball.lift*2.5;
+        ball.vx+=(-windDrag*(dx*airSpeed-vx*speed)+windLift*vy*wind.x)*dt;
+        ball.vz+=(-windDrag*(dz*airSpeed-vz*speed)+windLift*vy*wind.z)*dt;
+        ball.vy+=(-windDrag*vy*(airSpeed-speed)+windLift*(dx*dx+dz*dz-vx*vx-vz*vz))*dt;
+    }
+    // Rotate horizontal velocity without adding energy. Curvature fades with speed.
+    if(ball.curve){
+        const turn=ball.curve*Math.hypot(ball.vx,ball.vz)*dt,c=Math.cos(turn),s=Math.sin(turn),vx=ball.vx;
+        ball.vx=vx*c-ball.vz*s;ball.vz=vx*s+ball.vz*c;
+    }
 }
 function flightProfile(speed,angle,lift){
     const ball={vx:speed*Math.cos(angle),vy:speed*Math.sin(angle),vz:0,lift};
@@ -78,18 +96,18 @@ for(const name of bag.slice(0,-1))calibrateClub(clubs[name]);
 function putterSpeed(power){
     return mix(clubs.Putter.minimum,clubs.Putter.speed,power**1.12);
 }
-function strike(point,ground,club,power,heading,lie){
+function strike(point,ground,club,power,heading,lie,lieProfile=null){
     const config=clubs[club],putt=club==='Putter';
     const speed=putt?putterSpeed(power):config.speed*(.12+.88*power**.87);
     const loftedWedge=config.loft>=33;
     const fromSand=lie==='sand',fromRough=lie==='rough';
-    const penalty=putt?1:fromSand?(loftedWedge?.74:.49):fromRough?.87:1;
-    const extraLaunch=!putt&&fromSand&&loftedWedge?6:0;
+    const penalty=putt?1:lieProfile?.speed??(fromSand?(loftedWedge?.74:.49):fromRough?.87:1);
+    const extraLaunch=(!putt&&fromSand&&loftedWedge?6:0)+(!putt?(lieProfile?.launch??0):0);
     const loft=((config.launch??config.loft)+extraLaunch)*Math.PI/180;
-    const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(fromRough?.52:fromSand?.63:1);
+    const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(lieProfile?.spin??(fromRough?.52:fromSand?.63:1));
     return {...newBall(point,ground),vx:Math.cos(heading)*speed*Math.cos(loft)*penalty,
         vy:Math.sin(loft)*speed*penalty,vz:Math.sin(heading)*speed*Math.cos(loft)*penalty,
-        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll*(!putt&&fromRough?1.19:1),mode:putt?'roll':'air'};
+        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll,grassRelease:config.grassRelease??1,mode:putt?'roll':'air'};
 }
 function flagContact(from,to,pin){
     const dx=to.x-from.x,dz=to.z-from.z;
@@ -130,19 +148,19 @@ function crossing(a,b,c,d){
     return t>0&&t<=1&&u>=0&&u<=1?t:null;
 }
 
-function surroundGrade(surface,ground,x,z,floor,dx,dz){
+function surfaceGrade(surface,ground,x,z,floor,dx,dz,lie){
     const sample=.045;
-    const ahead=surface(x+dx*sample,z+dz*sample)==='surround';
-    const behind=surface(x-dx*sample,z-dz*sample)==='surround';
+    const ahead=surface(x+dx*sample,z+dz*sample)===lie;
+    const behind=surface(x-dx*sample,z-dz*sample)===lie;
     if(!ahead&&!behind)return 0;
     const high=ahead?ground(x+dx*sample,z+dz*sample):floor;
     const low=behind?ground(x-dx*sample,z-dz*sample):floor;
     return clamp((high-low)/(sample*(Number(ahead)+Number(behind))),-4,4);
 }
-function landOnSurround(ball,surface,ground,floor){
+function landOnGrass(ball,lie,surface,ground,floor){
     const {x,z,vx,vy,vz}=ball;
-    const gx=surroundGrade(surface,ground,x,z,floor,1,0);
-    const gz=surroundGrade(surface,ground,x,z,floor,0,1);
+    const gx=surfaceGrade(surface,ground,x,z,floor,1,0,lie);
+    const gz=surfaceGrade(surface,ground,x,z,floor,0,1,lie);
     const normalLength=Math.hypot(gx,1,gz);
     const nx=-gx/normalLength,ny=1/normalLength,nz=-gz/normalLength;
     const approach=vx*nx+vy*ny+vz*nz;
@@ -152,18 +170,21 @@ function landOnSurround(ball,surface,ground,floor){
     const spin=ball.spin||0;
     const steep=ease((impact/Math.max(.01,Math.hypot(tx,ty,tz))-.20)/.8);
     const check=steep*clamp(.42+.45*spin,0,1);
-    const surround=surfaces.surround;
-    const retained=Math.min(1,surround.forward*(ball.roll||1)*mix(.90,.49,check));
-    const rebound=impact*surround.bounce*mix(1,.76,check);
+    const material=surfaces[lie];
+    // Iron release is calibrated separately from carry and green checking.
+    const release=lie==='fairway'?(ball.grassRelease??1):1;
+    const retained=Math.min(1,material.forward*(ball.roll||1)*mix(.90,.49,check)*release);
+    const rebound=impact*material.bounce*mix(1,.76,check);
     ball.vx=tx*retained+nx*rebound;
     ball.vz=tz*retained+nz*rebound;
     ball.vy=ty*retained+ny*rebound;
-    ball.firstLie??='surround';
+    ball.firstLie??=lie;
     ball.y=floor+ballRadius;
     ball.spin=spin*.60;
     if(rebound*normalLength<.48){ball.mode='roll';ball.vy=0;}
 }
 function land(ball,lie,surface,ground,from,floor){
+    ball.firstContact??={x:ball.x,y:floor,z:ball.z,vx:ball.vx,vy:ball.vy,vz:ball.vz};
     const material=surfaces[lie]||surfaces.rough;
     const horizontal=Math.hypot(ball.vx,ball.vz);
     const descent=clamp(-ball.vy/Math.max(.01,horizontal),0,1.5);
@@ -207,8 +228,8 @@ function land(ball,lie,surface,ground,from,floor){
             bounce=Math.min(bounce,.12);
         }
     }
-    if(lie==='surround'&&!hitBunkerLip){
-        landOnSurround(ball,surface,ground,floor);
+    if(['tee','fairway','rough','surround'].includes(lie)&&!hitBunkerLip){
+        landOnGrass(ball,lie,surface,ground,floor);
         return;
     }
     const retained=Math.min(1,forward*(ball.roll||1));
@@ -247,6 +268,28 @@ function resolveFastPutt(ball,from,pin,speed){
         ball.flag=true;
         ball.cupCooldown=.32;
     }
+}
+function obstacleContact(ball,from,obstacle){
+    const {center,radii}=obstacle;
+    const p=[(from.x-center.x)/radii.x,(from.y-center.y)/radii.y,(from.z-center.z)/radii.z];
+    const d=[(ball.x-from.x)/radii.x,(ball.y-from.y)/radii.y,(ball.z-from.z)/radii.z];
+    const a=d.reduce((sum,n)=>sum+n*n,0),b=2*d.reduce((sum,n,i)=>sum+n*p[i],0);
+    const c=p.reduce((sum,n)=>sum+n*n,0)-1,disc=b*b-4*a*c;
+    if(a<1e-12||disc<0||c<0)return;
+    const t=(-b-Math.sqrt(disc))/(2*a);
+    if(t<0||t>1)return;
+    const x=mix(from.x,ball.x,t),y=mix(from.y,ball.y,t),z=mix(from.z,ball.z,t);
+    let nx=(x-center.x)/radii.x**2,ny=(y-center.y)/radii.y**2,nz=(z-center.z)/radii.z**2;
+    const length=Math.hypot(nx,ny,nz);
+    nx/=length;ny/=length;nz/=length;
+    const velocity=ball.vx*nx+ball.vy*ny+ball.vz*nz;
+    if(velocity>=0)return;
+    const rebound=1+(obstacle.restitution??.2),drag=obstacle.retention??.55;
+    ball.vx=(ball.vx-rebound*velocity*nx)*drag;
+    ball.vy=(ball.vy-rebound*velocity*ny)*drag;
+    ball.vz=(ball.vz-rebound*velocity*nz)*drag;
+    ball.x=x+nx*.025;ball.y=y+ny*.025;ball.z=z+nz*.025;
+    ball.obstacle=obstacle.kind;
 }
 function advance(ball, course, settings, dt=stepTime){
     ball.time+=dt;
@@ -289,6 +332,7 @@ function advance(ball, course, settings, dt=stepTime){
     }
     ball.y=ball.mode==='air'?ball.y+ball.vy*dt:rollingGround(ball.x,ball.z)+ballRadius;
 
+    for(const obstacle of course.obstacles??[])obstacleContact(ball,from,obstacle);
     const wallArea=course.wallBounds;
     if(wall.length>1&&(!wallArea||Math.min(from.y,ball.y)<wallArea.top&&
         Math.max(from.x,ball.x)>=wallArea.minX&&Math.min(from.x,ball.x)<=wallArea.maxX&&

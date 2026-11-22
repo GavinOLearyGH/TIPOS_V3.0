@@ -77,3 +77,10 @@ The deterministic profile combines slow sine waves: direction stays within Â±15Â
 The UI pauses the weather/physics clock on window blur, hidden tabs, flyovers and result dialogs, with no elapsed-time catch-up. Completed Play 3 holes persist the clock and seed for continuation on the next hole. Reset restores that hole's entry clock; replaying a setup starts the same pattern again; new setups get a new seed. Personal best keys include the pattern/version. Shot metrics retain pattern, seed, release tick and release vector for reproducibility. The Daily Challenge's client and replay server require a separate coordinated migration before enabling dynamic wind there.
 
 Run `node tests/dynamic-wind.mjs` for twelve directions, legacy conversion, bounded/smooth variation, deterministic seeded replay, orientation, idle/flight integration, display identity, different release phases, putt immunity and retained static behavior.
+
+
+## Integrated Daily Challenge
+
+`daily/` supplies the combined front page. The build places it at the generated root and retains the existing Hole 6 player as `ace.html`. `core/competition.mjs` provides deterministic daily three-hole setups, settled-shot replay/recovery, penalties, automatic Hole 3 tee-shot tiebreak capture and shared ranking. `core/daily-client.mjs` adapts that competition to browser-local preview storage or the Namecheap API. Both modes use the existing course player/engine; official controls prevent resets or changing setup.
+
+The build snapshots course HTML as well as modules, allowing an unfinished official round to resume with its exact starting engine. The backend validates every shot using that pinned snapshot and performs compare-and-swap revision updates. `leaderboard/three.mjs` handles official start/shot/publication, while the existing Hole 6 API is retained. `leaderboard/NAMECHEAP.md` describes the additive table and server upgrade. `tests/daily-three.mjs`, `tests/daily-hub.mjs`, `tests/course-wind-ui.mjs` and `tests/namecheap-assets.mjs` exercise full-round replay, retry/recovery, result/ranking presentation and HTTP asset routing. Native phone rendering still requires device review.

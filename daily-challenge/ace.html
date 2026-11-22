@@ -1,0 +1,2198 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<title>The Irish Par Daily Challenge · The Springhaven Club - Hole 6</title>
+<meta name="description" content="Play The Irish Par Daily Challenge. Play The Springhaven Club - Hole 6, get closest to the pin, or sharpen your game in Practice.">
+<link rel="canonical" href="https://gavinolearygh.github.io/TIPOS_V3.0/daily-challenge/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Irish Par">
+<meta property="og:title" content="The Irish Par Daily Challenge · The Springhaven Club - Hole 6">
+<meta property="og:description" content="One hole. Take your shot and see how close you get.">
+<meta property="og:url" content="https://gavinolearygh.github.io/TIPOS_V3.0/daily-challenge/">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#121b17">
+<style>
+:root{color-scheme:dark;--bg:#121b17;--panel:#1c2821;--line:#3a4a3f;--ink:#eef0e3;--muted:#b6c2b6;--gold:#f5d489}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif}
+main{width:min(1320px,100%);margin:auto;padding:clamp(12px,2.65vw,36px)}
+header{display:flex;justify-content:space-between;align-items:end;gap:1rem;margin-bottom:16px}
+.club-brand{color:var(--muted);font-size:.78rem;font-weight:650;letter-spacing:.16em}
+h1{font:600 clamp(2rem,5vw,3.5rem)/1 Georgia,serif;margin:.32rem 0 0}
+.badge{color:var(--gold);font-size:.8rem;white-space:nowrap}
+.stage{--hud-inset:12px;--shot-clearance:86px;position:relative;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#99c2cc;touch-action:none}
+#course{width:100%;height:clamp(350px,59vh,680px);display:block;cursor:grab}
+#course:active{cursor:grabbing}
+#aim-ring{position:absolute;width:19px;height:19px;border:2px solid #ffe196;border-radius:50%;box-shadow:0 0 0 1px #342819;pointer-events:none;transform:translate(-50%,-50%);opacity:.95}
+#ball-marker{position:absolute;width:20px;height:20px;border:1px solid #fff9;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #2032205f}
+#ball-marker.grabbed{width:27px;height:27px;border:2px solid #ffe9ad;box-shadow:0 0 0 2px #22322299,0 0 12px #ffd87b8c}
+#pull-handle{position:absolute;pointer-events:none;transform:translate(-50%,-50%);width:32px;height:32px;border:2px solid #ffe9ad;border-radius:50%;background:#18241d2b;box-shadow:0 0 0 2px #162219a8,0 2px 8px #17231288}
+#pull-tether,#pull-aim{position:absolute;pointer-events:none;height:2px;transform-origin:left center;border-radius:2px;filter:drop-shadow(0 1px 1px #172312b3)}
+#pull-tether{background:#ffe4a3}
+#pull-aim{background:repeating-linear-gradient(90deg,#ffe4a3 0 9px,transparent 9px 14px)}
+#flyover{position:absolute;top:8px;right:12px;z-index:2;min-height:40px;padding:.4rem .6rem;background:#142018ec;color:var(--gold);font-size:.82rem}
+#flyover-green-read{position:absolute;left:var(--hud-inset);bottom:var(--shot-clearance);padding:.4rem .6rem;border-radius:6px;background:#142018ec;color:var(--gold);font-size:.8rem;pointer-events:none}
+#flyover-fade{position:absolute;inset:0;background:#121b17;opacity:0;pointer-events:none;z-index:1}
+.stage-hud{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:57%;pointer-events:none}
+.stage-hud>span,.shot-letter{background:#142018ec;padding:.38rem .55rem;border:1px solid #fff3;border-radius:6px;color:#fff;font-size:.82rem}
+.map-card{position:absolute;right:12px;top:54px;height:min(282px,calc(100% - 54px - var(--shot-clearance)));aspect-ratio:164/516;background:#18241dee;border:1px solid #fff5;border-radius:9px;overflow:hidden;pointer-events:none}
+#map{display:block;width:100%;height:100%}
+#trace{position:absolute;left:var(--hud-inset);bottom:var(--shot-clearance);pointer-events:none}
+.controls{display:flex;align-items:end;gap:.65rem;flex-wrap:wrap;padding:.85rem 0}
+.controls label{display:grid;gap:.25rem;color:var(--muted);font-size:.78rem}
+button,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:.55rem .75rem;min-height:42px}
+button{cursor:pointer}button:disabled{opacity:.48;cursor:default}button:focus-visible,select:focus-visible,#course:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#green-grid{position:absolute;left:var(--hud-inset);bottom:var(--shot-clearance);min-height:40px;padding:.4rem .6rem;background:#142018ec;color:#fff;font-size:.82rem}
+#green-grid[aria-pressed=true]{color:var(--gold);border-color:#f5d48988}
+#landing-feedback{margin:0;color:var(--muted);font-size:.84rem}
+#status{flex:1;margin:0;min-height:1.5rem;align-self:center}
+.info{display:flex;gap:1rem;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:.85rem;margin:.35rem 0}
+.status-row{display:flex;gap:.8rem;align-items:baseline;margin:.2rem 0}.status-row strong{color:var(--gold);font-size:.81rem;white-space:nowrap}
+[hidden]{display:none!important}
+header{align-items:center}.mode-buttons{display:flex;gap:.35rem}.mode-buttons button[aria-pressed=true]{background:var(--gold);color:#252517;font-weight:750}
+.context{display:flex;gap:.6rem;justify-content:space-between;align-items:center;margin:0 0 .6rem;color:var(--muted);font-size:.84rem}
+#wind-arrow{display:inline-block;font-size:1.2em;line-height:1;margin-right:.24rem}
+#aim-offset{white-space:nowrap}
+.shot-hud{position:absolute;inset:auto var(--hud-inset) var(--hud-inset);display:flex;align-items:flex-end;justify-content:space-between;gap:.5rem;pointer-events:none}
+.shot-hud label{display:grid;gap:.2rem;padding:.4rem .55rem;background:#142018ec;border:1px solid #fff3;border-radius:8px;color:#fff;font-size:.8rem;line-height:1.25}
+.club-panel{max-width:45%}#club{max-width:100%;width:136px;min-height:36px;padding:.35rem .4rem;pointer-events:auto}
+#power-wrap{width:min(44%,230px)}#power-label{overflow-wrap:anywhere}#power{width:100%;height:10px;accent-color:var(--gold)}
+.shot-help{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:.6rem 0}
+.shot-help .info{display:grid;gap:.15rem;margin:0}#reset{flex:none}
+.status-row{align-items:center;min-height:44px}.status-row strong{white-space:normal}
+details{font-size:.83rem;color:var(--muted);margin:.65rem 0}summary{cursor:pointer;min-height:32px;padding-top:.35rem}
+.practice-setup{border-top:1px solid var(--line);margin-top:.8rem;padding-top:.75rem}.practice-setup h2{margin:0;font-size:1.1rem}.settings select{max-width:100%}
+@media(max-width:640px){
+  main{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+  header{margin-bottom:.55rem;gap:.35rem}.club-brand{font-size:.63rem;letter-spacing:.1em}h1{font-size:1.8rem}
+  .mode-buttons button{padding:.35rem .47rem;font-size:.84rem}.context{font-size:.76rem}
+  .stage{--hud-inset:6px;--shot-clearance:82px}
+  .shot-hud label{font-size:.72rem;padding:.3rem .4rem}
+  #club{font-size:1rem;min-height:38px;width:122px}
+  #course{height:clamp(260px,48svh,490px)}.stage-hud{left:6px;top:6px;max-width:63%}.stage-hud>span{font-size:.72rem;padding:.3rem .42rem}
+  #flyover{top:6px;right:6px;min-height:42px}.map-card{right:6px;top:53px;height:min(206px,calc(100% - 53px - var(--shot-clearance)))}.controls{gap:.36rem}.controls button,.controls select{font-size:.88rem}
+  .status-row{gap:.45rem;font-size:.84rem}.info{font-size:.78rem}
+}
+
+.welcome{max-width:980px;margin:clamp(14px,5vw,54px) auto}
+.welcome-hero{padding:clamp(22px,5vw,54px);border:1px solid var(--line);border-radius:18px;background:linear-gradient(125deg,#293b2c,#192720)}
+.welcome-hero h1{font-size:clamp(2.6rem,7vw,5rem)}.welcome-hero p{color:var(--muted);margin:.8rem 0 1.3rem}
+.welcome-hero .streak-line{margin:1rem 0 0}.streak-line strong{color:var(--gold)}
+.shot-guide{padding:1rem;border:1px solid var(--line);border-radius:12px;background:#13231d;margin-bottom:1rem}
+.shot-guide h2{font:600 1.2rem/1.2 Georgia,serif;margin:0 0 .8rem}
+.shot-guide ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem;list-style:none;margin:0;padding:0}
+.shot-guide li{min-width:0;padding:.45rem;background:#1e3428;border-radius:8px;font-size:.82rem}
+.guide-view{height:56px;position:relative;margin-bottom:.35rem;overflow:hidden}
+.guide-view i{position:absolute;display:block}
+.guide-ball,.guide-ring{left:50%;top:29px;transform:translate(-50%,-50%);border-radius:50%}
+.guide-ball{width:8px;height:8px;background:#fff;box-shadow:0 0 0 1px #203220}
+.guide-ring{width:23px;height:23px;border:2px solid #ffe9ad}
+.guide-tether,.guide-aim{left:50%;top:29px;height:2px;transform-origin:left center}
+.guide-tether{width:18px;background:#ffe9ad;transform:rotate(90deg)}
+.guide-aim{width:26px;transform:rotate(-90deg);background:repeating-linear-gradient(90deg,#ffe4a3 0 6px,transparent 6px 10px)}
+.guide-pull .guide-ring{top:46px}.guide-side .guide-ring{left:calc(50% - 13px);top:45px}
+.guide-side .guide-tether{width:21px;transform:rotate(129deg)}.guide-side .guide-aim{transform:rotate(-51deg)}
+.guide-release .guide-ball{top:7px}.guide-release .guide-ring{opacity:.5}
+.daily-action{display:grid;align-content:start;justify-items:start;gap:.35rem}
+.daily-rule{color:var(--muted);font-size:.86rem}
+.welcome-actions #how-to-play-toggle{color:var(--gold)}
+.result-kind{margin:0 0 .3rem;color:var(--gold);font-size:.86rem;font-weight:700}
+#result-detail:empty{display:none}#rank-title:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.welcome-actions{display:flex;flex-wrap:wrap;align-items:start;gap:.65rem}.primary{background:var(--gold);color:#252517;font-weight:750}
+.welcome-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-top:1rem}
+.welcome-panel,.result-panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:clamp(16px,3vw,25px)}
+.welcome-panel h2,.result-panel h2{margin:0 0 .55rem;font:600 1.5rem/1.15 Georgia,serif}
+.leader-name{font-size:1.15rem;font-weight:750;overflow-wrap:anywhere}.leader-detail,.board-source,.subtle{color:var(--muted);font-size:.86rem}
+.welcome-panel p{margin:.35rem 0}.score-bands{display:grid;gap:.4rem;list-style:none;padding:0;margin:.65rem 0 0}
+.score-bands li{display:grid;grid-template-columns:7.2rem 1fr 2.5rem;align-items:center;gap:.5rem;font-size:.82rem}
+.score-bands meter{width:100%;height:.85rem;accent-color:var(--gold)}.score-bands span:last-child{text-align:right}
+.rank-panel{margin-top:1rem}.rank-panel table{width:100%;border-collapse:collapse;text-align:left}
+.rank-panel th,.rank-panel td{padding:.45rem .5rem;border-bottom:1px solid var(--line)}
+.rank-panel td:nth-child(2){overflow-wrap:anywhere}.rank-panel th:last-child,.rank-panel td:last-child{text-align:right;white-space:nowrap}
+.board-source{margin-top:1rem}.result-panel{width:min(100% - 1.5rem,470px);max-height:calc(100vh - 1.5rem);max-height:calc(100dvh - 1.5rem);margin:auto;overflow:auto;color:var(--ink);overscroll-behavior:contain}
+.result-panel::backdrop{background:#0c160f99}
+.result-header{display:flex;align-items:start;justify-content:space-between;gap:.8rem;margin-bottom:.6rem}
+.result-header h2{margin:0}.result-header button{flex:none}
+#result-detail{margin:0 0 .75rem;color:var(--muted)}
+#post-status:empty{display:none}.result-panel .welcome-actions{margin-top:.7rem}
+.result-panel form{display:flex;flex-wrap:wrap;align-items:end;gap:.65rem}
+.result-panel label{display:grid;gap:.25rem;color:var(--muted);font-size:.86rem}
+.result-panel input{min-height:42px;max-width:100%;width:230px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:.5rem}
+.result-panel input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.play-header{flex-wrap:wrap}.mode-buttons{flex-wrap:wrap}
+@media(max-width:640px){.welcome-grid{grid-template-columns:1fr}.welcome-actions button{flex:1}.result-panel form>*{max-width:100%}.daily-action{flex:1 0 100%;justify-items:stretch}}
+</style></head>
+<body><main>
+<section id="welcome" class="welcome" aria-labelledby="welcome-title">
+<div class="welcome-hero">
+<div class="club-brand">THE IRISH PAR</div>
+<h1 id="welcome-title" tabindex="-1">Daily Challenge</h1>
+<p><strong>The Springhaven Club - Hole 6 · Hole in 1 Challenge</strong><br>Today's Setup: <span id="welcome-setup"></span></p>
+<section id="how-to-play" class="shot-guide" aria-labelledby="how-to-play-title" hidden>
+<h2 id="how-to-play-title">How to play</h2>
+<ol>
+<li><div class="guide-view guide-pull" aria-hidden="true"><i class="guide-aim"></i><i class="guide-tether"></i><i class="guide-ring"></i><i class="guide-ball"></i></div>Pull back for power</li>
+<li><div class="guide-view guide-side" aria-hidden="true"><i class="guide-aim"></i><i class="guide-tether"></i><i class="guide-ring"></i><i class="guide-ball"></i></div>Slide to aim</li>
+<li><div class="guide-view guide-release" aria-hidden="true"><i class="guide-aim"></i><i class="guide-ring"></i><i class="guide-ball"></i></div>Release to swing</li>
+</ol>
+</section>
+<div class="welcome-actions">
+<div class="daily-action"><button id="open-daily" class="primary" aria-describedby="daily-rule">Play Daily Challenge</button><span id="daily-rule" class="daily-rule">Your first shot is your official result</span></div>
+<button id="open-practice">Practice</button>
+<button id="review-daily" hidden>View today’s result</button>
+<button id="how-to-play-toggle" type="button" aria-controls="how-to-play" aria-expanded="false">How to play</button>
+</div>
+<p class="streak-line" role="status"><strong id="streak-count"></strong><span id="streak-detail"></span></p>
+</div>
+<p id="board-source" class="board-source" role="status"></p>
+<div class="welcome-grid">
+<section class="welcome-panel" aria-labelledby="leader-title"><h2 id="leader-title">Today’s Leader</h2><p id="leader-name" class="leader-name"></p><p id="leader-detail" class="leader-detail"></p></section>
+<section class="welcome-panel" aria-labelledby="distribution-title"><h2 id="distribution-title">Score Distribution</h2><p id="player-count" class="subtle"></p><ul id="score-bands" class="score-bands"></ul></section>
+</div>
+<section class="welcome-panel rank-panel" aria-labelledby="rank-title"><h2 id="rank-title" tabindex="-1">Leaderboard</h2>
+<p id="board-empty" class="subtle">No scores yet.</p>
+<table id="rank-table" hidden><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">First shot</th></tr></thead><tbody id="rank-rows"></tbody></table>
+</section></section>
+<section id="game-screen" hidden aria-label="Play The Springhaven Club - Hole 6">
+<header class="play-header"><div><div class="club-brand">THE IRISH PAR</div><h1>The Springhaven Club - Hole 6</h1></div><div class="mode-buttons" aria-label="Play mode"><button id="back-home">Welcome</button><button id="daily" aria-pressed="true">Daily Challenge</button><button id="practice-mode" aria-pressed="false">Practice</button></div></header>
+<div class="context"><span id="setup-name"></span><span id="daily-official"></span></div>
+<div class="stage" aria-label="First-person view of The Springhaven Club - Hole 6">
+<canvas id="course" tabindex="0" aria-describedby="controls-guide" aria-label="Course view. Pull back from the ball to set aim and power." role="img"></canvas>
+<div class="stage-hud"><span id="distance"></span><span id="lie"></span><span><b id="wind-arrow" aria-hidden="true">↑</b><span id="wind-readout"></span></span><span id="carry" hidden></span><span id="slope" hidden></span><span id="aim-offset" hidden></span></div>
+<button id="flyover" type="button">Flyover</button>
+<div class="map-card"><canvas id="map" width="164" height="516" role="img" aria-label="Overhead view of The Springhaven Club - Hole 6, with the green at the top and tee boxes at the bottom. Tracks the ball during the shot."></canvas></div>
+<div id="aim-ring" hidden></div><div id="ball-marker" hidden></div>
+<div id="pull-aim" hidden aria-hidden="true"></div><div id="pull-tether" hidden aria-hidden="true"></div><div id="pull-handle" hidden aria-hidden="true"></div>
+<div class="shot-letter" id="trace" hidden>Ball in play</div>
+<button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button>
+<div class="shot-hud" role="group" aria-label="Shot controls">
+<label class="club-panel">Club · carry<select id="club"></select></label>
+<label id="power-wrap"><span id="power-label" title="Estimated distance from the ball along your aim, using terrain and green speed. If the ball rolls back, the readout shows how far it reaches and where it settles. The estimate treats the cup as part of the green.">Power · 0%</span><progress id="power" value="0" max="100"></progress></label>
+</div>
+<span id="flyover-green-read" hidden>Green read · Downhill direction</span>
+<div id="flyover-fade" hidden aria-hidden="true"></div>
+<dialog id="shot-result" class="result-panel" aria-labelledby="result-title" aria-describedby="result-kind result-detail">
+<div class="result-header">
+<div><p id="result-kind" class="result-kind"></p><h2 id="result-title" tabindex="-1" autofocus></h2></div>
+<button id="result-close" type="button">Close</button>
+</div>
+<p id="result-detail"></p>
+<form id="score-form">
+<label>Display name<input id="player-name" name="playerName" maxlength="28" autocomplete="nickname" required></label>
+<button id="post-score" class="primary" type="submit">Post score</button>
+</form>
+<p id="post-status" class="subtle" role="status" tabindex="-1"></p>
+<div class="welcome-actions">
+<button id="result-retry" type="button">Try again</button>
+<button id="result-random" type="button" hidden>Random position</button>
+<button id="result-leaderboard" class="primary" type="button" hidden>View leaderboard</button>
+<button id="result-home" type="button">Back to welcome</button>
+</div>
+</dialog>
+</div>
+<div class="shot-help">
+<div class="info" id="controls-guide"><span>Drag the ball down for power. Slide left to aim right, or right to aim left. Release to swing.</span><span>Keyboard: ← → aim · Hold Space for power · Release to hit · Esc cancels</span></div>
+<button id="reset" type="button">Reset</button>
+</div>
+<div class="status-row"><strong id="score"></strong><p id="status" role="status"></p><button id="view-result" type="button" hidden>View result</button></div>
+<p id="landing-feedback" role="status" hidden></p>
+
+<section id="practice-settings" class="practice-setup" aria-labelledby="practice-setup-title" hidden>
+<h2 id="practice-setup-title">Set up your shot</h2>
+<div class="controls settings">
+<label>Tee<select id="tee"><option value="back">Back</option><option value="middle" selected>Middle</option><option value="forward">Forward</option></select></label>
+<label>Wind direction<select id="wind"></select></label>
+<label>Wind speed<select id="wind-speed"><option value="0">Calm</option><option value="5">5 mph</option><option value="8">8 mph</option><option value="12">12 mph</option></select></label>
+<label>Practice pin<select id="pin"></select></label>
+<label>Green speed<select id="green-speed"><option value="0.8">Slow</option><option value="1" selected>Medium</option><option value="1.24">Fast</option></select></label>
+<label>Start from<select id="practice"><option value="tee">Tee</option><option value="bank">Pond approach</option><option value="wedge">Fairway wedge</option><option value="bunker">Bunker</option><option value="sidehill">Sidehill putt</option><option value="ridge">Across the ridge</option><option value="short">Short putt</option></select></label>
+<button id="random-position" type="button">Random position</button>
+</div>
+</section>
+
+</section></main><script>
+const scale = 0.153;
+const courseWidth=1400*scale,courseDepth=500*scale;
+const tees = {back:{x:145.5*scale,z:276*scale},middle:{x:247.5*scale,z:271*scale},forward:{x:504*scale,z:262*scale}};
+const tee=tees.middle;
+// Begin shared engine.
+const ballRadius = 0.02135;
+const cupRadius = 0.054;
+const stepTime = 1 / 240;
+const clubs = {
+    '3 Iron':{grassRelease:.81,carry:184,loft:14,apex:70,roll:1.10},
+    '4 Iron':{grassRelease:.83,carry:174,loft:15,apex:71,roll:1.08},
+    '5 Iron':{grassRelease:.88,carry:161,loft:16.5,apex:73,roll:1.05},
+    '6 Iron':{grassRelease:.92,carry:153,loft:18,apex:75,roll:1.02},
+    '7 Iron':{grassRelease:.96,carry:145,loft:19.5,apex:76,roll:1.00},
+    '8 Iron':{carry:135,loft:22.5,apex:76,roll:.92},
+    '9 Iron':{carry:124,loft:25.5,apex:74,roll:.84},
+    PW:{carry:110,loft:29,apex:73,roll:.72},
+    GW:{carry:94,loft:33,apex:67,roll:.68},
+    SW:{carry:77,loft:36,apex:60,roll:.60},
+    LW:{carry:64,loft:41,apex:56,roll:.56},
+    Putter:{speed:5,loft:0,minimum:.16,roll:1}
+};
+const bag=Object.keys(clubs);
+const surfaces = {
+    tee:{bounce:.32,brake:.46,forward:.7736,entry:1},
+    fairway:{bounce:.14,brake:1.2,forward:.60,entry:1},
+    rough:{bounce:.075,brake:2.8,forward:.42,entry:.74},
+    surround:{bounce:.23,brake:.78,forward:.7304,entry:.94},
+    green:{bounce:.30,brake:.36,forward:.434,entry:1},
+    sand:{bounce:.025,brake:2.75,forward:.15,entry:.63},
+    bridge:{bounce:.46,brake:.6,forward:.8408,entry:1},
+    path:{bounce:.5,brake:.55,forward:.86,entry:1}
+};
+const windDirections=['Toward green','Toward green and right','Left to right','Toward tee and right','Toward tee','Toward tee and left','Right to left','Toward green and left'];
+const mphToMetresPerSecond=.44704;
+function windVector(direction,mph){
+    const angle=direction*Math.PI/4,speed=mph*mphToMetresPerSecond;
+    return {x:Math.cos(angle)*speed,z:Math.sin(angle)*speed};
+}
+const windPresets={calm:windVector(0,0)};
+const aimStep=.00025,powerStep=.0005;
+const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
+const mix = (a,b,t) => a+(b-a)*t;
+const ease = t => (t=clamp(t,0,1),t*t*(3-2*t));
+const newBall = (point, ground) => ({...point,y:ground(point.x,point.z)+ballRadius,
+    vx:0,vy:0,vz:0,mode:'rest',wall:false,time:0,cupCooldown:0});
+
+function flightStep(ball,wind,dt){
+    const vx=ball.vx,vy=ball.vy,vz=ball.vz;
+    const speed=Math.hypot(vx,vy,vz),drag=.0032*speed;
+    // Retain the calibrated calm trajectory, including its integration order.
+    ball.vx-=vx*drag*dt;
+    ball.vz-=vz*drag*dt;
+    ball.vy-=(9.81+vy*drag-ball.lift*Math.hypot(ball.vx,ball.vz)**2)*dt;
+    if(wind.x||wind.z){
+        const dx=vx-wind.x,dz=vz-wind.z,airSpeed=Math.hypot(dx,vy,dz);
+        // Add moving-air minus calm aerodynamic forces. Lift responds to airflow
+        // and acts perpendicular to it; the horizontal terms matter on ascent
+        // and descent. These effective coefficients tune our simplified model,
+        // without recalibrating every club or changing ground/putting physics.
+        const windDrag=.008,windLift=ball.lift*2.5;
+        ball.vx+=(-windDrag*(dx*airSpeed-vx*speed)+windLift*vy*wind.x)*dt;
+        ball.vz+=(-windDrag*(dz*airSpeed-vz*speed)+windLift*vy*wind.z)*dt;
+        ball.vy+=(-windDrag*vy*(airSpeed-speed)+windLift*(dx*dx+dz*dz-vx*vx-vz*vz))*dt;
+    }
+    // Rotate horizontal velocity without adding energy. Curvature fades with speed.
+    if(ball.curve){
+        const turn=ball.curve*Math.hypot(ball.vx,ball.vz)*dt,c=Math.cos(turn),s=Math.sin(turn),vx=ball.vx;
+        ball.vx=vx*c-ball.vz*s;ball.vz=vx*s+ball.vz*c;
+    }
+}
+function flightProfile(speed,angle,lift){
+    const ball={vx:speed*Math.cos(angle),vy:speed*Math.sin(angle),vz:0,lift};
+    const dt=1/120;
+    let x=0,y=0,peak=0;
+    for(let step=0;step<2400;step++){
+        flightStep(ball,windPresets.calm,dt);
+        x+=ball.vx*dt;y+=ball.vy*dt;
+        peak=Math.max(peak,y);
+        if(y<=0)break;
+    }
+    return {x,peak};
+}
+function calibrateClub(club){
+    club.lift=.0018;
+    let low=club.loft,high=club.loft+22;
+    for(let pass=0;pass<12;pass++){
+        club.launch=(low+high)/2;
+        const angle=club.launch*Math.PI/180;
+        let slow=12,fast=82;
+        for(let trial=0;trial<15;trial++){
+            club.speed=(slow+fast)/2;
+            if(flightProfile(club.speed,angle,club.lift).x<club.carry*.9144)slow=club.speed;
+            else fast=club.speed;
+        }
+        if(flightProfile(club.speed,angle,club.lift).peak<club.apex*.3048)low=club.launch;
+        else high=club.launch;
+    }
+}
+for(const name of bag.slice(0,-1))calibrateClub(clubs[name]);
+function putterSpeed(power){
+    return mix(clubs.Putter.minimum,clubs.Putter.speed,power**1.12);
+}
+function strike(point,ground,club,power,heading,lie,lieProfile=null){
+    const config=clubs[club],putt=club==='Putter';
+    const speed=putt?putterSpeed(power):config.speed*(.12+.88*power**.87);
+    const loftedWedge=config.loft>=33;
+    const fromSand=lie==='sand',fromRough=lie==='rough';
+    const penalty=putt?1:lieProfile?.speed??(fromSand?(loftedWedge?.74:.49):fromRough?.87:1);
+    const extraLaunch=(!putt&&fromSand&&loftedWedge?6:0)+(!putt?(lieProfile?.launch??0):0);
+    const loft=((config.launch??config.loft)+extraLaunch)*Math.PI/180;
+    const spin=putt?0:(.44+.018*config.loft)*(.45+.55*power**.8)*(lieProfile?.spin??(fromRough?.52:fromSand?.63:1));
+    return {...newBall(point,ground),vx:Math.cos(heading)*speed*Math.cos(loft)*penalty,
+        vy:Math.sin(loft)*speed*penalty,vz:Math.sin(heading)*speed*Math.cos(loft)*penalty,
+        putted:putt,lift:(config.lift||0)*(.55+.45*power),spin,roll:config.roll,grassRelease:config.grassRelease??1,mode:putt?'roll':'air'};
+}
+function flagContact(from,to,pin){
+    const dx=to.x-from.x,dz=to.z-from.z;
+    const length=dx*dx+dz*dz;
+    if(length<1e-12)return null;
+    const x=from.x-pin.x,z=from.z-pin.z,radius=ballRadius+.018;
+    const dot=x*dx+z*dz,offset=x*x+z*z-radius*radius;
+    if(offset<0||dot>=0)return null;
+    const discriminant=dot*dot-length*offset;
+    if(discriminant<0)return null;
+    const t=(-dot-Math.sqrt(discriminant))/length;
+    return t>=0&&t<=1?t:null;
+}
+// Sweep the ball center against the rim. Speed tolerance decreases off center.
+function cupContact(from,to,pin,speed){
+    const dx=to.x-from.x,dz=to.z-from.z;
+    const length=Math.hypot(dx,dz);
+    if(length<1e-8)return null;
+    const along=((pin.x-from.x)*dx+(pin.z-from.z)*dz)/length;
+    const miss=Math.abs((pin.x-from.x)*dz-(pin.z-from.z)*dx)/length;
+    const outer=cupRadius+ballRadius*0.55;
+    if(miss>=outer)return null;
+    const half=Math.sqrt(outer**2-miss**2);
+    if(along+half<0||along-half>length)return null;
+    // Wait for the closest approach unless the step starts inside the opening.
+    if(along>length && (from.x-pin.x)**2+(from.z-pin.z)**2>outer**2)return null;
+    const threshold=1.50*Math.sqrt(Math.max(0,1-(miss/(cupRadius*1.12))**2));
+    if(miss<cupRadius*.92&&speed<=threshold)return 'capture';
+    if(miss>cupRadius*.32&&speed<2.3)return 'lip';
+    return 'over';
+}
+function crossing(a,b,c,d){
+    const rx=b.x-a.x,rz=b.z-a.z,sx=d.x-c.x,sz=d.z-c.z;
+    const cross=rx*sz-rz*sx;
+    if(Math.abs(cross)<1e-10)return null;
+    const qx=c.x-a.x,qz=c.z-a.z;
+    const t=(qx*sz-qz*sx)/cross,u=(qx*rz-qz*rx)/cross;
+    return t>0&&t<=1&&u>=0&&u<=1?t:null;
+}
+
+function surfaceGrade(surface,ground,x,z,floor,dx,dz,lie){
+    const sample=.045;
+    const ahead=surface(x+dx*sample,z+dz*sample)===lie;
+    const behind=surface(x-dx*sample,z-dz*sample)===lie;
+    if(!ahead&&!behind)return 0;
+    const high=ahead?ground(x+dx*sample,z+dz*sample):floor;
+    const low=behind?ground(x-dx*sample,z-dz*sample):floor;
+    return clamp((high-low)/(sample*(Number(ahead)+Number(behind))),-4,4);
+}
+function landOnGrass(ball,lie,surface,ground,floor){
+    const {x,z,vx,vy,vz}=ball;
+    const gx=surfaceGrade(surface,ground,x,z,floor,1,0,lie);
+    const gz=surfaceGrade(surface,ground,x,z,floor,0,1,lie);
+    const normalLength=Math.hypot(gx,1,gz);
+    const nx=-gx/normalLength,ny=1/normalLength,nz=-gz/normalLength;
+    const approach=vx*nx+vy*ny+vz*nz;
+    // The tangent carries the shot along the slope. The normal gives it clearance.
+    const tx=vx-approach*nx,ty=vy-approach*ny,tz=vz-approach*nz;
+    const impact=Math.max(0,-approach);
+    const spin=ball.spin||0;
+    const steep=ease((impact/Math.max(.01,Math.hypot(tx,ty,tz))-.20)/.8);
+    const check=steep*clamp(.42+.45*spin,0,1);
+    const material=surfaces[lie];
+    // Iron release is calibrated separately from carry and green checking.
+    const release=lie==='fairway'?(ball.grassRelease??1):1;
+    const retained=Math.min(1,material.forward*(ball.roll||1)*mix(.90,.49,check)*release);
+    const rebound=impact*material.bounce*mix(1,.76,check);
+    ball.vx=tx*retained+nx*rebound;
+    ball.vz=tz*retained+nz*rebound;
+    ball.vy=ty*retained+ny*rebound;
+    ball.firstLie??=lie;
+    ball.y=floor+ballRadius;
+    ball.spin=spin*.60;
+    if(rebound*normalLength<.48){ball.mode='roll';ball.vy=0;}
+}
+function land(ball,lie,surface,ground,from,floor){
+    ball.firstContact??={x:ball.x,y:floor,z:ball.z,vx:ball.vx,vy:ball.vy,vz:ball.vz};
+    const material=surfaces[lie]||surfaces.rough;
+    const horizontal=Math.hypot(ball.vx,ball.vz);
+    const descent=clamp(-ball.vy/Math.max(.01,horizontal),0,1.5);
+    let bounce=material.bounce,forward=material.forward;
+    if(lie==='sand'){
+        const shallow=1-ease(descent/.65);
+        forward=mix(forward,.47,shallow);
+        bounce=mix(bounce,.17,shallow);
+    }else if(lie==='fairway'||lie==='tee'){
+        forward*=mix(1.04,.94,ease(descent));
+    }else if(lie==='green'){
+        const firstGreen=!ball.greenContact;
+        const ux=horizontal>.001?ball.vx/horizontal:0,uz=horizontal>.001?ball.vz/horizontal:0;
+        const sample=.15;
+        const x=ball.x+ux*sample,z=ball.z+uz*sample;
+        const grade=surface(x,z)==='green'?clamp((ground(x,z)-floor)/sample,-.12,.12):0;
+        const impactDescent=Math.max(0,-ball.vy/Math.max(.01,horizontal)+grade);
+        const spin=ball.spin||0;
+        if(firstGreen){
+            ball.greenContact={x:ball.x,z:ball.z,ux,uz,angle:Math.atan2(-ball.vy,horizontal)*180/Math.PI};
+        }
+        const steep=ease((impactDescent-.34)/.68);
+        const shallow=1-ease(impactDescent/.36);
+        const check=steep*clamp(.20+.75*spin,0,1);
+        forward*=1+.16*shallow-.57*check;
+        bounce*=1-.30*check;
+        if(firstGreen&&spin>.98&&impactDescent>.90&&horizontal>=2&&horizontal<20){
+            // A steep, high-spin wedge may grip enough to come back a short distance.
+            const grip=ease((spin-.98)/.18)*ease((impactDescent-.90)/.24);
+            forward=mix(forward,-.10*Math.min(1,12/horizontal),grip);
+        }
+    }
+    const fromSand=surface(from.x,from.z)==='sand';
+    let hitBunkerLip=false;
+    if(fromSand||lie==='sand'){
+        const span=Math.hypot(ball.x-from.x,ball.z-from.z);
+        hitBunkerLip=span>.001&&(floor-ground(from.x,from.z))/span>.23;
+        if(hitBunkerLip){
+            ball.bunkerLip=true;
+            forward=-Math.min(forward,.16);
+            bounce=Math.min(bounce,.12);
+        }
+    }
+    if(['tee','fairway','rough','surround'].includes(lie)&&!hitBunkerLip){
+        landOnGrass(ball,lie,surface,ground,floor);
+        return;
+    }
+    const retained=Math.min(1,forward*(ball.roll||1));
+    ball.firstLie??=fromSand&&ball.bunkerLip?'sand':lie;
+    ball.y=floor+ballRadius;
+    ball.vx*=retained;
+    ball.vz*=retained;
+    ball.vy=Math.max(0,-ball.vy*bounce);
+    ball.spin=(ball.spin||0)*(lie==='green'?.46:.60);
+    if(ball.vy<.62){ball.mode='roll';ball.vy=0;}
+}
+function estimatePutt(point,course,heading,power,greenSpeed){
+    if(power<.025)return {reach:0,finish:0};
+    const ball=strike(point,course.ground,'Putter',power,heading,course.surface(point.x,point.z));
+    const settings={greenSpeed,pin:null};
+    const dx=Math.cos(heading),dz=Math.sin(heading);
+    let reach=0,finish=0;
+    while(ball.mode==='roll'){
+        advance(ball,course,settings,1/120);
+        finish=(ball.x-point.x)*dx+(ball.z-point.z)*dz;
+        reach=Math.max(reach,finish);
+    }
+    return {reach,finish};
+}
+function resolveFastPutt(ball,from,pin,speed){
+    const miss=Math.abs((pin.x-from.x)*ball.vz-(pin.z-from.z)*ball.vx)/speed;
+    const center=1-clamp(miss/.024,0,1);
+    // A central putt just over capture pace loses energy and rolls through.
+    const through=mix(.42,.60,clamp((speed-1.5)/.65,0,1));
+    // A harder, direct strike on the stick can send the ball back.
+    const firm=ease(clamp((speed-2.1)/.85,0,1));
+    const retain=mix(.82,mix(through,-.23,firm),center);
+    ball.vx*=retain;
+    ball.vz*=retain;
+    if(retain<0){
+        ball.flag=true;
+        ball.cupCooldown=.32;
+    }
+}
+function obstacleContact(ball,from,obstacle){
+    const {center,radii}=obstacle;
+    const p=[(from.x-center.x)/radii.x,(from.y-center.y)/radii.y,(from.z-center.z)/radii.z];
+    const d=[(ball.x-from.x)/radii.x,(ball.y-from.y)/radii.y,(ball.z-from.z)/radii.z];
+    const a=d.reduce((sum,n)=>sum+n*n,0),b=2*d.reduce((sum,n,i)=>sum+n*p[i],0);
+    const c=p.reduce((sum,n)=>sum+n*n,0)-1,disc=b*b-4*a*c;
+    if(a<1e-12||disc<0||c<0)return;
+    const t=(-b-Math.sqrt(disc))/(2*a);
+    if(t<0||t>1)return;
+    const x=mix(from.x,ball.x,t),y=mix(from.y,ball.y,t),z=mix(from.z,ball.z,t);
+    let nx=(x-center.x)/radii.x**2,ny=(y-center.y)/radii.y**2,nz=(z-center.z)/radii.z**2;
+    const length=Math.hypot(nx,ny,nz);
+    nx/=length;ny/=length;nz/=length;
+    const velocity=ball.vx*nx+ball.vy*ny+ball.vz*nz;
+    if(velocity>=0)return;
+    const rebound=1+(obstacle.restitution??.2),drag=obstacle.retention??.55;
+    ball.vx=(ball.vx-rebound*velocity*nx)*drag;
+    ball.vy=(ball.vy-rebound*velocity*ny)*drag;
+    ball.vz=(ball.vz-rebound*velocity*nz)*drag;
+    ball.x=x+nx*.025;ball.y=y+ny*.025;ball.z=z+nz*.025;
+    ball.obstacle=obstacle.kind;
+}
+function advance(ball, course, settings, dt=stepTime){
+    ball.time+=dt;
+    const {ground,surface,wall=[],waterHeight=-Infinity,bridgeHeight,terrainGround,terrainSurface}=course;
+    const bounds=course.bounds;
+    const insideBounds=(x,z)=>x>=bounds.minX&&x<=bounds.maxX&&z>=bounds.minZ&&z<=bounds.maxZ;
+    const {pin,wind,greenSpeed}=settings;
+    const from={x:ball.x,y:ball.y,z:ball.z};
+    const deckBefore=bridgeHeight?.(from.x,from.z);
+    const rollsUnderDeck=ball.mode==='roll'&&deckBefore!==undefined&&from.y-ballRadius<deckBefore-.025;
+    const rollingGround=rollsUnderDeck?terrainGround:ground;
+    let rollingLie;
+    if(ball.mode==='drop'){
+        ball.y-=dt*.55;
+        if(ball.y<ground(pin.x,pin.z)-.13)ball.mode='holed';
+        return;
+    }
+    if(ball.mode==='air'){
+        flightStep(ball,wind,dt);
+    } else if(ball.mode==='roll'){
+        const sample=.07;
+        const gradeX=(rollingGround(ball.x+sample,ball.z)-rollingGround(ball.x-sample,ball.z))/(sample*2);
+        const gradeZ=(rollingGround(ball.x,ball.z+sample)-rollingGround(ball.x,ball.z-sample))/(sample*2);
+        ball.vx-=7*clamp(gradeX,-.55,.55)*dt;
+        ball.vz-=7*clamp(gradeZ,-.55,.55)*dt;
+        const pace=Math.hypot(ball.vx,ball.vz);
+        rollingLie=(rollsUnderDeck?terrainSurface:surface)(ball.x,ball.z);
+        const base=(surfaces[rollingLie]||surfaces.rough).brake;
+        const remaining=Math.max(0,pace-(rollingLie==='green'?base/greenSpeed:base)*dt);
+        if(remaining<.023){ball.mode='rest';return;}
+        ball.vx*=remaining/pace;
+        ball.vz*=remaining/pace;
+    } else return;
+    ball.x+=ball.vx*dt;
+    ball.z+=ball.vz*dt;
+    const deckAhead=bridgeHeight?.(ball.x,ball.z);
+    if(rollingLie==='bridge'&&deckAhead===undefined&&ground(ball.x,ball.z)<from.y-ballRadius-.09){
+        ball.mode='air';
+        ball.vy=0;
+    }
+    ball.y=ball.mode==='air'?ball.y+ball.vy*dt:rollingGround(ball.x,ball.z)+ballRadius;
+
+    for(const obstacle of course.obstacles??[])obstacleContact(ball,from,obstacle);
+    const wallArea=course.wallBounds;
+    if(wall.length>1&&(!wallArea||Math.min(from.y,ball.y)<wallArea.top&&
+        Math.max(from.x,ball.x)>=wallArea.minX&&Math.min(from.x,ball.x)<=wallArea.maxX&&
+        Math.max(from.z,ball.z)>=wallArea.minZ&&Math.min(from.z,ball.z)<=wallArea.maxZ)){
+        for(let i=1;i<wall.length;i++){
+            const a=wall[i-1],b=wall[i];
+            const t=crossing(from,ball,a,b);
+            if(t===null)continue;
+            const dx=b.x-a.x,dz=b.z-a.z;
+            const x=mix(from.x,ball.x,t),z=mix(from.z,ball.z,t);
+            const at=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz),0,1);
+            const y=mix(from.y,ball.y,t);
+            if(y-ballRadius>mix(a.top,b.top,at)||y+ballRadius<waterHeight)continue;
+            let nx=b.z-a.z,nz=a.x-b.x;
+            const size=Math.hypot(nx,nz);
+            nx/=size;nz/=size;
+            const normal=ball.vx*nx+ball.vz*nz;
+            ball.vx=(ball.vx-1.32*normal*nx)*.64;
+            ball.vz=(ball.vz-1.32*normal*nz)*.64;
+            ball.x=from.x;ball.y=from.y;ball.z=from.z;
+            ball.vy=Math.min(ball.vy,1);
+            ball.wall=true;
+            break;
+        }
+    }
+    if(ball.mode==='air'&&ball.y>(course.airClearance??3)&&insideBounds(ball.x,ball.z)&&ball.time<=45)return;
+    const cupFloor=pin&&(pin.floor??(pin.floor=ground(pin.x,pin.z))),rim=cupFloor+ballRadius;
+    if(pin&&ball.mode==='air'&&from.y>rim&&ball.y<=rim){
+        const t=(from.y-rim)/(from.y-ball.y);
+        const x=mix(from.x,ball.x,t),z=mix(from.z,ball.z,t);
+        if(Math.hypot(x-pin.x,z-pin.z)<=cupRadius-ballRadius&&Math.hypot(ball.vx,ball.vz)<6){
+            ball.mode='drop';ball.x=pin.x;ball.y=rim;ball.z=pin.z;
+            return;
+        }
+    }
+    if(ball.flagCooldown>0)ball.flagCooldown-=dt;
+    const flagT=!pin||ball.putted||ball.flagCooldown>0||Math.min(from.y,ball.y)>cupFloor+2 ? null : flagContact(from,ball,pin);
+    if(flagT!==null){
+        const y=mix(from.y,ball.y,flagT);
+        const speed=Math.hypot(ball.vx,ball.vz);
+        if(y>=rim-.005&&y<=cupFloor+1.95+ballRadius&&(ball.mode==='air'||speed>1.5)){
+            const x=mix(from.x,ball.x,flagT),z=mix(from.z,ball.z,flagT);
+            const normalLength=Math.hypot(x-pin.x,z-pin.z);
+            const nx=(x-pin.x)/normalLength,nz=(z-pin.z)/normalLength;
+            const normal=ball.vx*nx+ball.vz*nz;
+            ball.x=x+nx*.001;ball.y=y;ball.z=z+nz*.001;
+            ball.vx=(ball.vx-1.48*normal*nx)*.86;
+            ball.vz=(ball.vz-1.48*normal*nz)*.86;
+            ball.vy*=.82;
+            ball.flagCooldown=.06;
+            ball.flag=true;
+        }
+    }
+    const deck=bridgeHeight?.(ball.x,ball.z);
+    const underDeck=deck!==undefined&&(rollsUnderDeck||
+        (ball.mode==='air'&&from.y-ballRadius<(deckBefore??deck)-.015));
+    const lieAt=underDeck?terrainSurface:surface;
+    const groundAt=underDeck?terrainGround:ground;
+    const lie=lieAt(ball.x,ball.z);
+    const floor=groundAt(ball.x,ball.z);
+    if(lie==='water'&&ball.y-ballRadius<=waterHeight){
+        ball.mode='water';
+        return;
+    }
+    if(rollingLie&&rollingLie!==lie&&surfaces[lie]){
+        ball.vx*=surfaces[lie].entry;
+        ball.vz*=surfaces[lie].entry;
+    }
+    if(ball.mode==='air'&&ball.y<=floor+ballRadius){
+        land(ball,lie,lieAt,groundAt,from,floor);
+    }
+    ball.cupCooldown-=dt;
+    if(pin&&ball.putted&&ball.cupExitPending&&
+        Math.hypot(from.x-pin.x,from.z-pin.z)>cupRadius+ballRadius*.55){
+        ball.cupExitPending=false;
+    }
+    if(pin&&ball.mode==='roll'&&lie==='green'&&ball.cupCooldown<=0&&!ball.cupExitPending){
+        const speed=Math.hypot(ball.vx,ball.vz);
+        const hit=cupContact(from,ball,pin,speed);
+        if(hit&&ball.putted)ball.cupExitPending=true;
+        if(hit==='capture'){
+            ball.mode='drop';ball.x=pin.x;ball.z=pin.z;
+        } else if(hit==='lip'){
+            const side=Math.sign((pin.x-from.x)*(ball.z-from.z)-(pin.z-from.z)*(ball.x-from.x))||1;
+            const vx=ball.vx,vz=ball.vz;
+            ball.vx=(vx*.78-vz*.52*side)*.72;
+            ball.vz=(vz*.78+vx*.52*side)*.72;
+            ball.cupCooldown=.22;
+            ball.cupResult='Lipped out. ';
+        } else if(hit==='over'){
+            ball.cupCooldown=.16;
+            ball.cupResult='Ran over the cup. ';
+            if(ball.putted)resolveFastPutt(ball,from,pin,speed);
+        }
+    }
+    if(ball.time>45||!insideBounds(ball.x,ball.z)||ball.mode!=='air'&&course.isOutOfBounds?.(ball.x,ball.z))ball.mode='out';
+}
+// End shared engine.
+// Per-hole plan coordinates follow the world atlas. Looking from the tee, across
+// increases from left to right and depth increases from the front to the back.
+const greenComplex={
+    outline:"M1128 179Q1134 164 1147 161L1198 160Q1219 162 1243 179L1272 191Q1298 204 1303 231Q1308 257 1303 282Q1296 306 1273 317Q1253 324 1217 322Q1185 322 1158 311Q1143 301 1143 274Q1141 252 1129 228Q1117 209 1128 179Z",
+    frame:{front:[1122,242],back:[1306,242],width:164},
+    center:[1215,242],
+    pinLocations:{
+        frontLeft:[1154,193],front:[1165,243],frontRight:[1169,282],
+        middleLeft:[1214,200],middle:[1226,242],middleRight:[1245,279],
+        backLeft:[1255,213],back:[1263,244],backRight:[1278,280]
+    },
+    tiers:{datum:-.18,backRise:.24,rightRise:.035,frontLeftFall:.135,
+        ridge:{depth:[.35,.37,.66],rise:.23,width:.22}},
+    // A surveyed green can supply elevations in metres instead of estimated tiers.
+    // Rows run front to back and columns run left to right across the frame.
+    elevations:null
+};
+const pins=Object.fromEntries(Object.entries(greenComplex.pinLocations)
+    .map(([name,[x,z]])=>[name,{x:x*scale,z:z*scale}]));
+const greenCenter={x:greenComplex.center[0]*scale,z:greenComplex.center[1]*scale};
+const shapes = {"teeArea": "M120 253Q121 229 151 229L224 230Q252 215 291 216L371 216Q410 209 451 212L523 212Q570 212 586 230Q605 245 605 265L605 302Q602 328 558 335Q445 344 327 337Q231 331 150 312Q113 307 120 253Z", "tee": "M139 254L380 243L381 297L141 309Z M459 239L577 235L581 286L464 290Z", "fairway": "M730 271Q734 228 757 211Q778 199 797 188Q814 179 843 178L934 178Q945 185 954 202L981 235Q996 258 997 291Q997 339 984 366Q976 382 958 380Q895 382 827 367Q776 357 747 331Q724 313 730 271Z", "surround": "M1031 191Q1040 148 1102 129Q1167 113 1210 127Q1274 143 1304 185Q1334 211 1321 281Q1313 318 1273 337L1266 344L1264 374Q1240 399 1189 393Q1156 393 1142 371L1135 344Q1119 327 1117 302Q1112 250 1088 228Q1071 208 1039 202Z", "water": "M943 116Q954 111 965 130Q978 148 988 170Q1000 194 1019 218Q1031 224 1062 223Q1100 225 1112 245Q1118 256 1117 279L1119 313Q1119 333 1104 345Q1095 353 1081 359Q1062 338 1047 310Q1030 281 1011 258Q991 234 976 214Q953 193 948 159Z", "wall": "M1021 222Q1047 221 1063 222Q1098 223 1112 242Q1120 253 1118 279L1120 314Q1120 332 1107 344Q1097 354 1082 359", "green": greenComplex.outline, "sand": "M1147 337Q1151 322 1164 325Q1175 326 1186 337Q1193 347 1207 342Q1223 338 1229 351Q1235 367 1221 378Q1209 386 1180 381Q1155 377 1148 366Q1142 355 1147 337Z"};
+function geometryPath(data){
+    const tokens=data.match(/[MLQZ]|-?\d+(?:\.\d+)?/g),paths=[];
+    let i=0,points;
+    const point=()=>[Number(tokens[i++]),Number(tokens[i++])];
+    while(i<tokens.length){
+        const command=tokens[i++];
+        if(command==='M'){points=[point()];paths.push(points);}
+        if(command==='L')points.push(point());
+        if(command==='Q'){
+            const a=points.at(-1),b=point(),c=point();
+            for(let step=1;step<=60;step++){
+                const t=step/60,k=1-t;
+                points.push([k*k*a[0]+2*k*t*b[0]+t*t*c[0],k*k*a[1]+2*k*t*b[1]+t*t*c[1]]);
+            }
+        }
+        if(command==='Z')points.push(points[0]);
+    }
+    for(const points of paths){
+        points.minX=Math.min(...points.map(p=>p[0]));
+        points.maxX=Math.max(...points.map(p=>p[0]));
+        points.minZ=Math.min(...points.map(p=>p[1]));
+        points.maxZ=Math.max(...points.map(p=>p[1]));
+    }
+    return paths;
+}
+function containsPoint(paths,x,z){
+    for(const points of paths){
+        if(x<points.minX||x>points.maxX||z<points.minZ||z>points.maxZ)continue;
+        let inside=false;
+        for(let i=0,j=points.length-1;i<points.length;j=i++){
+            const a=points[i],b=points[j];
+            if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])inside=!inside;
+        }
+        if(inside)return true;
+    }
+    return false;
+}
+function sampleGeometryPath(points,count){
+    const lengths=[0];
+    for(let i=1;i<points.length;i++){
+        const a=points[i-1],b=points[i];
+        lengths.push(lengths.at(-1)+Math.hypot(b[0]-a[0],b[1]-a[1]));
+    }
+    let i=1;
+    return Array.from({length:count},(_,index)=>{
+        const distance=lengths.at(-1)*index/(count-1);
+        while(i<lengths.length-1&&lengths[i]<distance)i++;
+        const t=(distance-lengths[i-1])/(lengths[i]-lengths[i-1]);
+        return {x:mix(points[i-1][0],points[i][0],t),z:mix(points[i-1][1],points[i][1],t)};
+    });
+}
+const geometryPaths=Object.fromEntries(Object.entries(shapes).map(([key,value])=>[key,geometryPath(value)]));
+
+const palette={rough:'#4e6c40',teeArea:'#577b46',tee:'#78a66b',fairway:'#7da65c',
+    surround:'#668a4f',water:'#356a7e',bridge:'#a69677',green:'#92b864',sand:'#d7be88'};
+const wall=sampleGeometryPath(geometryPaths.wall[0],70).map(p=>({x:p.x*scale,z:p.z*scale}));
+const bunkerEdge=sampleGeometryPath(geometryPaths.sand[0],97);
+const waterHeight=-3.45;
+function terrainSurface(x,z){
+    const px=x/scale,pz=z/scale;
+    for(const key of ['water','sand','green','tee','fairway','surround']){
+        if(containsPoint(geometryPaths[key],px,pz))return key;
+    }
+    return 'rough';
+}
+function makeGreenHeight({frame,tiers,elevations}){
+    const {front,back,width}=frame;
+    const dx=back[0]-front[0],dz=back[1]-front[1],length=Math.hypot(dx,dz);
+    const ux=dx/length,uz=dz/length;
+    return (x,z)=>{
+        const px=x/scale-front[0],pz=z/scale-front[1];
+        const depth=clamp((px*ux+pz*uz)/length,0,1);
+        const across=clamp(.5+(pz*ux-px*uz)/width,0,1);
+        if(elevations){
+            const row=depth*(elevations.length-1), column=across*(elevations[0].length-1);
+            const i=Math.min(elevations.length-2,Math.floor(row));
+            const j=Math.min(elevations[0].length-2,Math.floor(column));
+            const low=mix(elevations[i][j],elevations[i][j+1],column-j);
+            const high=mix(elevations[i+1][j],elevations[i+1][j+1],column-j);
+            return mix(low,high,row-i);
+        }
+        const {ridge}=tiers,[left,curve,right]=ridge.depth;
+        const ridgeDepth=mix(mix(left,curve,across),mix(curve,right,across),across);
+        const tierLift=ridge.rise*ease(.5+(depth-ridgeDepth)/ridge.width);
+        const cornerFall=tiers.frontLeftFall*(1-depth)**2*(1-across)**3;
+        return tiers.datum+tiers.backRise*depth+tiers.rightRise*across+tierLift-cornerFall;
+    };
+}
+const greenHeight=makeGreenHeight(greenComplex);
+function bunkerDepth(px,pz){
+    let closestSquared=Infinity;
+    for(let i=1;i<bunkerEdge.length;i++){
+        const a=bunkerEdge[i-1],b=bunkerEdge[i];
+        const dx=b.x-a.x,dz=b.z-a.z;
+        const distanceSquared=dx*dx+dz*dz;
+        if(!distanceSquared)continue;
+        const t=clamp(((px-a.x)*dx+(pz-a.z)*dz)/distanceSquared,0,1);
+        const offsetX=px-a.x-t*dx,offsetZ=pz-a.z-t*dz;
+        closestSquared=Math.min(closestSquared,offsetX**2+offsetZ**2);
+    }
+    return .55*ease(Math.sqrt(closestSquared)*scale/1.7);
+}
+function baseGround(x,z){
+    const px=x/scale,pz=z/scale;
+    if(px<615)return .08*Math.sin(pz*.025)*ease((615-px)/100);
+    const lie=terrainSurface(x,z);
+    if(lie==='water')return waterHeight-.16;
+    if(lie==='green')return greenHeight(x,z);
+    let bank=-3.37*ease((px-610)/430);
+    if(pz>365)bank=mix(bank,-2.75,ease((pz-365)/70));
+    if(pz<155)bank=mix(bank,-1.4,ease((155-pz)/60));
+    // Blend the broad approach bank into the steeper rise behind the wall.
+    // Fade with distance along the wall so its ends join the surrounding grass.
+    const wallBlend=ease((pz-219)/24)*ease((358-pz)/33);
+    // The front-left shoulder reaches putting height before the green starts.
+    const frontShoulder=ease((pz-148)/20)*ease((247-pz)/13);
+    const approachRise=ease((px-1032)/mix(109,90,frontShoulder));
+    let rise=approachRise;
+    if(wallBlend>0&&px>1020&&px<1141){
+        let crest=wall[0].x/scale;
+        for(let i=1;i<wall.length;i++){
+            const a=wall[i-1],b=wall[i];
+            if(a.z>=b.z)continue;
+            crest=b.x/scale;
+            if(z>b.z)continue;
+            crest=mix(a.x,b.x,clamp((z-a.z)/(b.z-a.z),0,1))/scale;
+            break;
+        }
+        rise=mix(approachRise,ease((px-crest)/8),wallBlend);
+    }
+    const high=greenHeight(x,z);
+    return mix(bank,high,rise)-(lie==='sand'?bunkerDepth(px,pz):0);
+}
+// Fit the stone crest to the grass uphill of the wall, then feather both ends
+// into the pond bank. Arc-length samples give the ends independent tapers.
+for(let i=0;i<wall.length;i++){
+    const p=wall[i],a=wall[Math.max(0,i-1)],b=wall[Math.min(wall.length-1,i+1)];
+    const length=Math.hypot(b.x-a.x,b.z-a.z);
+    p.nx=(b.z-a.z)/length;
+    p.nz=(a.x-b.x)/length;
+    p.shoulder=baseGround(p.x+p.nx*1.45,p.z+p.nz*1.45);
+    const taper=ease(i/27)*ease((wall.length-1-i)/17);
+    const bankTop=waterHeight+.07;
+    p.top=mix(bankTop,Math.max(bankTop,p.shoulder),taper);
+}
+function terrainGround(x,z){
+    const height=baseGround(x,z),width=1.45;
+    if(x<1019*scale-width||x>1122*scale+width||z<220*scale-width||
+        z>360*scale+width||terrainSurface(x,z)==='water')return height;
+    let best=width**2,crest,shoulder,side,aroundEnd;
+    for(let i=1;i<wall.length;i++){
+        const a=wall[i-1],b=wall[i],dx=b.x-a.x,dz=b.z-a.z;
+        const t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz),0,1);
+        const ox=x-mix(a.x,b.x,t),oz=z-mix(a.z,b.z,t);
+        const distance=ox*ox+oz*oz;
+        if(distance>=best)continue;
+        best=distance;
+        crest=mix(a.top,b.top,t);
+        side=ox*mix(a.nx,b.nx,t)+oz*mix(a.nz,b.nz,t);
+        shoulder=mix(a.shoulder,b.shoulder,t);
+        aroundEnd=(i===1&&t===0)||(i===wall.length-1&&t===1);
+    }
+    if(crest===undefined)return height;
+    const retainedSide=aroundEnd?ease((side+.45)/.45):side>=-.015?1:0;
+    const distance=Math.sqrt(best)/width;
+    const grade=mix(crest,shoulder,ease(distance));
+    return mix(height,grade,retainedSide*(1-ease((distance-.65)/.35)));
+}
+const bridge={x:972*scale,z:179*scale,ux:.91,uz:-Math.sqrt(1-.91**2),
+    start:-24*scale,end:27*scale,halfWidth:8*scale,crown:.88};
+function bridgePoint(t,width){
+    const d=mix(bridge.start,bridge.end,t);
+    return {x:bridge.x+bridge.ux*d-bridge.uz*width,z:bridge.z+bridge.uz*d+bridge.ux*width};
+}
+const bridgeCorners=[bridgePoint(0,-bridge.halfWidth),bridgePoint(1,-bridge.halfWidth),
+    bridgePoint(1,bridge.halfWidth),bridgePoint(0,bridge.halfWidth)];
+const bridgeBank=bridgeCorners.map(p=>terrainGround(p.x,p.z));
+function bridgeDeck(t,width){
+    const side=(width/bridge.halfWidth+1)/2;
+    const near=mix(bridgeBank[0],bridgeBank[3],side);
+    const far=mix(bridgeBank[1],bridgeBank[2],side);
+    return mix(near,far,t)+bridge.crown*Math.sin(Math.PI*t)**2;
+}
+function bridgeHeight(x,z){
+    const dx=x-bridge.x,dz=z-bridge.z;
+    const d=dx*bridge.ux+dz*bridge.uz,width=-dx*bridge.uz+dz*bridge.ux;
+    const tolerance=1e-7;
+    if(d<bridge.start-tolerance||d>bridge.end+tolerance||Math.abs(width)>bridge.halfWidth+tolerance)return;
+    return bridgeDeck(clamp((d-bridge.start)/(bridge.end-bridge.start),0,1),
+        clamp(width,-bridge.halfWidth,bridge.halfWidth));
+}
+function ground(x,z){return bridgeHeight(x,z)??terrainGround(x,z);}
+function surface(x,z){return bridgeHeight(x,z)===undefined?terrainSurface(x,z):'bridge';}
+const course={ground,surface,wall,waterHeight,bridgeHeight,terrainGround,terrainSurface,bounds:{minX:60*scale,maxX:1345*scale,minZ:59*scale,maxZ:470*scale},
+    wallBounds:{top:1,minX:1019*scale,maxX:1122*scale,minZ:220*scale,maxZ:360*scale}};
+
+// Eastern time gives all players the same course setup for the club's calendar day.
+const dateParts=new Intl.DateTimeFormat('en',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
+function dayKey(now=new Date()){
+    const parts=Object.fromEntries(dateParts.formatToParts(now).map(({type,value})=>[type,value]));
+    return parts.year+'-'+parts.month+'-'+parts.day;
+}
+// Each forecast and pin here has a repeatable ace using the on-screen aim and power increments.
+const dailySetups=[
+    ['forward','middle',0,0,1],
+    ['middle','back',3,6,1.24,189.16,34.66],
+    ['forward','back',7,8,1.24],
+    ['back','back',0,8,.8,197.15,36.05],
+];
+function challengeFor(day){
+    const calendarDay=Math.floor(Date.parse(day+'T00:00:00Z')/86400000);
+    const index=(calendarDay%dailySetups.length+dailySetups.length)%dailySetups.length;
+    const [tee,pin,dir,mph,speed,x,z]=dailySetups[index];
+    return {tee,pin,dir,mph,speed,cup:x===undefined?pins[pin]:{x,z}};
+}
+// The leaderboard replays this same physics and course data from the HTML build.
+function replayDailyShot(day,club,power,heading){
+    const setup=challengeFor(day),tee=tees[setup.tee],pin=setup.cup;
+    const replaySettings={pin,wind:windVector(setup.dir,setup.mph),greenSpeed:setup.speed};
+    const ball=strike(tee,ground,club,power,heading,surface(tee.x,tee.z));
+    while(ball.time<50&&['air','roll','drop'].includes(ball.mode))advance(ball,course,replaySettings);
+    if(ball.mode==='holed')return {outcome:'in-play',ace:true,mm:0};
+    if(ball.mode==='rest')return {outcome:'in-play',ace:false,mm:Math.round(Math.hypot(ball.x-pin.x,ball.z-pin.z)*1000)};
+    return {outcome:ball.mode==='water'?'water':'out',ace:false,mm:null};
+}
+// End shared physics.
+const path=Object.fromEntries(Object.entries(shapes).map(([key,d])=>[key,new Path2D(d)]));
+path.bridge=new Path2D(bridgeCorners.map((p,i)=>(i?'L':'M')+p.x/scale+' '+p.z/scale).join('')+'Z');
+function atlas(){
+    const canvas=document.createElement('canvas');
+    canvas.width=1400;canvas.height=500;
+    const ctx=canvas.getContext('2d');
+    for(const key of Object.keys(palette)){
+        if(key==='bridge')continue;
+        ctx.fillStyle=palette[key];
+        if(key==='rough')ctx.fillRect(0,0,1400,500);
+        else ctx.fill(path[key]);
+    }
+    ctx.save();
+    ctx.clip(path.fairway);
+    ctx.fillStyle='#d1eeb019';
+    for(let i=750;i<1030;i+=26)ctx.fillRect(i,130,13,270);
+    ctx.restore();
+    ctx.save();
+    ctx.clip(path.green);
+    ctx.fillStyle='#e0ffb01b';
+    for(let i=1100;i<1350;i+=18)ctx.fillRect(i,145,9,188);
+    ctx.restore();
+    return canvas;
+}
+// Begin shared controls.
+
+function dragPower(depth,putting){
+    return putting?depth:depth<=.42?.8*depth/.42:.8+.2*(depth-.42)/.58;
+}
+function dragHeading(start,base,dx){
+    const width=Math.abs(dx);
+    const turn=clamp(-Math.sign(dx)*(.00025*width+.000014*Math.max(0,width-16)**2),-.48,.48);
+    return base+Math.round((start-base+turn)/aimStep)*aimStep;
+}
+function shotCamera(ball,ground,heading,putting,following){
+    const dx=Math.cos(heading),dz=Math.sin(heading),back=following?5.7:putting?1.8:2.5;
+    const x=ball.x-dx*back,z=ball.z-dz*back;
+    const y=following?Math.max(ground(x,z)+2.2,ball.y-1.2):ground(ball.x,ball.z)+(putting?1.2:1.62);
+    const look=following?6:putting?5.5:14;
+    return {eye:[x,y,z],target:[ball.x+dx*look,following?ball.y-.05:ground(ball.x,ball.z)-(putting?1.68:2.30),ball.z+dz*look]};
+}
+
+// Screen-space line and handle share one projected shot bearing.
+function pullGuideGeometry(anchor,bearing,depth,width,height,distance){
+    const vx=bearing.x-anchor.x,vy=bearing.y-anchor.y,span=Math.hypot(vx,vy);
+    if(span<.01)return null;
+    const dx=vx/span,dy=vy/span,angle=Math.atan2(dy,dx);
+    const room=(dx,dy,inset)=>Math.max(0,Math.min(
+        dx>0?(width-inset-anchor.x)/dx:dx<0?(inset-anchor.x)/dx:Infinity,
+        dy>0?(height-inset-anchor.y)/dy:dy<0?(inset-anchor.y)/dy:Infinity));
+    return {dx,dy,angle,forward:Math.min(span*Math.min(1,distance),room(dx,dy,10)),
+        back:Math.min(54*depth,room(-dx,-dy,18))};
+}
+// End shared controls.
+// Begin shared visuals.
+
+// Canonical Hole 6 ball, cup, flag, putting grid and flyover green read.
+function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,greenBounds}){
+    function triangle(mesh,a,b,c,color){
+        for(const p of [a,b,c])mesh.push(...p,...color);
+    }
+    function quad(mesh,a,b,c,d,color){
+        triangle(mesh,a,b,c,color);triangle(mesh,a,c,d,color);
+    }
+    function disk(mesh,x,y,z,r,shade){
+        for(let i=0;i<24;i++){
+            const a=i*Math.PI/12,b=(i+1)*Math.PI/12;
+            triangle(mesh,[x,y,z],[x+Math.cos(a)*r,y,z+Math.sin(a)*r],[x+Math.cos(b)*r,y,z+Math.sin(b)*r],shade);
+        }
+    }
+    function ellipsoid(mesh,x,y,z,rx,ry,rz,shade,slices=12,rings=7){
+        const p=(i,j)=>{
+            const a=i*2*Math.PI/slices,b=(j/rings-.5)*Math.PI;
+            return [x+Math.cos(a)*Math.cos(b)*rx,y+Math.sin(b)*ry,z+Math.sin(a)*Math.cos(b)*rz];
+        };
+        for(let j=0;j<rings;j++)for(let i=0;i<slices;i++){
+            const light=.78+.17*Math.cos(i*2*Math.PI/slices)+j/rings*.17;
+            quad(mesh,p(i,j),p(i+1,j),p(i+1,j+1),p(i,j+1),shade.map(x=>x*light));
+        }
+    }
+    function post(mesh,x,z,bottom,height,width,shade){
+        quad(mesh,[x-width,bottom,z],[x+width,bottom,z],[x+width,bottom+height,z],[x-width,bottom+height,z],shade);
+        quad(mesh,[x,bottom,z-width],[x,bottom,z+width],[x,bottom+height,z+width],[x,bottom+height,z-width],shade);
+    }
+    function greenLine(mesh,x,z,dx,dz,halfWidth,height,shade){
+        const size=Math.hypot(dx,dz),sideX=-dz/size*halfWidth,sideZ=dx/size*halfWidth;
+        const point=(t,side)=>{
+            const px=x+t*dx+side*sideX,pz=z+t*dz+side*sideZ;
+            return [px,ground(px,pz)+height,pz];
+        };
+        quad(mesh,point(0,-1),point(0,1),point(1,1),point(1,-1),shade);
+    }
+    function makePuttingGrid(){
+        const {minX,maxX,minZ,maxZ}=greenBounds;
+        const spacing=.5,cells=4,mesh=[],streams=[],sample=.07;
+        const x0=Math.floor(minX/spacing);
+        const x1=Math.ceil(maxX/spacing);
+        const z0=Math.floor(minZ/spacing);
+        const z1=Math.ceil(maxZ/spacing);
+        const onGreen=(x,z)=>surface(x,z)==='green';
+        const lineColor=[.50,.64,.35];
+        for(let i=x0;i<=x1;i++)for(let j=z0;j<=z1;j++){
+            const row=i%cells===0,col=j%cells===0;
+            if(!row&&!col)continue;
+            const x=i*spacing,z=j*spacing;
+            if(!onGreen(x,z))continue;
+            if(col&&onGreen(x+spacing,z))greenLine(mesh,x,z,spacing,0,.018,.018,lineColor);
+            if(row&&onGreen(x,z+spacing))greenLine(mesh,x,z,0,spacing,.018,.018,lineColor);
+            if(!row||!col)continue;
+            const gx=(ground(x+sample,z)-ground(x-sample,z))/(2*sample);
+            const gz=(ground(x,z+sample)-ground(x,z-sample))/(2*sample);
+            const grade=Math.hypot(gx,gz);
+            if(grade<.0015)continue;
+            const dx=-gx/grade,dz=-gz/grade;
+            if(onGreen(x-dx*.6,z-dz*.6)&&onGreen(x+dx*.6,z+dz*.6)){
+                const preview=i%(cells*2)===0&&j%(cells*2)===0&&
+                    onGreen(x-dx*.9,z-dz*.9)&&onGreen(x+dx*.9,z+dz*.9);
+                streams.push({x,z,dx,dz,preview,period:mix(54,19,clamp(grade/.06,0,1)),phase:(i*17+j*11)%37/37});
+            }
+        }
+        return {mesh:buffer(mesh),streams};
+    }
+    function drawGreenRead(tick,opacity){
+        const arrows=[];
+        puttingGrid??=makePuttingGrid();
+        for(const {x,z,dx,dz,preview,period,phase} of puttingGrid.streams){
+            if(!preview)continue;
+            const t=(tick/period+phase)%1,span=(t-.5)*.9;
+            const ax=x+span*dx,az=z+span*dz;
+            const light=Math.sin(Math.PI*t);
+            const shade=[mix(.65,1,light),mix(.71,.92,light),mix(.38,.65,light)];
+            for(const side of [-1,1]){
+                const wingX=-dx*.42-dz*.25*side,wingZ=-dz*.42+dx*.25*side;
+                greenLine(arrows,ax,az,wingX,wingZ,.055,.08,shade);
+            }
+        }
+        gl.enable(gl.BLEND);
+        gl.uniform1f(uniform.opacity,opacity);
+        gl.bindBuffer(gl.ARRAY_BUFFER,mobile());
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrows),gl.DYNAMIC_DRAW);
+        draw({handle:mobile(),count:arrows.length/6},0);
+        gl.uniform1f(uniform.opacity,1);
+        gl.disable(gl.BLEND);
+    }
+    let puttingGrid;
+    function drawFrame({pin,ball,aim,trail=[],flying=false,gridTick=null,readOpacity=null}){
+        const moving=[],base=ground(pin.x,pin.z);
+        if(gridTick!==null&&readOpacity===null){
+            puttingGrid??=makePuttingGrid();
+            draw(puttingGrid.mesh,0);
+            for(const {x,z,dx,dz,period,phase} of puttingGrid.streams){
+                const t=(gridTick/period+phase)%1;
+                const span=(t-.5)*1.03,light=Math.sin(Math.PI*t);
+                const shade=[mix(.54,.98,light),mix(.67,1,light),mix(.37,.76,light)];
+                greenLine(moving,x+span*dx,z+span*dz,dx*.13,dz*.13,.025,.026,shade);
+            }
+        }
+        disk(moving,pin.x,base+.012,pin.z,cupRadius,[.09,.13,.08]);
+        post(moving,pin.x,pin.z,base,1.95,.018,[.97,.95,.83]);
+        triangle(moving,[pin.x,base+1.94,pin.z],[pin.x,base+1.45,pin.z],[pin.x,base+1.69,pin.z+.63],[.94,.45,.28]);
+        if(aim)disk(moving,aim.x,aim.y+.035,aim.z,aim.near?.095:.20,[.95,.79,.41]);
+        if(ball.mode!=='holed'){
+            const size=flying?.076:ball.mode==='drop'?ballRadius:.046;
+            const y=ball.y+(ball.mode==='rest'?.023:0);
+            ellipsoid(moving,ball.x,y,ball.z,size,size,size,[1,1,.98],10,5);
+            if(ball.mode==='rest'||ball.mode==='roll'||ball.mode==='air'){
+                const flat=ground(ball.x,ball.z);
+                if(surface(ball.x,ball.z)!=='water')disk(moving,ball.x,flat+.012,ball.z,.063,[.35,.48,.25]);
+            }
+        }
+        for(let i=1;i<trail.length;i++){
+            const a=trail[i-1],b=trail[i],w=.023;
+            quad(moving,[a.x,a.y-w,a.z],[a.x,a.y+w,a.z],[b.x,b.y+w,b.z],[b.x,b.y-w,b.z],[.98,.87,.52]);
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER,mobile());
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(moving),gl.DYNAMIC_DRAW);
+        draw({handle:mobile(),count:moving.length/6},0);
+        if(readOpacity>0)drawGreenRead(gridTick,readOpacity);
+    }
+    return {triangle,quad,disk,ellipsoid,post,drawFrame};
+}
+// End shared visuals.
+function makeRenderer(canvas,map){
+    const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
+    if(!gl)throw Error('This browser could not start WebGL. Enable graphics acceleration and reload.');
+    const vertex=`
+        attribute vec3 a;attribute vec3 c;uniform vec3 eye,right,up,forward;
+        uniform float ratio;varying vec3 world,color;varying float depth;
+        void main(){
+            vec3 d=a-eye;float z=dot(d,forward);
+            gl_Position=vec4(dot(d,right)*1.72/ratio,dot(d,up)*1.72,z*1.0003-.14,z);
+            world=a;color=c;depth=z;
+        }`;
+    const fragment=`
+        precision highp float;varying vec3 world,color;varying float depth;
+        uniform sampler2D atlas;uniform float kind,opacity;
+        void main(){
+            vec3 outColor=color;
+            if(kind>0.5){
+                vec3 sampleColor=texture2D(atlas,vec2(world.x/(1400.*${scale}),world.z/(500.*${scale}))).rgb;
+                bool pond=sampleColor.b>sampleColor.g+.035 && sampleColor.b>sampleColor.r+.12;
+                if(kind>1.5&&kind<3.5){
+                    if(kind<2.5&&!pond)discard;
+                    float ripple=sin(world.x*5.4+sin(world.z*3.6))*sin(world.z*5.4)*.035;
+                    outColor=vec3(.22,.45,.53)+ripple;
+                }else{
+                    if(kind<1.5&&pond)discard;
+                    if(pond)sampleColor=vec3(.36,.49,.30);
+                    float grain=fract(sin(dot(floor(world.xz*42.),vec2(12.9898,78.233)))*43758.5453)*.055;
+                    outColor=sampleColor*color*(.95+grain);
+                }
+            }
+            gl_FragColor=vec4(mix(outColor,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)),opacity);
+        }`;
+    const program=gl.createProgram();
+    for(const [type,source] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){
+        const shader=gl.createShader(type);
+        gl.shaderSource(shader,source);
+        gl.compileShader(shader);
+        if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(shader));
+        gl.attachShader(program,shader);
+    }
+    gl.linkProgram(program);
+    if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
+    gl.useProgram(program);
+    gl.enable(gl.DEPTH_TEST);
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    const attrib=['a','c'].map(n=>gl.getAttribLocation(program,n));
+    const uniform=Object.fromEntries(['eye','right','up','forward','ratio','kind','opacity'].map(n=>[n,gl.getUniformLocation(program,n)]));
+    gl.uniform1f(uniform.opacity,1);
+    const texture=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,texture);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,map);
+    for(const axis of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,axis,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    const white=[1,1,1];
+    const {front,back,width:greenWidth}=greenComplex.frame,pad=greenWidth*scale/2;
+    const visuals=createVisuals({gl,uniform,draw,buffer,mobile:()=>mobile,ground,surface,
+        greenBounds:{minX:Math.min(front[0],back[0])*scale-pad,maxX:Math.max(front[0],back[0])*scale+pad,
+            minZ:Math.min(front[1],back[1])*scale-pad,maxZ:Math.max(front[1],back[1])*scale+pad}});
+    const {triangle,quad,disk,ellipsoid,post}=visuals;
+    function buffer(mesh){
+        const handle=gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER,handle);
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(mesh),gl.STATIC_DRAW);
+        return {handle,count:mesh.length/6};
+    }
+    const mesh=[], lake=[], solid=[], bank=[], shoreline=[];
+    const unit=scale*4,nx=350,nz=125,heights=[];
+    for(let i=0;i<=nx;i++){
+        heights[i]=[];
+        for(let j=0;j<=nz;j++)heights[i][j]=ground(i*unit,j*unit);
+    }
+    const point=(i,j)=>[i*unit,heights[i][j],j*unit];
+    const grassEdge=wall.map(p=>[p.x+p.nx*.82,0,p.z+p.nz*.82]);
+    const wetEdge=wall.map(p=>[p.x-p.nx*.62,waterHeight,p.z-p.nz*.62]);
+    const edgeSide=(a,b,p)=>(b[0]-a[0])*(p[2]-a[2])-(b[2]-a[2])*(p[0]-a[0]);
+    const interpolate=(a,b,t)=>a.map((value,i)=>mix(value,b[i],t));
+    const cutCells=new Map();
+    for(let i=1;i<wall.length;i++){
+        const cut=[wetEdge[i-1],wetEdge[i],grassEdge[i],grassEdge[i-1]];
+        if(edgeSide(cut[0],cut[1],cut[2])<0)cut.reverse();
+        const bounds=axis=>cut.map(p=>Math.floor(p[axis]/unit));
+        const xs=bounds(0),zs=bounds(2);
+        for(let x=Math.min(...xs);x<=Math.max(...xs);x++)for(let z=Math.min(...zs);z<=Math.max(...zs);z++){
+            const key=x*nz+z;
+            if(!cutCells.has(key))cutCells.set(key,[]);
+            cutCells.get(key).push(cut);
+        }
+    }
+    // Split a triangle against the narrow strip around each wall segment.
+    // Keep its outside pieces, with heights interpolated along the cut edges.
+    function outsideCut(polygon,cut){
+        const outside=[];
+        for(let i=0;polygon.length>=3&&i<cut.length;i++){
+            const a=cut[i],b=cut[(i+1)%cut.length],inside=[],piece=[];
+            let p=polygon.at(-1),distance=edgeSide(a,b,p);
+            for(const q of polygon){
+                const next=edgeSide(a,b,q);
+                if((distance>=0)!==(next>=0)){
+                    const joint=interpolate(p,q,distance/(distance-next));
+                    inside.push(joint);piece.push(joint);
+                }
+                (next>=0?inside:piece).push(q);
+                p=q;distance=next;
+            }
+            if(piece.length>=3)outside.push(piece);
+            polygon=inside;
+        }
+        return outside;
+    }
+    function gridHeight(x,z){
+        const i=Math.floor(x/unit),j=Math.floor(z/unit),u=x/unit-i,v=z/unit-j;
+        const a=heights[i][j],b=heights[i+1][j],c=heights[i+1][j+1],d=heights[i][j+1];
+        return u>=v?a+(b-a)*u+(c-b)*v:a+(c-d)*u+(d-a)*v;
+    }
+    // Include each grid edge and diagonal along the grass seam so both meshes
+    // have the same straight edges and heights at their join.
+    function gridCuts(a,b){
+        const cuts=[0,1];
+        for(const [start,end] of [[a[0],b[0]],[a[2],b[2]],[a[0]-a[2],b[0]-b[2]]]){
+            for(let grid=Math.floor(Math.min(start,end)/unit)+1;grid*unit<Math.max(start,end);grid++){
+                const t=(grid*unit-start)/(end-start);
+                if(t>1e-7&&t<1-1e-7)cuts.push(t);
+            }
+        }
+        return cuts.sort((a,b)=>a-b);
+    }
+    for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){
+        const front=heights[i][j]+heights[i][j+1],back=heights[i+1][j]+heights[i+1][j+1];
+        const left=heights[i][j]+heights[i+1][j],right=heights[i][j+1]+heights[i+1][j+1];
+        const light=clamp(1-(.85*(back-front)+.45*(right-left))/(2*unit),.74,1.12);
+        const corners=[point(i,j),point(i+1,j),point(i+1,j+1),point(i,j+1)];
+        const shade=[light,light,light],cuts=cutCells.get(i*nz+j);
+        if(!cuts){
+            quad(mesh,...corners,shade);
+            continue;
+        }
+        let pieces=[[corners[0],corners[1],corners[2]],[corners[0],corners[2],corners[3]]];
+        for(const cut of cuts)pieces=pieces.flatMap(piece=>outsideCut(piece,cut));
+        for(const piece of pieces)for(let k=1;k<piece.length-1;k++){
+            triangle(mesh,piece[0],piece[k],piece[k+1],shade);
+        }
+    }
+    quad(lake,[0,waterHeight,0],[courseWidth,waterHeight,0],[courseWidth,waterHeight,courseDepth],[0,waterHeight,courseDepth],white);
+    for(let i=1;i<wall.length;i++){
+        const a=wall[i-1],b=wall[i];
+        for(let j=0;j<5;j++){
+            const c=.30+.075*((i*7+j*11)%5)/4;
+            const bottom=waterHeight+j*(a.top-waterHeight)/5;
+            const top=waterHeight+(j+1)*(a.top-waterHeight)/5;
+            quad(solid,[a.x,bottom,a.z],[b.x,waterHeight+j*(b.top-waterHeight)/5,b.z],
+                [b.x,waterHeight+(j+1)*(b.top-waterHeight)/5,b.z],[a.x,top,a.z],[c+.055,c+.025,c]);
+        }
+    }
+    for(let i=1;i<wall.length;i++){
+        const a=wall[i-1],b=wall[i],start=grassEdge[i-1],end=grassEdge[i];
+        const cuts=gridCuts(start,end);
+        const crest=t=>[mix(a.x,b.x,t),mix(a.top,b.top,t),mix(a.z,b.z,t)];
+        const grass=t=>{
+            const p=interpolate(start,end,t);
+            p[1]=gridHeight(p[0],p[2]);
+            return p;
+        };
+        for(let j=1;j<cuts.length;j++){
+            const from=cuts[j-1],to=cuts[j];
+            quad(bank,crest(from),crest(to),grass(to),grass(from),[.97,.97,.97]);
+        }
+        quad(shoreline,[a.x,waterHeight,a.z],[b.x,waterHeight,b.z],wetEdge[i],wetEdge[i-1],white);
+    }
+    const bridgeStone=[.68,.66,.61],bridgeEdge=[.78,.76,.70];
+    const deckPoint=(t,w,dy)=>{
+        const p=bridgePoint(t,w);
+        return [p.x,bridgeDeck(t,w)+dy,p.z];
+    };
+    const across=bridge.halfWidth,edge=.16;
+    for(let i=0;i<24;i++){
+        const a=i/24,b=(i+1)/24;
+        const shade=bridgeStone.map(c=>c*(i%2?.97:1));
+        quad(solid,deckPoint(a,-across,0),deckPoint(b,-across,0),
+            deckPoint(b,across,0),deckPoint(a,across,0),shade);
+        quad(solid,deckPoint(a,-across,-.29),deckPoint(b,-across,-.29),
+            deckPoint(b,across,-.29),deckPoint(a,across,-.29),[.48,.47,.43]);
+        for(const side of [-1,1]){
+            const w=side*across,inner=side*(across-edge);
+            quad(solid,deckPoint(a,w,-.29),deckPoint(b,w,-.29),deckPoint(b,w,.045),deckPoint(a,w,.045),shade);
+            quad(solid,deckPoint(a,w,.045),deckPoint(b,w,.045),
+                deckPoint(b,inner,.045),deckPoint(a,inner,.045),bridgeEdge);
+            quad(solid,deckPoint(a,inner,0),deckPoint(b,inner,0),
+                deckPoint(b,inner,.045),deckPoint(a,inner,.045),bridgeEdge);
+        }
+    }
+    for(const t of [0,1]){
+        quad(solid,deckPoint(t,-across,-.29),deckPoint(t,across,-.29),
+            deckPoint(t,across,0),deckPoint(t,-across,0),bridgeStone);
+    }
+    for(const [oldX,oldZ,h] of [[19,15,7],[31,18,8],[51,13,10],[76,16,8],[88,11,9],[102,14,8],[118,14,8],
+        [145,13,10],[148,20,11],[154,30,10],[153,41,10],[143,47,8],[129,49,8],[116,50,6],
+        [101,47,7],[83,48,8],[65,46,8],[42,49,7],[25,45,8],[15,45,7]]){
+        const x=oldX*scale/.115,z=oldZ*scale/.115;
+        const y=ground(x,z);
+        disk(solid,x,y+.035,z,1.2,[.28,.39,.24]);
+        post(solid,x,z,y,h*.55,.17,[.28,.21,.14]);
+        ellipsoid(solid,x,y+h*.69,z,h*.29,h*.41,h*.27,[.29,.46,.26],9,5);
+        ellipsoid(solid,x+.75,y+h*.58,z+.55,h*.22,h*.25,h*.25,[.27,.43,.24],8,4);
+    }
+    const groundBuffer=buffer(mesh),waterBuffer=buffer(lake),solidBuffer=buffer(solid);
+    const bankBuffer=buffer(bank),shorelineBuffer=buffer(shoreline);
+    const mobile=gl.createBuffer();
+    function draw(item,kind){
+        gl.bindBuffer(gl.ARRAY_BUFFER,item.handle);
+        for(let i=0;i<2;i++){
+            gl.enableVertexAttribArray(attrib[i]);
+            gl.vertexAttribPointer(attrib[i],3,gl.FLOAT,false,24,i*12);
+        }
+        gl.uniform1f(uniform.kind,kind);
+        gl.drawArrays(gl.TRIANGLES,0,item.count);
+    }
+    const normalize=v=>{const length=Math.hypot(...v);return v.map(n=>n/length);};
+    const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+    const dot=(a,b)=>a.reduce((sum,n,i)=>sum+n*b[i],0);
+    let camera,lastStatic;
+    function frame(eye,target,pin,ball,aim,trail,heading,flying,gridTick=null,readOpacity=null){
+        const ratio=Math.min(devicePixelRatio||1,1.6);
+        const width=Math.round(canvas.clientWidth*ratio),height=Math.round(canvas.clientHeight*ratio);
+        const still=ball.mode==='rest'||ball.mode==='holed'||ball.mode==='water'||ball.mode==='out';
+        if(still){
+            const view=[width,height,...eye,...target,ball.x,ball.y,ball.z,ball.mode,pin.x,pin.z,aim?.x,aim?.z,trail.length,gridTick,readOpacity].join();
+            if(lastStatic===view)return;
+            lastStatic=view;
+        }else lastStatic=null;
+        if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+        gl.viewport(0,0,width,height);
+        const forward=normalize(target.map((n,i)=>n-eye[i]));
+        const right=normalize(cross(forward,[0,1,0]));
+        const up=cross(right,forward);
+        camera={eye,forward,right,up,ratio:width/height};
+        for(const [name,value] of Object.entries({eye,forward,right,up}))gl.uniform3fv(uniform[name],value);
+        gl.uniform1f(uniform.ratio,camera.ratio);
+        gl.clearColor(.58,.76,.83,1);
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+        draw(groundBuffer,1);draw(bankBuffer,4);draw(waterBuffer,2);draw(shorelineBuffer,3);draw(solidBuffer,0);
+        visuals.drawFrame({pin,ball,aim,trail,flying,gridTick,readOpacity});
+    }
+    function project(x,y,z){
+        if(!camera)return null;
+        const d=[x-camera.eye[0],y-camera.eye[1],z-camera.eye[2]];
+        const depth=dot(d,camera.forward);
+        if(depth<=.1)return null;
+        return {x:(.5+.86*dot(d,camera.right)/depth/camera.ratio)*canvas.clientWidth,
+            y:(.5-.86*dot(d,camera.up)/depth)*canvas.clientHeight};
+    }
+    return {frame,project};
+}
+const $=id=>document.getElementById(id);
+const canvas=$('course'), mapCanvas=$('map'), status=$('status');
+const ballMarker=$('ball-marker'),pullHandle=$('pull-handle'),pullTether=$('pull-tether'),pullAim=$('pull-aim');
+const gridButton=$('green-grid');
+const flyButton=$('flyover'),flyFade=$('flyover-fade'),flyGreenRead=$('flyover-green-read');
+const map=atlas(),mapContext=mapCanvas.getContext('2d');
+const mapBounds={x:55,z:59,length:1295,width:411};
+const mapWidth=mapCanvas.width,mapHeight=mapCanvas.height;
+const mapBackdrop=document.createElement('canvas');
+mapBackdrop.width=mapWidth;mapBackdrop.height=mapHeight;
+const backdrop=mapBackdrop.getContext('2d');
+backdrop.translate(0,mapHeight);
+backdrop.rotate(-Math.PI/2);
+backdrop.drawImage(map,mapBounds.x,mapBounds.z,mapBounds.length,mapBounds.width,0,0,mapHeight,mapWidth);
+backdrop.save();
+backdrop.scale(mapHeight/mapBounds.length,mapWidth/mapBounds.width);
+backdrop.translate(-mapBounds.x,-mapBounds.z);
+backdrop.fillStyle=palette.bridge;
+backdrop.fill(path.bridge);
+backdrop.restore();
+let renderer,renderError,rendererAttempted=false;
+const yards=metres=>Math.round(metres/0.9144);
+const feet=metres=>Math.round(metres/0.3048);
+const settings={pin:pins.middle,wind:windPresets.calm,greenSpeed:1,tee:tees.middle};
+const names={back:'Back',middle:'Middle',forward:'Forward',front:'Front'};
+const pinNames={frontLeft:'Front left',front:'Front center',frontRight:'Front right',
+    middleLeft:'Middle left',middle:'Middle center',middleRight:'Middle right',
+    backLeft:'Back left',back:'Back center',backRight:'Back right'};
+function addOptions(id,items){
+    for(const [value,text] of items){
+        const option=document.createElement('option');
+        option.value=value;option.textContent=text;$(id).append(option);
+    }
+}
+addOptions('club',bag.map(name=>[name,clubs[name].carry?name+' · '+clubs[name].carry+' yd':name]));
+addOptions('wind',windDirections.map((name,index)=>[index,name]));
+addOptions('pin',Object.keys(pins).map(key=>[key,pinNames[key]]));
+$('pin').value='middle';
+let daily=true,currentDay='',challenge,finished=false,previousClub=null,previousAim=null;
+const quantize=(value,step)=>Math.round(value/step)*step;
+function applyMode(){
+    if(daily){
+        const day=dayKey();
+        if(day!==currentDay){currentDay=day;challenge=challengeFor(day);previousClub=null;previousAim=null;}
+        Object.assign(settings,{tee:tees[challenge.tee],pin:challenge.cup,wind:windVector(challenge.dir,challenge.mph),greenSpeed:challenge.speed});
+    }else{
+        Object.assign(settings,{tee:tees[$('tee').value],pin:pins[$('pin').value],
+            wind:windVector(Number($('wind').value),Number($('wind-speed').value)),greenSpeed:Number($('green-speed').value)});
+    }
+}
+function setMode(isDaily){
+    if(daily===isDaily||active()||flyover)return;
+    daily=isDaily;previousClub=null;previousAim=null;
+    reset();
+}
+let heading=0,ball,strokeFrom,shotHeading,stroke=0,penalties=0,trail=[],charge=0,drag=null,keyTime=null;
+let eye,target,lastTime=0,accumulator=0,trailTime=0,shotStarted=0;
+let mapTrail=[],waterMark=null,flyover=null,showGreenGrid=true;
+const active=()=>['air','roll','drop'].includes(ball.mode);
+const editable=()=>!resultDialog.open&&!$('game-screen').hidden&&ball.mode==='rest'&&!finished&&!flyover;
+const flatDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+const angleTo=(a,b)=>Math.atan2(b.z-a.z,b.x-a.x);
+function practicePoint(position=$('practice').value){
+    if(daily)return settings.tee;
+    const pin=settings.pin;
+    switch(position){
+        case 'bank':return {x:981*scale,z:pin.z};
+        case 'ridge':return {x:1175*scale,z:242*scale};
+        case 'sidehill':return {x:pins.middle.x-3.3,z:pins.middle.z-2.4};
+        case 'wedge':return {x:134,z:39};
+        case 'bunker':return {x:1190*scale,z:360*scale};
+        case 'short':return {x:pin.x-.35,z:pin.z-.829};
+        default:return settings.tee;
+    }
+}
+let pacePreview;
+function setPower(fraction,updateLabel=true){
+    charge=quantize(clamp(fraction,0,1),powerStep);
+    $('power').value=charge*100;
+    if(updateLabel)renderPowerLabel();
+}
+function renderPowerLabel(){
+    if($('club').value!=='Putter'||!ball||!editable()){
+        $('power-label').textContent='Power · '+Number((charge*100).toFixed(2))+'%';
+        return;
+    }
+    if(pacePreview?.ball!==ball||pacePreview.heading!==heading||
+        pacePreview.power!==charge||pacePreview.speed!==settings.greenSpeed){
+        pacePreview={ball,heading,power:charge,speed:settings.greenSpeed,
+            ...estimatePutt(ball,course,heading,charge,settings.greenSpeed)};
+    }
+    const {reach,finish}=pacePreview;
+    const cup=flatDistance(ball,settings.pin)/.3048;
+    const format=value=>value<10?Number(value.toFixed(1)):Math.round(value);
+    const distance=metres=>format(Math.abs(metres)/.3048)+' ft';
+    const settled=finish<-.05?distance(finish)+' back of start':distance(finish);
+    const pace=reach-finish>.1524?'Est. reaches '+distance(reach)+' · settles '+settled:
+        'Est. '+distance(reach)+' roll';
+    $('power-label').textContent=format(cup)+' ft to cup · '+pace;
+}
+function reset(){
+    applyMode();
+    clearResult();
+    practiceStart=null;
+    mapTrail=[];waterMark=null;
+    $('landing-feedback').hidden=true;
+    finished=false;stroke=0;penalties=0;trail=[];drag=null;keyTime=null;eye=null;target=null;
+    ball=newBall(practicePoint(),ground);
+    heading=angleTo(ball,settings.pin);
+    const carry=flatDistance(ball,settings.pin)/.9144-4;
+    const suggested=[...bag].reverse().find(name=>clubs[name].carry>=carry)||'3 Iron';
+    const lie=surface(ball.x,ball.z);
+    $('club').value=daily&&previousClub?previousClub:
+        lie==='green'?'Putter':lie==='sand'||!daily&&$('practice').value==='bank'?'SW':
+        !daily&&$('practice').value==='wedge'?'LW':suggested;
+    if(daily&&previousAim!==null)heading=previousAim;
+    setPower(0);
+    status.textContent=renderer?'Ready.':renderError;
+    updateHUD();
+}
+function showWind(){
+    const {x,z}=settings.wind,mag=Math.hypot(x,z),arrow=$('wind-arrow');
+    arrow.hidden=!mag;
+    if(!mag){$('wind-readout').textContent='Calm';return;}
+    const angle=Math.atan2(z,x)-heading;
+    arrow.style.transform='rotate('+angle+'rad)';
+    const index=(Math.round(angle/(Math.PI/4))%8+8)%8;
+    const labels=['tailwind','tail/right','left to right','head/right','headwind','head/left','right to left','tail/left'];
+    $('wind-readout').textContent=Math.round(mag/mphToMetresPerSecond)+' mph · '+labels[index];
+}
+function wallCarry(){
+    const far={x:ball.x+200*Math.cos(heading),z:ball.z+200*Math.sin(heading)};
+    let best=Infinity;
+    for(let i=1;i<wall.length;i++){
+        const t=crossing(ball,far,wall[i-1],wall[i]);
+        if(t!==null)best=Math.min(best,t*200);
+    }
+    return best;
+}
+const lieNames={tee:'Tee box',fairway:'Fairway',rough:'Rough',green:'Green',surround:'Green surround',sand:'Bunker',water:'Water',bridge:'Bridge'};
+function updateHUD(){
+    const distance=flatDistance(ball,settings.pin);
+    const carry=editable()&&$('club').value!=='Putter'?wallCarry():Infinity;
+    const lie=surface(ball.x,ball.z);
+    $('distance').textContent='Pin · '+(distance<20?feet(distance)+' ft':yards(distance)+' yd');
+    $('lie').textContent=lieNames[lie]||'Rough';
+    showWind();
+    const offset=(heading-angleTo(ball,settings.pin))*180/Math.PI;
+    $('aim-offset').hidden=!editable();
+    $('aim-offset').textContent=Math.abs(offset)<.007?'On pin':Math.abs(offset).toFixed(2)+'° '+(offset>0?'right':'left')+' of pin';
+    const pulling=drag?.kind==='shot';
+    ballMarker.classList.toggle('grabbed',pulling);
+    if(!pulling)pullHandle.hidden=pullTether.hidden=pullAim.hidden=true;
+    $('carry').hidden=!Number.isFinite(carry);
+    if(Number.isFinite(carry))$('carry').textContent='Wall · '+yards(carry)+' yd';
+    const isPutting=editable()&&lie==='green'&&$('club').value==='Putter';
+    gridButton.hidden=!isPutting;
+    gridButton.setAttribute('aria-pressed',String(showGreenGrid));
+    renderPowerLabel();
+    $('slope').hidden=!isPutting;
+    if(isPutting){
+        const ahead=(ground(ball.x+Math.cos(heading)*.2,ball.z+Math.sin(heading)*.2)-ground(ball.x,ball.z))/.2;
+        const right=(ground(ball.x-Math.sin(heading)*.2,ball.z+Math.cos(heading)*.2)-ground(ball.x,ball.z))/.2;
+        const across=Math.abs(right)<.002?'little side break':right>0?'breaks left':'breaks right';
+        $('slope').textContent=(ahead>=0?'Uphill':'Downhill')+' '+Math.abs(ahead*100).toFixed(1)+'% at ball · '+across;
+    }
+    $('setup-name').textContent=daily?currentDay+' · '+names[challenge.tee]+' tee · '+names[challenge.pin]+' pin · '+(challenge.speed<1?'Slow':challenge.speed>1?'Fast':'Medium')+' green':'Practice';
+    const official=daily&&readOfficial(currentDay);
+    $('daily-official').textContent=official?'Official · '+resultText(official):'';
+    $('score').textContent=daily?(practiceRetry??Boolean(official)?'Practice attempt':'Official attempt'):stroke+' '+(stroke===1?'stroke':'strokes')+(penalties?' · '+penalties+' penalty':'');
+    $('trace').hidden=!active();
+    $('back-home').disabled=active()||!!flyover;
+    $('view-result').disabled=!!flyover;
+    flyButton.textContent=flyover?'Skip flyover':'Flyover';
+    flyButton.disabled=!renderer||active();
+    $('daily').setAttribute('aria-pressed',String(daily));
+    $('practice-mode').setAttribute('aria-pressed',String(!daily));
+    $('daily').disabled=$('practice-mode').disabled=active()||!!flyover;
+    $('practice-settings').hidden=daily;
+    $('club').disabled=!editable()||!renderer;
+    for(const name of ['pin','wind','wind-speed','green-speed','tee','practice','reset','random-position'])$(name).disabled=active()||!!flyover;
+    if(!active())drawMap();
+}
+function mapPoint(point){
+    return {
+        x:(point.z/scale-mapBounds.z)/mapBounds.width*mapWidth,
+        y:(1-(point.x/scale-mapBounds.x)/mapBounds.length)*mapHeight
+    };
+}
+const pullAimDistance=putt=>(putt?4.2:26)*charge**.82;
+function drawMap(){
+    const c=mapContext,current=mapPoint(ball),pin=mapPoint(settings.pin);
+    c.drawImage(mapBackdrop,0,0);
+    if(editable()){
+        const putt=$('club').value==='Putter',pulling=drag?.kind==='shot';
+        const aimLength=pulling?pullAimDistance(putt):putt?Math.min(8,flatDistance(ball,settings.pin)):24;
+        const end=mapPoint({x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength});
+        const dx=end.x-current.x,dy=end.y-current.y,distance=Math.hypot(dx,dy);
+        const magnify=!pulling&&distance>0&&distance<13?13/distance:1;
+        c.strokeStyle='#f9efc5';c.lineWidth=3;c.beginPath();
+        c.moveTo(current.x,current.y);
+        c.lineTo(current.x+dx*magnify,current.y+dy*magnify);
+        c.stroke();
+    }
+    if(active()){
+        // Sample the trail by time, while the ball marker itself updates every frame.
+        const previous=mapTrail.at(-1);
+        if(!previous||ball.time-previous.time>=.035){
+            mapTrail.push({...current,time:ball.time});
+        }
+        while(mapTrail.length&&ball.time-mapTrail[0].time>.8)mapTrail.shift();
+        c.strokeStyle='#f9efc5';c.lineWidth=3;
+        for(let i=0;i<mapTrail.length;i++){
+            const p=mapTrail[i],next=mapTrail[i+1]||current;
+            c.globalAlpha=.67*(1-(ball.time-p.time)/.8);
+            c.beginPath();c.moveTo(p.x,p.y);c.lineTo(next.x,next.y);c.stroke();
+        }
+        c.globalAlpha=1;
+    }
+    c.lineWidth=3;c.strokeStyle='#18241d';
+    c.fillStyle='#f7ce79';
+    c.beginPath();c.arc(pin.x,pin.y,7,0,Math.PI*2);c.fill();c.stroke();
+    if(waterMark){
+        const splash=mapPoint(waterMark);
+        c.strokeStyle='#d3f7ff';c.fillStyle='#34748a';c.lineWidth=3;
+        c.beginPath();c.arc(splash.x,splash.y,11,0,Math.PI*2);c.fill();c.stroke();
+        c.beginPath();c.arc(splash.x,splash.y,4,0,Math.PI*2);c.stroke();
+    }
+    if(ball.mode!=='holed'&&ball.mode!=='drop'&&ball.mode!=='water'){
+        c.fillStyle='#fff';c.strokeStyle='#18241d';c.lineWidth=3;
+        c.beginPath();c.arc(current.x,current.y,7,0,Math.PI*2);c.fill();c.stroke();
+    }else if(ball.mode==='holed'){
+        // Centre the finishing ball in the larger pin marker.
+        c.fillStyle='#fff';
+        c.beginPath();c.arc(pin.x,pin.y,4,0,Math.PI*2);c.fill();
+    }
+}
+function shoot(){
+    if(!editable()||charge<.025||!renderer){setPower(0);return;}
+    if(daily&&currentDay!==dayKey()){
+        reset();status.textContent='A new daily challenge is ready. Set up your shot again.';return;
+    }
+    if(!daily&&!practiceStart)practiceStart=Object.fromEntries(practiceSetupIds.map(id=>[id,$(id).value]));
+    strokeFrom={x:ball.x,z:ball.z};
+    shotHeading=heading;stroke++;
+    if(daily){
+        previousClub=$('club').value;previousAim=heading;
+        const shot={day:currentDay,club:previousClub,power:charge,heading:Math.atan2(Math.sin(heading),Math.cos(heading))};
+        const earlier=readOfficial(currentDay);
+        practiceRetry=!!earlier;
+        if(!earlier){
+            const record={...shot,id:randomId(),...replayDailyShot(shot.day,shot.club,shot.power,shot.heading)};
+            writeOfficial(record);
+            syncOfficial(record).catch(()=>{});
+        }
+    }
+    trail=[];trailTime=0;shotStarted=0;
+    mapTrail=[];waterMark=null;
+    $('landing-feedback').hidden=true;
+    ball=strike(ball,ground,$('club').value,charge,heading,surface(ball.x,ball.z));
+    setPower(0);
+    status.textContent='Ball in play.';
+    updateHUD();
+    drawMap();
+}
+function aimBy(radians){
+    if(!editable()||keyTime!==null||drag)return;
+    const base=angleTo(ball,settings.pin);
+    heading=base+quantize(heading-base+radians,aimStep);
+    updateHUD();
+}
+function beginDrag(event,kind){
+    if(!editable()||!renderer||drag||keyTime!==null||event.button>0)return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const room=(window.visualViewport?.height||window.innerHeight||800)-event.clientY-14;
+    drag={id:event.pointerId,x:event.clientX,y:event.clientY,aim:heading,kind,charge,depth:0,
+        travel:clamp(room,126,210)};
+    if(kind==='shot'){
+        setPower(0);
+        updateHUD();
+    }
+}
+canvas.addEventListener('pointerdown',event=>{
+    const p=renderer?.project(ball.x,ball.y+.022,ball.z),rect=canvas.getBoundingClientRect();
+    const grabRadius=event.pointerType==='touch'?48:42;
+    const onBall=p&&Math.hypot(p.x+rect.x-event.clientX,p.y+rect.y-event.clientY)<grabRadius;
+    beginDrag(event,onBall?'shot':'aim');
+});
+function cancel(){
+    if(drag){
+        const {aim,charge:priorPower}=drag;
+        drag=null;
+        heading=aim;
+        setPower(priorPower);
+        updateHUD();
+    }
+    if(keyTime!==null){
+        keyTime=null;
+        setPower(0);
+    }
+}
+function previewDrag(event){
+    const dx=event.clientX-drag.x;
+    let turn;
+    if(drag.kind==='shot'){
+        const depth=clamp((event.clientY-drag.y)/drag.travel,0,1);
+        drag.depth=depth;
+        // Give high-power shots more physical travel for precise distance control.
+        setPower(dragPower(depth,$('club').value==='Putter'),false);
+    }else{
+        turn=dx*($('club').value==='Putter'?.0018:.001);
+    }
+    const base=angleTo(ball,settings.pin);
+    heading=drag.kind==='shot'?dragHeading(drag.aim,base,dx):base+quantize(drag.aim-base+turn,aimStep);
+}
+canvas.addEventListener('pointermove',event=>{
+    if(drag?.id!==event.pointerId)return;
+    previewDrag(event);
+    updateHUD();
+});
+canvas.addEventListener('pointerup',event=>{
+    if(drag?.id!==event.pointerId)return;
+    previewDrag(event);
+    if(drag.kind==='shot'){
+        if(event.clientY-drag.y<8){cancel();return;}
+        drag=null;
+        shoot();
+    }else{
+        drag=null;
+        updateHUD();
+    }
+});
+canvas.addEventListener('pointercancel',event=>{if(drag?.id===event.pointerId)cancel();});
+canvas.addEventListener('lostpointercapture',event=>{if(drag?.id===event.pointerId)cancel();});
+const aimIncrement=()=>$('club').value==='Putter'?.007:.005;
+window.addEventListener('keydown',event=>{
+    if(resultDialog.open)return;
+    if(event.code==='Escape'){if(flyover)stopFlyover();else cancel();return;}
+    if(event.target.matches?.('input,select,button'))return;
+    if(!editable())return;
+    if(event.code==='ArrowLeft'||event.code==='ArrowRight'){
+        event.preventDefault();if(!drag)aimBy(aimIncrement()*(event.code==='ArrowLeft'?-1:1));
+    }
+    if(event.code==='Space'){
+        event.preventDefault();
+        if(keyTime===null&&!drag)keyTime=performance.now();
+    }
+});
+window.addEventListener('keyup',event=>{
+    if(event.code!=='Space'||keyTime===null)return;
+    event.preventDefault();
+    keyTime=null;shoot();
+});
+window.addEventListener('blur',cancel);
+$('pin').onchange=$('tee').onchange=$('practice').onchange=reset;
+for(const id of ['wind','wind-speed','green-speed'])$(id).onchange=()=>{applyMode();updateHUD();};
+$('club').onchange=updateHUD;
+gridButton.onclick=()=>{
+    showGreenGrid=!showGreenGrid;
+    updateHUD();
+};
+function resetAndFocus(){
+    reset();
+    canvas.focus({preventScroll:true});
+}
+function randomPracticePosition(){
+    if(daily||active()||flyover)return;
+    const select=$('practice');
+    const choices=[...select.options].filter(option=>{
+        if(option.value===select.value)return false;
+        const point=practicePoint(option.value);
+        return surface(point.x,point.z)!=='water';
+    });
+    if(!choices.length)return;
+    select.value=choices[Math.floor(Math.random()*choices.length)].value;
+    resetAndFocus();
+}
+$('reset').onclick=resetAndFocus;
+$('random-position').onclick=randomPracticePosition;
+$('daily').onclick=()=>setMode(true);
+$('practice-mode').onclick=()=>setMode(false);
+
+function leave(distance){
+    if(distance>=18.288)return yards(distance)+' yd';
+    if(distance>=.3048)return (distance/.3048).toFixed(1)+' ft';
+    return Math.max(.1,distance/.0254).toFixed(1)+' in';
+}
+function contactSummary(finalLie){
+    const landing=ball.firstLie&&ball.firstLie!==finalLie?'First contact: '+lieNames[ball.firstLie]+'. ':'';
+    if(ball.wall)return landing+'Hit the stone wall. ';
+    if(ball.flag)return landing+'Hit the flagstick. ';
+    if(ball.bunkerLip)return landing+'Caught the bunker lip. ';
+    return landing+(ball.cupResult||'');
+}
+function showLandingFeedback(){
+    const landing=ball.greenContact,feedback=$('landing-feedback');
+    if(daily||!landing)return;
+    const distance=(ball.x-landing.x)*landing.ux+(ball.z-landing.z)*landing.uz;
+    const amount=Math.abs(distance);
+    const release=amount<.15?'Little forward release':(distance>0?'Released ':'Finished back by ')+leave(amount);
+    feedback.textContent='Landed on green at '+Math.round(landing.angle)+'° · '+release;
+    feedback.hidden=false;
+}
+function finishShot(){
+    showLandingFeedback();
+    mapTrail=[];
+    if(ball.mode==='water')waterMark={x:ball.x,z:ball.z};
+    if(daily){
+        finished=true;trail=[];
+        const holed=ball.mode==='holed',inPlay=ball.mode==='rest'||holed;
+        const distance=holed?0:flatDistance(ball,settings.pin);
+        const lie=inPlay?surface(ball.x,ball.z):ball.mode;
+        const contact=contactSummary(lie);
+        status.textContent=holed?'Hole in one!':inPlay
+            ?contact+leave(distance)+' to the cup. '+lieNames[lie]+'.'
+            :contact+(ball.mode==='water'?'Water.':'Out of play.');
+        const practice=practiceRetry;
+        const result=practice?{outcome:inPlay?'in-play':ball.mode,ace:holed,
+            mm:inPlay?Math.round(distance*1000):null}:readOfficial(currentDay);
+        showDailyResult(result,practice);
+        return;
+    }
+    if(ball.mode==='holed'){
+        finished=true;
+        status.textContent='Holed out in '+stroke+(stroke===1?' stroke.':' strokes.');
+        showPracticeResult();
+        return;
+    }
+    if(ball.mode==='water'||ball.mode==='out'){
+        penalties++;stroke++;
+        const result=ball.mode==='water'?'Water':'Out of play';
+        status.textContent=contactSummary(ball.mode)+result+' · one penalty stroke, replay from the previous lie.';
+        ball=newBall(strokeFrom,ground);
+    }else{
+        const played=flatDistance(strokeFrom,ball);
+        const distance=$('club').value==='Putter'?feet(played)+' ft':yards(played)+' yd';
+        const lie=surface(ball.x,ball.z);
+        status.textContent=contactSummary(lie)+distance+' played. '+lieNames[lie]+'.';
+    }
+    trail=[];eye=null;target=null;
+    heading=angleTo(ball,settings.pin);
+    const lie=surface(ball.x,ball.z);
+    if(lie==='green')$('club').value='Putter';
+    else if(lie==='sand'||$('club').value==='Putter')$('club').value='SW';
+}
+function showMarker(element,point){
+    element.hidden=!point||point.x<6||point.x>canvas.clientWidth-6||point.y<6||point.y>canvas.clientHeight-6;
+    if(!element.hidden){element.style.left=point.x+'px';element.style.top=point.y+'px';}
+}
+function positionGuide(element,x,y,length,angle){
+    element.style.left=x+'px';
+    element.style.top=y+'px';
+    element.style.width=length+'px';
+    element.style.transform='translateY(-50%) rotate('+angle+'rad)';
+}
+function drawPullGuide(anchor,near){
+    if(drag?.kind!=='shot')return;
+    const distance=pullAimDistance(near);
+    const bearing=renderer.project(ball.x+Math.cos(heading)*Math.max(1,distance),
+        ball.y+.022,ball.z+Math.sin(heading)*Math.max(1,distance));
+    if(ballMarker.hidden||!bearing){pullHandle.hidden=pullTether.hidden=pullAim.hidden=true;return;}
+    const guide=pullGuideGeometry(anchor,bearing,drag.depth,canvas.clientWidth,canvas.clientHeight,distance);
+    if(!guide){pullHandle.hidden=pullTether.hidden=pullAim.hidden=true;return;}
+    const {dx,dy,angle,forward,back}=guide;
+    pullAim.hidden=forward<13;
+    if(!pullAim.hidden)positionGuide(pullAim,anchor.x+dx*10,anchor.y+dy*10,forward-10,angle);
+    pullHandle.hidden=back<6;
+    pullTether.hidden=back<17;
+    if(!pullHandle.hidden){
+        pullHandle.style.left=anchor.x-dx*back+'px';
+        pullHandle.style.top=anchor.y-dy*back+'px';
+    }
+    if(!pullTether.hidden)positionGuide(pullTether,anchor.x-dx*(back-8),anchor.y-dy*(back-8),back-16,angle);
+}
+function stopFlyover(){
+    flyover=null;
+    flyFade.hidden=true;
+    flyGreenRead.hidden=true;
+    flyFade.style.opacity=0;
+    updateHUD();
+}
+flyButton.onclick=()=>{
+    if(flyover){stopFlyover();return;}
+    if(!renderer||active()||drag||keyTime!==null)return;
+    const tee=settings.tee,green=greenCenter;
+    const size=flatDistance(tee,green),dx=(green.x-tee.x)/size,dz=(green.z-tee.z)/size;
+    flyover={tee,green,size,dx,dz,started:null};
+    flyFade.hidden=false;
+    showMarker($('aim-ring'),null);showMarker(ballMarker,null);
+    updateHUD();
+};
+function renderFlyover(now){
+    const tour=flyover;
+    tour.started??=now;
+    const elapsed=(now-tour.started)/1000;
+    const arrival=4.9,departure=arrival+3,fade=.35;
+    const returnStart=departure+fade;
+    if(elapsed>=returnStart+fade){stopFlyover();return false;}
+    if(elapsed>=returnStart){
+        flyGreenRead.hidden=true;
+        flyFade.style.opacity=1-ease((elapsed-returnStart)/fade);
+        if(eye&&target)renderer.frame(eye,target,settings.pin,ball,null,trail,heading,false);
+        return true;
+    }
+    const greenRead=ease((elapsed-arrival)/.35)*ease((departure-elapsed)/.35);
+    flyGreenRead.hidden=greenRead===0;
+    flyGreenRead.style.opacity=greenRead;
+    flyFade.style.opacity=ease((elapsed-departure)/fade);
+    const ratio=canvas.clientWidth/Math.max(canvas.clientHeight,1);
+    const framing=greenComplex.frame.width*scale*Math.max(1,1.16/Math.max(ratio,.45));
+    const u=ease(elapsed/arrival),along=mix(-4,tour.size-framing*.63,u);
+    const x=tour.tee.x+tour.dx*along,z=tour.tee.z+tour.dz*along;
+    const look=Math.min(tour.size,along+mix(19,framing*.63,u));
+    const tx=tour.tee.x+tour.dx*look,tz=tour.tee.z+tour.dz*look;
+    const height=mix(ground(tour.tee.x,tour.tee.z)+1.65,ground(tour.green.x,tour.green.z)+framing*.93,u)+23*Math.sin(Math.PI*u);
+    renderer.frame([x,height,z],[tx,ground(tx,tz)+mix(-2,.16,u),tz],
+        settings.pin,ball,null,[],0,false,Math.floor(now/50),greenRead);
+    return true;
+}
+function frame(now){
+    if($('game-screen').hidden||!renderer){lastTime=0;requestAnimationFrame(frame);return;}
+    const dt=Math.min((now-(lastTime||now))/1000,.06);
+    lastTime=now;
+    if(flyover&&renderFlyover(now)){requestAnimationFrame(frame);return;}
+    if(keyTime!==null)setPower((now-keyTime)/1350);
+    if(active()){
+        if(!shotStarted)shotStarted=now;
+        accumulator+=dt;
+        const previousMode=ball.mode;
+        while(accumulator>=stepTime&&active()){
+            advance(ball,course,settings);
+            accumulator-=stepTime;
+            if(ball.mode==='air'&&ball.time-trailTime>.04){
+                trail.push({x:ball.x,y:ball.y,z:ball.z});
+                if(trail.length>36)trail.shift();
+                trailTime=ball.time;
+            }
+        }
+        if(!active()){finishShot();updateHUD();}
+        else{
+            if(previousMode!==ball.mode||now%150<dt*1000)updateHUD();
+            drawMap();
+        }
+    }else accumulator=0;
+    if(!active()&&!editable()&&eye&&target){
+        renderer.frame(eye,target,settings.pin,ball,null,trail,shotHeading,false);
+        showMarker($('aim-ring'),null);showMarker(ballMarker,null);
+        requestAnimationFrame(frame);
+        return;
+    }
+    const following=active()&&now-shotStarted>300&&ball.mode!=='drop';
+    const pulling=drag?.kind==='shot';
+    const h=active()?shotHeading:pulling?drag.aim:heading;
+    const near=$('club').value==='Putter';
+    const aimDist=near?clamp(flatDistance(ball,settings.pin),.4,12):Math.max(18,flatDistance(ball,settings.pin));
+    const aimX=clamp(ball.x+Math.cos(heading)*aimDist,0,courseWidth),aimZ=clamp(ball.z+Math.sin(heading)*aimDist,0,courseDepth);
+    const sharedCamera=shotCamera(ball,ground,h,near,following);
+    const desiredEye=sharedCamera.eye;
+    // Keep enough ground below the ready ball for the pullback handle on short screens.
+    const desiredTarget=sharedCamera.target;
+    const smooth=following?1-Math.exp(-dt*9):1;
+    eye=eye?eye.map((n,i)=>mix(n,desiredEye[i],smooth)):desiredEye;
+    target=target?target.map((n,i)=>mix(n,desiredTarget[i],smooth)):desiredTarget;
+    const aim=editable()&&!pulling?{x:aimX,y:Math.max(ground(aimX,aimZ),waterHeight),z:aimZ,near}:null;
+    const gridTick=showGreenGrid&&editable()&&near&&surface(ball.x,ball.z)==='green'?Math.floor(now/50):null;
+    renderer.frame(eye,target,settings.pin,ball,aim,trail,h,following,gridTick);
+    showMarker($('aim-ring'),aim?renderer.project(aim.x,aim.y+.09,aim.z):null);
+    const anchor=editable()?renderer.project(ball.x,ball.y+.022,ball.z):null;
+    showMarker(ballMarker,anchor);
+    drawPullGuide(anchor,near);
+    requestAnimationFrame(frame);
+}
+
+const scoreBands=['Ace','Inside 3 ft','3–under 10 ft','10–under 25 ft','25 ft or more'];
+const localOnly=location.protocol==='file:'||location.hostname.endsWith('.github.io');
+const leaderEndpoint=localOnly?null:new URL('api/leaderboard',location.href);
+const resultDialog=$('shot-result'),viewResult=$('view-result');
+const practiceSetupIds=['tee','wind','wind-speed','pin','green-speed','practice'];
+let practiceStart=null;
+let practiceRetry=null,visibleResult=null,savingResult=null,boardDate='',boardRequest=0;
+function readBrowser(key){
+    try{return JSON.parse(localStorage.getItem(key));}catch{return null;}
+}
+function saveBrowser(key,value){
+    try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{return false;}
+}
+const officialKey=day=>'irish-par-official:'+day;
+const sessionOfficial=new Map();
+const syncing=new Map();
+function readOfficial(day){return readBrowser(officialKey(day))||sessionOfficial.get(day);}
+function writeOfficial(record){
+    sessionOfficial.set(record.day,record);
+    saveBrowser(officialKey(record.day),record);
+}
+function randomId(){return Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
+function playerId(){
+    const saved=readBrowser('springhaven-player-id');
+    if(/^[a-f0-9]{32}$/.test(saved))return saved;
+    const id=randomId();
+    if(!saveBrowser('springhaven-player-id',id))throw Error('Allow browser storage to post your official shot.');
+    return id;
+}
+async function leaderboardPost(data){
+    const response=await fetch(leaderEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...data,player:playerId()}),signal:AbortSignal.timeout(8000)});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||'Could not reach the leaderboard.');
+    return result;
+}
+function syncOfficial(record){
+    if(!leaderEndpoint||record.synced||record.day!==dayKey())return Promise.resolve(record);
+    const key=record.day;
+    if(syncing.has(key))return syncing.get(key);
+    const request=leaderboardPost({action:'attempt',day:key,id:record.id,club:record.club,power:record.power,heading:record.heading})
+        .then(result=>{
+            const saved={...record,...result,synced:true};
+            writeOfficial(saved);
+            if(!$('welcome').hidden)renderStreak(dayKey());
+            return saved;
+        }).finally(()=>syncing.delete(key));
+    syncing.set(key,request);
+    return request;
+}
+function previousDay(day){return new Date(Date.parse(day+'T00:00:00Z')-86400000).toISOString().slice(0,10);}
+function streakFor(day){
+    let count=0;
+    for(let date=readOfficial(day)?day:previousDay(day);readOfficial(date);date=previousDay(date))count++;
+    return count;
+}
+function scoreText(score){return score.ace?'Hole in one':leave(score.mm/1000);}
+function resultText(score){
+    return score.outcome==='water'?'Water':score.outcome==='out'?'Out of play':scoreText(score);
+}
+function renderStreak(day){
+    const first=readOfficial(day),count=streakFor(day);
+    $('streak-count').textContent=count?count+'-day streak':'Start your streak';
+    $('streak-detail').textContent=first?' · Today’s official shot: '+resultText(first):
+        count?' · Play today to keep it going.':' · Your first shot counts.';
+    $('review-daily').hidden=!first;
+    $('open-daily').textContent=first?'Practice today’s setup':'Play Daily Challenge';
+    $('daily-rule').hidden=!!first;
+    if(first)$('open-daily').removeAttribute('aria-describedby');
+    else $('open-daily').setAttribute('aria-describedby','daily-rule');
+}
+function localBoard(day){
+    const first=readOfficial(day);
+    const leaders=first?.name?[first]:[];
+    const counts=[0,0,0,0,0];
+    for(const score of leaders)counts[score.ace?0:score.mm<914.4?1:score.mm<3048?2:score.mm<7620?3:4]++;
+    return {total:leaders.length,counts,leaders};
+}
+function renderScoreboard(board){
+    const {leaders,total,counts}=board;
+    $('leader-title').textContent=counts[0]?'Today’s Aces':'Today’s Leader';
+    $('leader-name').textContent=leaders[0]?.name||'No scores yet';
+    $('leader-detail').textContent=counts[0]>1?counts[0]+' players tied with an ace':
+        leaders.length?(counts[0]?'Hole in one':scoreText(leaders[0])+' to the pin'):'Play today’s challenge to set the first mark.';
+    $('player-count').textContent=total+' '+(total===1?'player':'players')+' · official first shots';
+    $('score-bands').replaceChildren(...scoreBands.map((label,index)=>{
+        const li=document.createElement('li'),name=document.createElement('span');
+        const bar=document.createElement('meter'),count=document.createElement('span');
+        name.textContent=label;count.textContent=counts[index];
+        bar.max=Math.max(1,total);bar.value=counts[index];
+        bar.setAttribute('aria-label',label+': '+counts[index]);
+        li.append(name,bar,count);return li;
+    }));
+    $('rank-table').hidden=!leaders.length;
+    $('board-empty').hidden=!!leaders.length;
+    let rank=0,last;
+    $('rank-rows').replaceChildren(...leaders.map((score,index)=>{
+        if(!last||score.ace!==last.ace||score.mm!==last.mm)rank=index+1;
+        last=score;
+        const row=document.createElement('tr');
+        for(const value of [rank,score.name,scoreText(score)]){
+            const cell=document.createElement('td');cell.textContent=value;row.append(cell);
+        }
+        return row;
+    }));
+}
+function describeBoard(state){
+    $('board-source').textContent=state==='online'?'Shared leaderboard · Resets at midnight Eastern':
+        state==='loading'?'Checking the shared leaderboard…':'Local leaderboard · Saved on this browser';
+    $('post-score').textContent=leaderEndpoint?'Post score':'Save score';
+}
+async function refreshWelcome(){
+    const day=dayKey(),target=challengeFor(day),tee=tees[target.tee],request=++boardRequest;
+    boardDate=day;
+    renderStreak(day);
+    const first=readOfficial(day);
+    if(first)syncOfficial(first).catch(()=>{});
+    const weather=target.mph?target.mph+' mph · '+windDirections[target.dir].toLowerCase():'Calm';
+    $('welcome-setup').textContent=names[target.tee]+' tee · '+yards(flatDistance(tee,target.cup))+' yd · '+pinNames[target.pin]+' pin · '+weather;
+    if(leaderEndpoint){
+        describeBoard('loading');
+        try{
+            const response=await fetch(leaderEndpoint,{cache:'no-store',signal:AbortSignal.timeout(4500)});
+            if(!response.ok)throw Error('Shared board unavailable');
+            const board=await response.json();
+            if(board.day!==day||!Array.isArray(board.leaders)||board.counts?.length!==5)throw Error('Unexpected board');
+            if(request===boardRequest){describeBoard('online');renderScoreboard(board);}
+            return;
+        }catch{}
+    }
+    if(request===boardRequest){describeBoard('local');renderScoreboard(localBoard(day));}
+}
+function openGame(wantsDaily){
+    if(!rendererAttempted){
+        rendererAttempted=true;
+        try{renderer=makeRenderer(canvas,map);}catch(error){renderError=error.message;}
+    }
+    $('welcome').hidden=true;$('game-screen').hidden=false;
+    daily=wantsDaily;previousClub=null;previousAim=null;
+    reset();$('back-home').focus();
+}
+function backToWelcome(destination=$('welcome-title')){
+    if(active()||flyover)return;
+    cancel();clearResult();$('game-screen').hidden=true;$('welcome').hidden=false;
+    destination.focus();refreshWelcome();
+}
+function clearResult(){
+    visibleResult=null;practiceRetry=null;
+    viewResult.hidden=true;
+    if(resultDialog.open)resultDialog.close();
+    $('post-status').textContent='';$('post-score').disabled=false;
+    $('result-leaderboard').hidden=true;
+}
+function openResult(){
+    if(viewResult.hidden||viewResult.disabled||resultDialog.open)return;
+    resultDialog.showModal();
+    $('result-title').focus({preventScroll:true});
+}
+function showDailyResult(result,practice=false){
+    visibleResult=practice?null:result;
+    const eligible=!practice&&result.outcome==='in-play'&&result.day===dayKey()&&!result.name;
+    $('score-form').hidden=!eligible;
+    $('result-retry').textContent='Try again for practice';
+    $('result-random').hidden=true;
+    $('result-kind').textContent=practice?'Practice result':'Official result';
+    const inPlay=result.outcome==='in-play';
+    $('result-title').textContent=result.ace?(practice?'Practice ace!':'Hole in one!'):
+        inPlay?scoreText(result)+' to the pin':resultText(result)+(practice?'':' · Streak kept');
+    $('result-detail').textContent=practice?'Today’s official result is locked.':
+        inPlay?'Counts toward your streak.':'';
+    $('player-name').value=readBrowser('springhaven-player-name')||'';
+    $('post-score').textContent=leaderEndpoint?'Post score':'Save score';
+    showPostingStatus(!practice&&Boolean(result.name));
+    viewResult.hidden=false;
+    openResult();
+}
+function showPostingStatus(posted){
+    $('post-status').textContent=posted?(leaderEndpoint?'Score posted.':'Score saved on this browser.'):'';
+    $('result-leaderboard').hidden=!posted;
+}
+function showPracticeResult(){
+    const start=[...$('practice').options].find(option=>option.value===practiceStart.practice).textContent;
+    $('result-kind').textContent='Practice result';
+    $('result-title').textContent='Hole complete';
+    const total=stroke+(stroke===1?' stroke':' strokes');
+    const penalty=penalties?' · includes '+penalties+(penalties===1?' penalty stroke':' penalty strokes'):'';
+    $('result-detail').textContent=total+penalty+' · Started from '+start;
+    $('score-form').hidden=true;
+    $('result-retry').textContent='Replay same setup';
+    $('result-random').hidden=false;
+    viewResult.hidden=false;
+    openResult();
+}
+function restorePracticeStart(){
+    for(const id of practiceSetupIds)$(id).value=practiceStart[id];
+    applyMode();
+}
+async function submitResult(event){
+    event.preventDefault();
+    const score=visibleResult,name=$('player-name').value.trim().replace(/\s+/g,' ');
+    if(!score||score.name||score.outcome!=='in-play'||score.day!==dayKey()||savingResult||
+        !name||name.length>28||/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/u.test(name))return;
+    const message=$('post-status');
+    savingResult=score;$('post-score').disabled=true;
+    try{
+        let official=readOfficial(score.day);
+        if(!official)throw Error('The official shot is unavailable in this browser.');
+        if(leaderEndpoint)official=await syncOfficial(official);
+        if(official.id!==score.id||official.outcome!=='in-play'){
+            if(visibleResult===score)showDailyResult(official);
+            return;
+        }
+        const record=leaderEndpoint?await leaderboardPost({action:'publish',day:score.day,id:score.id,name}):{name};
+        writeOfficial({...official,...record});
+        saveBrowser('springhaven-player-name',record.name);
+        if(visibleResult===score){
+            showPostingStatus(true);
+            $('score-form').hidden=true;
+            if(resultDialog.open)message.focus({preventScroll:true});
+        }
+    }catch(error){
+        if(visibleResult===score)message.textContent=error.name==='TimeoutError'||error.name==='TypeError'?
+            'Could not reach the leaderboard. Try posting again.':error.message;
+    }finally{
+        if(visibleResult===score)$('post-score').disabled=false;
+        savingResult=null;
+    }
+}
+const guideSeenKey='irish-par-how-to-play-seen';
+function showGuide(open){
+    $('how-to-play').hidden=!open;
+    $('how-to-play-toggle').setAttribute('aria-expanded',String(open));
+    $('how-to-play-toggle').textContent=open?'Hide how to play':'How to play';
+    $('open-practice').textContent=open?'Try Practice':'Practice';
+}
+function dismissGuide(){
+    saveBrowser(guideSeenKey,true);
+    showGuide(false);
+}
+$('how-to-play-toggle').onclick=()=>{
+    if($('how-to-play').hidden)showGuide(true);
+    else dismissGuide();
+};
+$('open-daily').onclick=()=>{dismissGuide();openGame(true);};
+$('review-daily').onclick=async()=>{
+    const first=readOfficial(dayKey());
+    if(!first)return;
+    openGame(true);
+    showDailyResult(first);
+    const official=await syncOfficial(first).catch(()=>first);
+    if(visibleResult===first&&(official.id!==first.id||official.outcome!==first.outcome))showDailyResult(official);
+};
+$('open-practice').onclick=()=>{dismissGuide();openGame(false);};
+$('back-home').onclick=$('result-home').onclick=()=>backToWelcome();
+$('result-leaderboard').onclick=()=>{
+    const rankings=$('rank-title');
+    backToWelcome(rankings);
+    rankings.scrollIntoView({block:'start'});
+};
+viewResult.onclick=openResult;
+$('result-close').onclick=()=>resultDialog.close();
+resultDialog.addEventListener('close',()=>{
+    if(!resultDialog.open&&!viewResult.hidden&&!$('game-screen').hidden)viewResult.focus();
+});
+$('result-retry').onclick=()=>{
+    if(!daily)restorePracticeStart();
+    resetAndFocus();
+};
+$('result-random').onclick=()=>{
+    restorePracticeStart();
+    randomPracticePosition();
+};
+$('score-form').onsubmit=submitResult;
+window.addEventListener('storage',event=>{
+    if(event.key===officialKey(dayKey())&&!$('welcome').hidden)refreshWelcome();
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('welcome').hidden)refreshWelcome();});
+setInterval(()=>{if(!$('welcome').hidden&&boardDate!==dayKey())refreshWelcome();},15000);
+
+showGuide(!readBrowser(guideSeenKey));
+reset();
+requestAnimationFrame(frame);
+refreshWelcome();
+
+
+if(new URLSearchParams(location.search).has('hub')){
+    const params=new URLSearchParams(location.search);
+    $('back-home').onclick=$('result-home').onclick=()=>location.href='./';
+    $('result-leaderboard').onclick=()=>location.href='./?board=ace#leaderboards';
+    openGame(!params.has('practice'));
+    if(params.has('review')){const first=readOfficial(dayKey());if(first)showDailyResult(first);}
+}
+</script></body></html>

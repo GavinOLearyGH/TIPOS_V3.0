@@ -5,10 +5,19 @@ const k=metresPerPlanUnit;
 const tee=(id,name,yards,z)=>({id,name,yards,z:z*k,
     x:(1495-Math.sqrt((yards*.9144/k)**2-(503-z)**2))*k});
 export const hole1={
-    id:'springhaven-1',number:1,name:'The Springhaven Club - Hole 1',par:4,
+    id:'springhaven-1',number:1,bearing:0,name:'The Springhaven Club - Hole 1',title:'The opening hole',par:4,
+    description:'A long fairway, a bunker on the left and church pews on the right. Finish on a green that slopes back to front.',
     plan:{width:1696,height:983,metresPerUnit:k},
     bounds:{minX:120*k,maxX:1630*k,minZ:350*k,maxZ:670*k},
-    airClearance:4,
+    airClearance:16,renderStep:.8,pathWidth:1.8,
+    scenery:{
+        trees:[
+            [335,585,9],[440,578,10],[545,590,9],[650,610,11],[887,593,10],[1040,605,10],[1180,613,11],[1330,625,9],[1565,593,9],
+            [450,358,9],[585,363,8],[715,365,10],[830,370,9],[945,373,9],[1080,390,11],[1210,390,10],[1360,390,11],[1545,394,9],[1610,470,11],[1605,570,10]
+        ].map(([x,z,height])=>({x:x*k,z:z*k,height})),
+        buildings:[{x:218*k,z:413*k,width:31,height:7,depth:17}]
+    },
+    boundaryStakes:Array.from({length:22},(_,i)=>({x:(315+i*60)*k,z:(350+Math.max(0,i-7)*2.4)*k})),
     tees:[
         tee('1896','1896 (Black)',419,492),
         tee('rawlins','Rawlins (Blue)',401,490),
@@ -29,7 +38,7 @@ export const hole1={
         'M159 653Q458 623 698 603Q995 582 1223 621L1459 632L1604 626'
     ],
     outOfBounds:'M294 350Q514 349 638 361Q949 364 1204 385L1612 387',
-    pews:{count:7,x:727,z:558,spacing:18,length:48,width:8,height:.5},
+    pews:{count:7,x:727,z:558,spacing:18,length:48,width:6,height:1.15},
     terrain:{baseRipple:.08,rippleLength:65,bunkerDepth:.6,bunkerBlend:1.8},
     green:{front:1448,depth:96,center:[1495,503],blend:[95,82],backToFrontRise:.4,localBreaks:null},
     provisional:['Terrain elevations','Bunker depth and lips','Exact OB boundary','Green contours','Tee marker positions within pads'],

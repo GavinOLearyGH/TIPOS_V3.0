@@ -37,3 +37,5 @@ document.getElementById('play-three').onclick=()=>{
     catch{document.getElementById('play-three').textContent='Enable browser storage to play a three-hole round';return;}
     location.href='./play.html?'+new URLSearchParams({hole:1,series:id,...setup,build:buildId});
 };
+
+if(location.pathname.includes('/daily-challenge/')||location.pathname.includes('/DailyChallenge/')){const link=document.createElement('a');link.href='../';link.textContent='← Daily Challenge';document.querySelector('main').prepend(link);}
