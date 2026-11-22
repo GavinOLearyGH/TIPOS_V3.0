@@ -23,13 +23,14 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 .club-name{font-size:14px;color:var(--muted);margin-top:8px}
 .course-play .play-title{font-size:clamp(26px,3vw,38px);margin:4px 0 0}
 #series-status{font-size:14px;margin:8px 0 12px}
-.game-hud{--edge:12px;--rail:78px;position:absolute;inset:var(--edge);display:grid;grid-template-rows:auto 44px minmax(100px,255px) minmax(0,1fr) auto;gap:8px;pointer-events:none}
+.game-hud{--edge:12px;--rail:78px;position:absolute;inset:var(--edge);display:grid;grid-template-rows:auto minmax(100px,255px) 44px minmax(0,1fr) auto;gap:8px;pointer-events:none}
 .hud{display:flex;align-items:center;flex-wrap:wrap;gap:0;background:#15231bea;border:1px solid #ffffff30;border-radius:8px;align-self:start;font-size:13px;font-variant-numeric:tabular-nums}
 .hud>span{padding:7px 10px;overflow-wrap:anywhere}
 .hud>span+span{border-left:1px solid #ffffff24}
 .hud #slope{flex-basis:100%;border-left:0;border-top:1px solid #ffffff24;color:#d0dac8;font-size:12px;padding-top:5px;padding-bottom:5px}
-.view-tools{display:flex;justify-self:end;gap:6px}
-.view-tools button{width:90px;font-size:13px;background:#182a20ed;pointer-events:auto}
+.view-tools{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--rail);min-width:0}
+#face-pin{grid-column:1}#flyover{grid-column:3}
+.view-tools button{width:100%;min-width:0;min-height:44px;padding:5px 2px;font-size:12px;background:#182a20ed;pointer-events:auto}
 .side-panels{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--rail);min-height:0}
 .power-rail,.map{height:100%;min-height:0;width:100%;border:1px solid #ffffff44;border-radius:8px;background:#142018de;overflow:hidden}
 .power-rail{grid-column:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;font-size:13px;font-variant-numeric:tabular-nums}
@@ -44,9 +45,9 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 .shot-controls select{pointer-events:auto;max-width:180px;min-height:40px;padding:5px}
 #green-grid{pointer-events:auto;background:#142018ec;font-size:12px;min-height:44px}
 @media(max-width:650px){
- .game-hud{--edge:8px;--rail:62px;grid-template-rows:auto 44px minmax(80px,196px) minmax(0,1fr) auto;gap:6px}
+ .game-hud{--edge:8px;--rail:62px;grid-template-rows:auto minmax(80px,196px) 44px minmax(0,1fr) auto;gap:6px}
  .hud{font-size:11px}.hud>span{padding:6px}.hud #slope{font-size:11px}
- .view-tools button{width:78px;font-size:12px;padding:6px 9px}
+ .view-tools button{font-size:11px;padding:5px 1px}
  .shot-controls label{padding:6px}.shot-controls select{font-size:12px;width:145px}
  .power-rail{padding:6px 3px;gap:4px;font-size:12px}
  .course-play .brand{font-size:10px}.club-name{font-size:12px}
@@ -55,10 +56,8 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 }
 @media(max-height:500px) and (orientation:landscape){
  #scene{height:75svh;min-height:280px}
- .game-hud{--rail:56px;grid-template-rows:auto minmax(70px,1fr) auto}
- .hud{margin-right:175px}
- .view-tools{position:absolute;right:0;top:0}
- .side-panels{grid-row:2}.shot-controls{grid-row:3}
+ .game-hud{--rail:56px;grid-template-rows:auto minmax(70px,1fr) 44px auto}
+ .side-panels{grid-row:2}.view-tools{grid-row:3}.shot-controls{grid-row:4}
  .rail-label,#putt-roll:empty{display:none}
  #strike-panel{bottom:85px}
 }
