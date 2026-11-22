@@ -15,7 +15,7 @@ import {createRenderer,makeAtlas} from '../core/renderer.mjs';
 import {clubs,ballRadius,stepTime,clamp,mix,ease,estimatePutt} from '../core/physics.mjs';
 
 const $=id=>document.getElementById(id);
-const links=gameLinks(location.href);
+const links=gameLinks(location.href);links.home+='?build='+buildId;links.practice+='?build='+buildId;
 for(const [id,href] of [['game-home',links.home],['course-home',links.practice],['complete-home',links.home],['practice-home',links.practice]])$(id).href=href;
 const requested=new URLSearchParams(location.search);
 let officialSession=null,officialBusy=false,pendingShot=null;
@@ -497,7 +497,7 @@ function showOfficialDialog(){
     $('next-hole').className='button primary';$('replay').className=completed&&!eligible?'primary':'';
     $('publish-official').disabled=Boolean(officialSession.name);$('official-name').disabled=Boolean(officialSession.name);
     $('official-post-status').textContent=officialSession.name?'Official score saved.':eligible?'Your official result is saved. Add a name to appear on the leaderboard.':'Result saved · Streak kept.';
-    $('official-board').href=new URL('?board='+(aceMode?'ace':'three')+'#leaderboards',appRoot()).href;
+    $('official-board').href=new URL('?board='+(aceMode?'ace':'three')+'&build='+buildId+'#leaderboards',appRoot()).href;
     $('next-hole').hidden=completed;$('next-hole').href=officialURL(officialSession);$('next-hole').textContent='Continue to Hole '+officialSession.hole;
     $('replay').textContent='Play again for practice';$('review-official').hidden=false;
     if(!$('complete').open)$('complete').showModal();

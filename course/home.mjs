@@ -5,7 +5,7 @@ import {buildId} from '../core/build-info.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
 import {playableHoles as courseCatalog} from './catalog.mjs';
 import {surfaceColors} from '../core/renderer.mjs';
-const links=gameLinks(location.href);
+const links=gameLinks(location.href);links.home+='?build='+buildId;links.practice+='?build='+buildId;
 document.getElementById('daily-home').href=links.home;
 refreshParentWorker();
 document.getElementById('build-version').textContent='Build '+buildId;
