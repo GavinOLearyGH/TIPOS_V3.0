@@ -1,10 +1,11 @@
+// Approximate clockwise bearing relative to Hole 1, traced from the supplied course-wide satellite photo.
 // Traced from the supplied Hole 3 overhead. All engine coordinates are metres.
 // Posted tees: Springhaven's published 193/151/137/117-yard par three.
 const k=193*.9144/Math.hypot(1790-250,563-612);
 const tee=(id,name,yards)=>({id,name,yards,z:612*k,
     x:(1790-Math.sqrt((yards*.9144/k)**2-(563-612)**2))*k});
 export const hole3={
-    id:'springhaven-3',number:3,bearing:-10,name:'The Springhaven Club - Hole 3',title:'The protected green',par:3,
+    id:'springhaven-3',number:3,bearing:157,name:'The Springhaven Club - Hole 3',title:'The protected green',par:3,
     description:'A compact par 3 with a short-mown landing area, a narrow collar and three bunkers protecting the green.',
     about:'Tee yardages follow the published scorecard. The approach, collar, green and three bunkers follow the supplied markup. Green breaks, bunker depths and terrain elevations are provisional. All holes share one engine and renderer.',
     plan:{width:2048,height:1163,metresPerUnit:k},

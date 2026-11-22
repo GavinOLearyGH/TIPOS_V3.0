@@ -1,9 +1,10 @@
+// Approximate clockwise bearing relative to Hole 1, traced from the supplied course-wide satellite photo.
 // Traced from the supplied Hole 2 overhead (2004 × 1133).
 // Posted tee yardages: Springhaven's published scorecard. Contours are provisional.
 const k=550*.9144/Math.hypot(1780-205,558-560);
 const tee=(id,name,yards,z)=>({id,name,yards,z:z*k,x:(1780-Math.sqrt((yards*.9144/k)**2-(558-z)**2))*k});
 export const hole2={
-    id:'springhaven-2',number:2,bearing:173,name:'The Springhaven Club - Hole 2',title:'The barranca',par:5,
+    id:'springhaven-2',number:2,bearing:177,name:'The Springhaven Club - Hole 2',title:'The barranca',par:5,
     description:'A long par 5. Position your approach to carry the playable barranca and reach a two-tier green guarded by two bunkers.',
     about:'The barranca is playable, approximately 5 ft deep, with fixed patches of smooth, heavy and tight lies. Its banks and the green tiers are provisional. All holes share one engine and renderer.',
     plan:{width:2004,height:1133,metresPerUnit:k},
