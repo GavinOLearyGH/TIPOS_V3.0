@@ -1,20 +1,22 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-97b7431cf5"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-97b7431cf5/course/style.css"></head>
-<body><main>
-<header><div><div class="brand">THE IRISH PAR · COURSE PLAY</div><h1 class="play-title" id="hole-title">The Springhaven Club</h1></div><a href="./">Course</a></header>
+<html lang="en"><head><meta name="course-build" content="0.3.0-c74fead000"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-c74fead000/course/style.css"></head>
+<body class="course-play"><main>
+<header><div><div class="brand">THE IRISH PAR · COURSE PLAY</div><div class="club-name">The Springhaven Club</div><h1 class="play-title" id="hole-title">Hole</h1></div><a href="./">Course</a></header>
 <div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
 <p id="series-status" class="muted" hidden></p>
 <div id="render-error" hidden role="alert"></div>
 <div class="stage" id="stage">
 <canvas id="scene" tabindex="0" aria-label="First-person course view. Drag down from the ball for power, slide left to aim right, and release to swing." aria-describedby="instructions"></canvas>
-<div class="left-hud"><div class="hud"><span id="distance"></span><span id="lie"></span><span id="wind-label"></span><span id="slope" hidden></span></div></div>
-<div class="power-rail" aria-label="Shot power"><span id="power-label">0%</span><div id="power" role="progressbar" aria-label="Shot power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="power-fill"></i></div><span id="putt-roll"></span></div>
-<button id="face-pin" type="button">Face pin</button>
-<button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button>
-<button id="flyover" type="button">Flyover</button>
+<div class="game-hud">
+<div class="hud" aria-label="Shot conditions"><span id="distance"></span><span id="lie"></span><span id="wind-label"></span><span id="slope" hidden></span></div>
+<div class="view-tools" role="group" aria-label="View controls"><button id="flyover" type="button">Flyover</button><button id="face-pin" type="button">Face pin</button></div>
+<div class="side-panels">
+<div class="power-rail" aria-label="Shot power"><span class="rail-label">Power</span><span id="power-label">0%</span><div id="power" role="progressbar" aria-label="Shot power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="power-fill"></i></div><span id="putt-roll"></span></div>
 <div class="map"><canvas id="map" width="180" height="510" role="img" aria-label="Overhead hole map. Tee at the bottom, green at the top, with live ball position."></canvas></div>
+</div>
+<div class="shot-controls"><label>Club · carry<select id="club"></select></label><button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button></div>
+</div>
 <div id="ball-ring" hidden></div><div id="aim-ring" hidden></div><div id="pull-handle" hidden></div><div id="pull-line" hidden></div><div id="pull-aim" hidden></div>
-<div class="shot-controls"><label>Club · carry<select id="club"></select></label></div>
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 <span id="tour-label" hidden>Green read · Downhill direction</span><div id="fade" hidden></div>
 </div>
@@ -34,4 +36,4 @@
 <button id="apply" type="button">Start new round</button></div></details>
 <details><summary>About this build</summary><p id="about-copy"></p></details>
 <dialog id="complete" aria-labelledby="complete-title"><p class="brand">HOLE COMPLETE</p><h2 id="complete-title"></h2><p id="complete-detail"></p><div id="series-card"></div><p id="series-best"></p><div class="actions"><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><button class="primary" id="replay">Replay hole</button><a class="button" id="next-hole" hidden>Next hole</a><a href="./">Back to course</a><button id="close-result">Close</button></div></dialog>
-</main><script type="module" src="./releases/0.3.0-97b7431cf5/course/play.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-c74fead000/course/play.mjs"></script></body></html>

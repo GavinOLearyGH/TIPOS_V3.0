@@ -28,7 +28,7 @@ options('tee',course.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
 options('club',fullBag.map(name=>[name,name+(clubs[name].carry?' · '+clubs[name].carry+' yd':'')]));
 options('wind',['Toward Hole 1 green','Hole 1 green / right','Across Hole 1 right','Hole 1 tee / right','Toward Hole 1 tee','Hole 1 tee / left','Across Hole 1 left','Hole 1 green / left'].map((name,index)=>[index,name]));
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
-$('hole-title').textContent=course.name;
+$('hole-title').textContent='Hole '+course.number+' · Par '+course.par;
 $('about-copy').textContent=course.about??'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
 if(!requested.has('wind')&&!requested.has('mph')){const wind=randomWind();$('wind').value=wind.wind;$('wind-speed').value=wind.mph;}
 for(const [key,id,allowed] of [['wind','wind',null],['mph','wind-speed',null],['speed','green-speed',['.8','1','1.24']]]){
@@ -87,7 +87,7 @@ function updateHUD(){
     const profile=course.lieAt?.(ball.x,ball.z);
     $('lie').textContent=profile?profile.featureName+' · '+profile.label:lieNames[course.surface(ball.x,ball.z)]||ball.mode;
     $('score-label').textContent=round.state.strokes+' '+(round.state.strokes===1?'stroke':'strokes')+
-        (round.state.penalties?' · '+round.state.penalties+' penalty':'')+' · Par '+course.par;
+        (round.state.penalties?' · '+round.state.penalties+' penalty':'');
     const wind=round.settings.wind,speed=Math.hypot(wind.x,wind.z)/.44704;
     const relative=Math.atan2(wind.z,wind.x)-heading;
     const labels=['tailwind','tail/right','left to right','head/right','headwind','head/left','right to left','tail/left'];
@@ -99,7 +99,7 @@ function updateHUD(){
         const rise=(course.ground(ball.x+Math.cos(heading)*sample,ball.z+Math.sin(heading)*sample)-course.ground(ball.x,ball.z))/sample;
         const across=(course.ground(ball.x-Math.sin(heading)*sample,ball.z+Math.cos(heading)*sample)-course.ground(ball.x,ball.z))/sample;
         $('slope').textContent=Math.abs(rise*100).toFixed(1)+'% '+(rise>=0?'uphill':'downhill')+
-            (Math.abs(across)<.002?' · little side break':across>0?' · breaks left':' · breaks right');
+            (Math.abs(across)<.002?' · Minimal break':across>0?' · breaks left':' · breaks right');
     }
     $('green-grid').hidden=!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
