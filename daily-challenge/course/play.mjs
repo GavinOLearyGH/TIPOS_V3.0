@@ -163,6 +163,8 @@ function updateHUD(){
     $('flyover').disabled=active()||!renderer||$('complete').open||officialBusy||Boolean(officialSession&&pendingShot);
     $('flyover').textContent=tour?.reading?'Back to shot':tour?'Skip flyover':'Flyover';
     $('read-green').disabled=!editable();
+    if(tour?.reading)$('stage').classList.add('reading-green');
+    else $('stage').classList.remove('reading-green');
     showSeries();
 }
 function updatePower(){
@@ -333,7 +335,7 @@ function tourView(now){
     const {minX,maxX,minZ,maxZ}=course.greenBounds;
     const center={x:(minX+maxX)/2,z:(minZ+maxZ)/2};
     const breadth=Math.max(Math.hypot(maxX-minX,maxZ-minZ)+6,(course.green?.readRadius??22)*2);
-    const framing=breadth*Math.max(1,1.1/(canvas.clientWidth/canvas.clientHeight));
+    const framing=.85*breadth*Math.max(1,1.1/(canvas.clientWidth/canvas.clientHeight));
     const endEye=[center.x-dx*framing*.58,course.ground(center.x,center.z)+framing*.9,center.z-dz*framing*.58];
     const greenGrid=tour.reading&&showGreenGrid;
     $('tour-label').hidden=!greenGrid;

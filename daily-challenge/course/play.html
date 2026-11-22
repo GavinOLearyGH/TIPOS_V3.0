@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-1a6904d00c"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-1a6904d00c/course/style.css"></head>
+<html lang="en"><head><meta name="course-build" content="0.3.0-9ebfc75471"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-9ebfc75471/course/style.css"></head>
 <body class="course-play"><main>
 <header><div><div class="brand">THE IRISH PAR</div><div class="club-name">The Springhaven Club</div><h1 class="play-title" id="hole-title">Hole</h1></div><nav class="game-nav" aria-label="Game navigation"><a id="game-home" href="../">Home</a><a id="course-home" href="./">Practice</a></nav></header>
 <div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
@@ -13,13 +13,14 @@
 <div class="power-rail" aria-label="Shot power"><span class="rail-label">Power</span><span id="power-label">0%</span><div id="power" role="progressbar" aria-label="Shot power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="power-fill"></i></div><span id="putt-roll"></span></div>
 <div class="map"><canvas id="map" width="180" height="510" role="img" aria-label="Overhead hole map. Tee at the bottom, green at the top, with live ball position."></canvas></div>
 </div>
-<div class="view-tools" role="group" aria-label="View controls"><button id="face-pin" type="button">Face pin</button><button id="read-green" type="button">Read Green</button><button id="flyover" type="button">Flyover</button></div>
+<div class="view-tools" role="group" aria-label="View controls"><button id="face-pin" type="button">Face pin</button><button id="flyover" type="button">Flyover</button></div>
 <div class="shot-controls"><label>Club · carry<select id="club"></select><small id="club-risk" hidden role="status"></small></label><button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button></div>
 </div>
 <div id="ball-ring" hidden></div><div id="aim-ring" hidden></div><div id="pull-handle" hidden></div><div id="pull-line" hidden></div><div id="pull-aim" hidden></div>
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 <span id="tour-label" hidden>Green read · Downhill direction</span><div id="fade" hidden></div>
 </div>
+<button id="read-green" type="button">Read Green</button>
 <div class="under-game"><p id="instructions">Swipe away from the ball to turn. Pull the ball down for power; slide left to aim right, or right to aim left. Hold, then release in the green strike zone. Higher power needs more precise timing. Putts use power and aim only. The wind arrow shows where the wind is blowing.<br>Keyboard: ← → aim · Hold Space for power · Release to hit · Esc cancels</p><button id="reset" type="button">Reset hole</button></div>
 <section class="shot-summary" id="shot-summary" aria-labelledby="shot-summary-title" hidden>
 <div class="shot-summary-heading"><strong id="shot-summary-title">Last shot</strong><span id="shot-summary-detail"></span></div>
@@ -37,4 +38,4 @@
 <button id="apply" type="button">Start new round</button></div><p>Clock directions show where wind blows: 12 toward the Hole 1 green, 3 right, 6 toward its tee, 9 left. Wind shifts up to 15° either side and varies gently in strength. The on-screen arrow is relative to your current aim.</p></details>
 <details><summary>About this build</summary><p id="about-copy"></p></details>
 <dialog id="complete" aria-labelledby="complete-title"><div class="result-heading"><p class="brand" id="result-kind">PRACTICE RESULT</p><button id="close-result" type="button" aria-label="Close result">×</button></div><h2 id="complete-title"></h2><p id="complete-detail"></p><div id="series-card"></div><p id="series-best"></p><section id="official-result" hidden><p id="official-detail"></p><label id="official-name-label">Display name<input id="official-name" maxlength="28" autocomplete="nickname"></label><button id="publish-official" class="primary" type="button">Add to leaderboard</button><p id="official-post-status" role="status"></p><a id="official-board" class="button">View leaderboard</a></section><div class="actions"><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><button class="primary" id="replay">Replay hole</button><a class="button" id="next-hole" hidden>Next hole</a><a id="practice-home" href="./">Choose a practice hole</a><a id="complete-home" href="../">Home</a></div></dialog>
-</main><script type="module" src="./releases/0.3.0-1a6904d00c/course/play.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-9ebfc75471/course/play.mjs"></script></body></html>
