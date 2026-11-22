@@ -81,3 +81,5 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 #official-name{width:100%;min-height:44px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:10px;font:inherit}
 #series-card p{margin:6px 0;font-size:14px}
 @media(max-width:650px){.game-nav{font-size:12px;gap:8px;flex-direction:column;align-items:flex-end}.course-play header{gap:10px}#complete{padding:18px}}
+
+#club-risk{display:block;max-width:180px;margin-top:5px;color:#f3d78c;line-height:1.35}#club-risk[hidden]{display:none}

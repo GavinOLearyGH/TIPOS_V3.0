@@ -1,3 +1,4 @@
+import {recommendClub,clubLie} from '../core/club-lie.mjs';
 import {gameLinks} from '../core/navigation.mjs';
 import {dayKey,read,write,threeKey,aceKey,startOfficial,submitOfficialShot,publishThree,officialURL,appRoot,totalScore} from '../core/daily-client.mjs';
 import {restoreCompetitionRound,dailyAceSetup} from '../core/competition.mjs';
@@ -108,7 +109,7 @@ function showSeries(){
 function drawStrike(now){
     const show=editable()&&strikeStarted!==null&&$('club').value!=='Putter';
     $('strike-panel').hidden=!show;if(!show)return;
-    const ball=round.state.ball,lie=course.lieAt?.(ball.x,ball.z)?.id??course.surface(ball.x,ball.z);
+    const lie=round.getLie().id;
     $('strike-zone').style.width=(executionWindow($('club').value,charge,lie)*100)+'%';
     $('strike-marker').style.left=((strikePosition(now-strikeStarted)+1)*50)+'%';
 }
@@ -121,9 +122,7 @@ function replaySeries(random=false){
 $('series-replay').onclick=()=>replaySeries();$('series-new').onclick=()=>replaySeries(true);
 
 function suggestClub(){
-    const ball=round.state.ball,lie=course.surface(ball.x,ball.z),carry=distance(ball,round.settings.pin)/.9144-4;
-    $('club').value=lie==='green'?'Putter':lie==='sand'?'SW':
-        [...fullBag].reverse().find(name=>clubs[name].carry>=carry)||'Driver';
+    $('club').value=recommendClub(distance(round.state.ball,round.settings.pin)/.9144,round.getLie(),fullBag);
 }
 function updateWindDisplay(){
     if(!round)return;
@@ -137,6 +136,8 @@ function updateHUD(){
     const ball=round.state.ball,pin=round.settings.pin,metres=distance(ball,pin);
     $('distance').textContent='Pin · '+(metres<27?feet(metres)+' ft':yards(metres)+' yd');
     const profile=course.lieAt?.(ball.x,ball.z);
+    const risk=active()?'':clubLie($('club').value,round.getLie()).note;
+    $('club-risk').textContent=risk;$('club-risk').hidden=!risk;
     $('lie').textContent=profile?profile.featureName+' · '+profile.label:lieNames[course.surface(ball.x,ball.z)]||ball.mode;
     $('score-label').textContent=round.state.strokes+' '+(round.state.strokes===1?'stroke':'strokes')+
         (round.state.penalties?' · '+round.state.penalties+' penalty':'');

@@ -1,9 +1,10 @@
 import {clamp,clubs} from './physics.mjs';
+import {clubLie} from './club-lie.mjs';
 export function executionWindow(club,power,lie='fairway'){
     if(club==='Putter')return 1;
     const long=(clubs[club]?.carry??100)>170;
     const base=clamp(.48-.25*power**2-(long?.07:0)-(lie==='heavy'?.08:lie==='rough'?.04:0),.10,.48);
-    const high=clamp((power-.9)/.1,0,1);return base*(1-.35*high*high*(3-2*high));
+    const high=clamp((power-.9)/.1,0,1);return base*(1-.35*high*high*(3-2*high))*clubLie(club,lie).window;
 }
 export function strikePosition(elapsed){return -Math.cos(Math.max(0,elapsed)*Math.PI*2/1400);}
 export function resolveExecution(club,power,position=0,lie='fairway'){
@@ -15,7 +16,7 @@ export function resolveExecution(club,power,position=0,lie='fairway'){
     // Preserve forgiveness at the clean-zone boundary, then progressively
     // amplify direction and curvature. Controlled swings reduce both effects.
     // Keep contact power/spin/lift penalties independent of this lateral ramp.
-    const effort=.55+.45*power**2;
+    const effort=(.55+.45*power**2)*clubLie(club,lie).miss;
     const direction=signed*(1+1.25*error)*effort;
     const curvature=signed*(1+1.5*error)*effort;
     return {heading:direction*.045,power:power*(1-.12*error**1.3),error,
