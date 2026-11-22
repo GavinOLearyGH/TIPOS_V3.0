@@ -486,7 +486,7 @@ function showOfficialDialog(){
     $('complete-home').textContent=completed?'Home':'Save and exit';
     $('replay').hidden=!completed;
     $('complete-title').textContent=aceMode?'Official result':completed?'Official result':'Hole '+course.number+' complete';
-    $('complete-detail').textContent=aceMode?(officialSession.ace?'Hole in one!':officialSession.outcome==='in-play'?(officialSession.mm/304.8).toFixed(1)+' ft to the pin':(officialSession.outcome==='water'?'Water':'Out of play')+' · Streak kept'):completed?totalScore(officialSession)+' strokes · '+(totalScore(officialSession)-12===0?'Even par':(totalScore(officialSession)>12?'+':'')+(totalScore(officialSession)-12))+' · Par 12':
+    $('complete-detail').textContent=aceMode?(officialSession.ace?'Hole in one!':officialSession.outcome==='in-play'?(officialSession.mm/304.8).toFixed(1)+' ft to the pin':(officialSession.outcome==='water'?'Water':'Out of play')+' · Played today'):completed?totalScore(officialSession)+' strokes · '+(totalScore(officialSession)-12===0?'Even par':(totalScore(officialSession)>12?'+':'')+(totalScore(officialSession)-12))+' · Par 12':
         totalScore(officialSession)+' strokes so far · Your round is saved.';
     $('series-replay').hidden=$('series-new').hidden=true;$('series-best').textContent='';
     $('series-card').replaceChildren();
