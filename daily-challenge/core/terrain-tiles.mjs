@@ -1,10 +1,12 @@
 import {clamp} from './physics.mjs';
 
-function axis(outerMin,min,max,outerMax,step,outerStep){
+function axis(outerMin,min,max,outerMax,step,outerStep,detailMin,detailMax){
     const samples=[];
-    const sections=[[outerMin,min,outerStep],[min,max,step],[max,outerMax,outerStep]];
-    for(const [start,end,spacing] of sections){
-        if(end<=start)continue;
+    const stops=[...new Set([outerMin,min,max,detailMin??min,detailMax??max,outerMax]
+        .map(point=>clamp(point,outerMin,outerMax)))].sort((a,b)=>a-b);
+    for(let i=1;i<stops.length;i++){
+        const start=stops[i-1],end=stops[i],middle=(start+end)/2;
+        const spacing=(middle>=min&&middle<=max)||(middle>=detailMin&&middle<=detailMax)?step:outerStep;
         const count=Math.ceil((end-start)/spacing);
         for(let i=0;i<count;i++)samples.push(start+i*(end-start)/count);
     }
@@ -12,9 +14,9 @@ function axis(outerMin,min,max,outerMax,step,outerStep){
     return samples;
 }
 
-export function* terrainTiles(viewBounds,playBounds,step,ground,outerStep=3.6){
-    const xs=axis(viewBounds.minX,playBounds.minX,playBounds.maxX,viewBounds.maxX,step,outerStep);
-    const zs=axis(viewBounds.minZ,playBounds.minZ,playBounds.maxZ,viewBounds.maxZ,step,outerStep);
+export function* terrainTiles(viewBounds,playBounds,step,ground,outerStep=3.6,detail){
+    const xs=axis(viewBounds.minX,playBounds.minX,playBounds.maxX,viewBounds.maxX,step,outerStep,detail?.minX,detail?.maxX);
+    const zs=axis(viewBounds.minZ,playBounds.minZ,playBounds.maxZ,viewBounds.maxZ,step,outerStep,detail?.minZ,detail?.maxZ);
     const heights=xs.map(x=>Float32Array.from(zs,z=>ground(x,z)));
     const tileSize=48;
     for(let firstX=0;firstX<xs.length-1;firstX+=tileSize)for(let firstZ=0;firstZ<zs.length-1;firstZ+=tileSize){

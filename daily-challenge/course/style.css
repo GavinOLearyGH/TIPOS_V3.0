@@ -83,3 +83,19 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 @media(max-width:650px){.game-nav{font-size:12px;gap:8px;flex-direction:column;align-items:flex-end}.course-play header{gap:10px}#complete{padding:18px}}
 
 #club-risk{display:block;max-width:180px;margin-top:5px;color:#f3d78c;line-height:1.35}#club-risk[hidden]{display:none}
+
+.reading-green .hud,.reading-green .side-panels,.reading-green #face-pin,.reading-green .shot-controls label,.reading-green #tour-label{display:none}
+.reading-green .view-tools,.reading-green .shot-controls{position:absolute;bottom:0}
+.reading-green .view-tools{right:0;display:block}
+.reading-green .shot-controls{left:0}
+.reading-green #flyover{width:auto;padding-inline:10px;white-space:nowrap}
+
+.cross-country-setup{display:grid;grid-template-columns:minmax(230px,1fr) minmax(0,1.35fr);gap:24px;align-items:start}
+.cross-country-form{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px}
+.cross-country-form p{margin:0}
+#route-estimate{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+.cross-country-map{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.cross-country-map canvas{display:block;width:100%;height:auto;max-height:490px;object-fit:contain;background:#4e6c40}
+.cross-country-map figcaption{display:flex;gap:1em;flex-wrap:wrap;padding:10px 14px;font-size:13px}
+.cross-country-map figcaption span+span{color:var(--gold)}
+@media(max-width:650px){.cross-country-setup{grid-template-columns:1fr}}

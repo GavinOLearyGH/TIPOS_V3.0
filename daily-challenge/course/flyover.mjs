@@ -38,11 +38,11 @@ function terrainProfile(ground,at,length){
     };
 }
 
-export function flyoverPath(course,tee){
+export function flyoverPath(course,tee,{direct=false}={}){
     const {minX,maxX,minZ,maxZ}=course.greenBounds;
     const center={x:(minX+maxX)/2,z:(minZ+maxZ)/2};
     const unit=course.plan.metresPerUnit;
-    const corridor=(centerlines[course.number-1]??[]).map(([x,z])=>({x:x*unit,z:z*unit}));
+    const corridor=direct?[]:(centerlines[course.number-1]??[]).map(([x,z])=>({x:x*unit,z:z*unit}));
     const points=[tee,...corridor.filter(p=>p.x>tee.x+3),center];
     const samples=[{point:tee,at:0}];
     function append(point){

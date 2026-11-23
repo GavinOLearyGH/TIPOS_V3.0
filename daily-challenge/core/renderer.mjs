@@ -263,7 +263,7 @@ export function createRenderer(canvas,course,atlas,view){
             }
         }
     }
-    const tiles=view&&Array.from(terrainTiles(b,course.playBounds,unit,renderGround,6),({vertices,indices,center,radius})=>{
+    const tiles=view&&Array.from(terrainTiles(b,course.playBounds,unit,renderGround,6,view.detailBounds),({vertices,indices,center,radius})=>{
         const handle=upload(vertices).handle,elements=gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,elements);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
@@ -303,7 +303,7 @@ export function createRenderer(canvas,course,atlas,view){
         else draw(groundBuffer,1);
         if(water)draw(water,2);
         draw(sceneryBuffer,0);
-        if(flagBases){
+        if(flagBases?.length){
             const flags=[];
             for(const flag of flagBases){
                 visuals.post(flags,flag.x,flag.z,flag.y,1.95,.026,[.91,.92,.82]);

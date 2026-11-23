@@ -13,6 +13,7 @@ import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/contro
 import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
 import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
 import {flyoverPath,flyoverCamera} from './flyover.mjs';
+import {crossCountrySelection,createCrossCountryGame} from './cross-country.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
 import {clubs,ballRadius,stepTime,clamp,mix,estimatePutt} from '../core/physics.mjs';
@@ -22,7 +23,8 @@ const links=gameLinks(location.href);links.home+='?build='+buildId;links.practic
 for(const [id,href] of [['game-home',links.home],['course-home',links.practice],['complete-home',links.home],['practice-home',links.practice]])$(id).href=href;
 const requested=new URLSearchParams(location.search);
 let officialSession=null,officialBusy=false,pendingShot=null;
-const officialDay=requested.get('ace')??requested.get('official');
+const isCrossCountry=requested.has('cross');
+const officialDay=isCrossCountry?null:requested.get('ace')??requested.get('official');
 const mode=requested.has('ace')?'ace':requested.get('mode')==='nine'?'nine':'three';
 if(officialDay){
     try{
@@ -31,10 +33,25 @@ if(officialDay){
         if(officialSession.build!==buildId){location.replace(officialURL(officialSession));throw Error('Opening your saved round version…');}
     }catch(error){$('render-error').hidden=false;$('render-error').textContent=error.message;$('stage').hidden=true;throw error;}
 }
-const definition=holeByNumber(officialSession?.hole||requested.get('hole')||1);
+const crossCountry=isCrossCountry?crossCountrySelection(requested.get('from'),requested.get('tee'),requested.get('green')):null;
+if(isCrossCountry&&!crossCountry){
+    location.replace(new URL('course/cross-country.html',appRoot()).href);
+    throw Error('Choose a valid tee and green');
+}
+const definition=holeByNumber(crossCountry?.to??(officialSession?.hole||requested.get('hole')||1));
 if(!definition)throw Error('This hole is not available yet.');
-const course=createConnectedCourse(definition.number);
-const view=makeConnectedView(course);
+const crossGame=crossCountry?createCrossCountryGame(crossCountry):null;
+const course=crossGame?.course??createConnectedCourse(definition.number);
+const view=crossGame?.view??makeConnectedView(course);
+if(crossCountry){
+    const routeURL=new URL('course/cross-country.html',appRoot());
+    routeURL.search=new URLSearchParams({from:crossCountry.from,tee:crossCountry.tee.id,green:crossCountry.to,build:buildId});
+    $('course-home').href=$('practice-home').href=routeURL.href;
+    $('practice-home').textContent='Pick a new route';
+    $('reset').textContent='Reset route';
+    $('map').setAttribute('aria-label','Cross Country route map with starting tee, target green, and ball position.');
+    for(const id of ['hole-setting','tee-setting','pin-setting'])$(id).hidden=true;
+}
 const canvas=$('scene'),minimap=$('map'),stage=$('stage');
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const yards=metres=>Math.round(metres/.9144);
@@ -57,7 +74,7 @@ let weatherSetup=(!requested.has('windAngle')&&!requested.has('wind')&&!requeste
     randomWindSetup():windSetup(Object.fromEntries(requested),'practice-'+Date.now());
 setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
 if(course.tees.some(tee=>tee.id===requested.get('tee')))$('tee').value=requested.get('tee');
-$('hole-title').textContent='Hole '+course.number+' · Par '+course.par;
+$('hole-title').textContent=crossCountry?'Cross Country Mode':'Hole '+course.number+' · Par '+course.par;
 $('about-copy').textContent=course.about??'Tee names and yardages are confirmed. Terrain, bunker depths, tree positions and green breaks are provisional. All holes share one engine and renderer.';
 if(['.8','1','1.24'].includes(requested.get('speed')))$('green-speed').value=requested.get('speed');
 $('replay').textContent='Replay Hole '+course.number;
@@ -66,7 +83,7 @@ $('build-version').textContent='Build '+buildId;
 refreshParentWorker();
 
 const atlas=makeAtlas(course,view);
-const mapCourse={...course,bounds:course.playBounds};
+const mapCourse={...course,bounds:crossGame?.mapBounds??course.playBounds};
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
 let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,animationId,frameNumber=0,showGreenGrid=true,windPaused=document.hidden;
 const active=()=>round&&!resting(round.state.ball);
@@ -75,7 +92,7 @@ const editable=()=>renderer&&round&&!active()&&!tour&&!round.state.complete&&!$(
 let strikeStarted=null,series=null,turnDrag=null;
 try{series=JSON.parse(sessionStorage.getItem('irish-par-series-'+requested.get('series')));}
 catch{}
-if(officialSession)series=null;
+if(officialSession||crossCountry)series=null;
 if(series&&(!series.setup||!Array.isArray(series.results)||!requested.get('series')||series.id!==requested.get('series')))series=null;
 if(series){
     series.setup={...series.setup,...windSetup(series.setup,'series-'+series.id)};delete series.setup.wind;
@@ -90,7 +107,7 @@ if(officialSession){
     const pending=read(pendingKey());
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
 }
-const practiceAceDay=!officialSession&&course.number===6?requested.get('practiceAce'):null;
+const practiceAceDay=!officialSession&&!crossCountry&&course.number===6?requested.get('practiceAce'):null;
 function applyPracticeAceSetup(){
     const setup=dailyAceSetup(practiceAceDay);
     weatherSetup=windSetup(setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
@@ -112,6 +129,7 @@ function roundProgress(session,number){
 }
 function formatRelative(relative){return relative===0?'Even par':(relative>0?'+':'')+relative;}
 function nextHole(){
+    if(crossCountry)return;
     const number=series?roundHoles(series)[seriesIndex+1]:courseCatalog.find(hole=>hole.number>course.number)?.number;
     return number;
 }
@@ -121,6 +139,10 @@ function showSeries(){
     if(officialSession){
         $('series-status').hidden=false;$('series-status').textContent=officialSession.kind==='ace'?'Official Hole-in-One Challenge · Hole 6 · First shot counts':'Official '+roundModes[mode].label+' · '+roundProgress(officialSession,officialSession.hole)+' · '+totalScore(officialSession)+' strokes';
         for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
+        return;
+    }
+    if(crossCountry){
+        $('series-status').hidden=false;$('series-status').textContent='Practice · Estimated par '+crossCountry.par;
         return;
     }
     if(!series){$('series-status').hidden=false;$('series-status').textContent=practiceAceDay?'Practice · '+(practiceAceDay===dayKey()?'Today’s Hole-in-One setup':'Hole-in-One setup · '+practiceAceDay):'Practice'+' · Hole '+course.number;return;}
@@ -144,7 +166,9 @@ function replaySeries(random=false){
 $('series-replay').onclick=()=>replaySeries();$('series-new').onclick=()=>replaySeries(true);
 
 function suggestClub(){
-    $('club').value=recommendClub(distance(round.state.ball,round.settings.pin)/.9144,round.getLie(),fullBag);
+    const yardsToPin=distance(round.state.ball,round.settings.pin)/.9144,lie=round.getLie();
+    const recommendationLie=crossGame&&lie.surface==='green'&&!crossGame.onTargetGreen(round.state.ball)?{...lie,surface:'fairway'}:lie;
+    $('club').value=recommendClub(yardsToPin,recommendationLie,fullBag);
 }
 function updateWindDisplay(){
     if(!round)return;
@@ -182,7 +206,7 @@ function updateHUD(){
     $('reload-build').disabled=active();
     $('face-pin').disabled=!editable()||!!drag||!!turnDrag;
     $('flyover').disabled=active()||!renderer||$('complete').open||officialBusy||Boolean(officialSession&&pendingShot);
-    $('flyover').textContent=tour?.reading?'Back to shot':tour?'Skip flyover':'Flyover';
+    $('flyover').textContent=tour?.reading?'Back to shot':tour?'Skip flyover':crossCountry?'Green view':'Flyover';
     if(tour?.reading)$('stage').classList.add('reading-green');
     else $('stage').classList.remove('reading-green');
     showSeries();
@@ -210,7 +234,8 @@ function startRound(){
     round=officialSession?restoreCompetitionRound(officialSession):createRound(course,{tee:$('tee').value,pin:$('pin').value,windProfile:weatherSetup,windTick:holeWindTick,
         greenSpeed:Number($('green-speed').value)});
     const tee=course.tees.find(item=>item.id===$('tee').value);
-    $('setup-label').textContent=tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · '+round.settings.pin.id+' pin';
+    $('setup-label').textContent=crossCountry?crossCountry.name+' · '+tee.name+' · '+crossCountry.yards+' yd':
+        tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · '+round.settings.pin.id+' pin';
     heading=bearing(round.state.ball,course.aimTarget(round.state.ball,round.settings.pin));
     trail=[];mapTrail=[];eye=null;target=null;accumulator=0;
     $('shot-summary').hidden=true;
@@ -253,7 +278,8 @@ function finishShot(){
             (relative>0?'+':'')+relative+' to par';
         $('complete-title').textContent=score;
         $('complete-detail').textContent=round.state.strokes+' strokes'+
-            (round.state.penalties?' · '+round.state.penalties+' penalty strokes':'')+' · '+course.name;
+            (round.state.penalties?' · '+round.state.penalties+' penalty strokes':'')+
+            (crossCountry?' · Estimated par '+crossCountry.par:'')+' · '+course.name;
         $('status').textContent='Holed out · '+score+'.';
         const next=nextHole();
         $('next-hole').hidden=!next;if(next){$('next-hole').href=holeURL(next);$('next-hole').textContent='Play Hole '+next;}
@@ -287,12 +313,12 @@ function drawMap(){
     if(!round)return;
     const ball=round.state.ball;
     const aim=editable()?{x:ball.x+Math.cos(heading)*28,z:ball.z+Math.sin(heading)*28}:null;
-    const b=course.playBounds;
+    const b=crossGame?.mapBounds??course.playBounds;
     mapCourse.bounds={
         minX:Math.min(b.minX,ball.x-12),maxX:Math.max(b.maxX,ball.x+12),
         minZ:Math.min(b.minZ,ball.z-12),maxZ:Math.max(b.maxZ,ball.z+12)
     };
-    drawShotMap(minimap,atlas,mapCourse,{ball,trail:mapTrail,targets:[round.settings.pin],aim});
+    drawShotMap(minimap,atlas,mapCourse,{ball,trail:mapTrail,targets:[round.settings.pin],aim,start:crossCountry?.tee});
 }
 function marker(id,point){
     const element=$(id);
@@ -312,8 +338,8 @@ $('flyover').onclick=()=>{
     if(active()||drag||keyStarted!==null||!renderer)return;
     cancel();
     const tee=course.tees.find(t=>t.id===$('tee').value)??course.tees[0];
-    const path=flyoverPath(course,tee);
-    tour={start:null,path,duration:clamp(path.length/55,6,10)};
+    const path=flyoverPath(course,tee,{direct:Boolean(crossCountry)});
+    tour={start:null,path,duration:clamp(path.length/55,6,10),reading:Boolean(crossCountry)};
     updateHUD();
 };
 function tourView(now){
@@ -446,11 +472,15 @@ $('reset').onclick=$('replay').onclick=()=>{
     if(active()||tour||officialBusy)return;
     if(officialSession){startDailyPractice();return;}
     $('series-replay').hidden=$('series-new').hidden=true;$('series-card').replaceChildren();$('series-best').textContent='';
-    $('hole').value=String(course.number);$('hole').onchange();if(series)$('tee').value=roundTee(series.setup.tee,course.number);startRound();canvas.focus({preventScroll:true});
+    if(!crossCountry){
+        $('hole').value=String(course.number);$('hole').onchange();
+        if(series)$('tee').value=roundTee(series.setup.tee,course.number);
+    }
+    startRound();canvas.focus({preventScroll:true});
 };
 $('apply').onclick=()=>{
     if(active()||tour||officialSession)return;
-    if(Number($('hole').value)!==course.number){location.assign(holeURL(Number($('hole').value)));return;}
+    if(!crossCountry&&Number($('hole').value)!==course.number){location.assign(holeURL(Number($('hole').value)));return;}
     startRound();canvas.focus({preventScroll:true});
 };
 $('close-result').onclick=()=>{$('complete').close();updateHUD();canvas.focus({preventScroll:true});};
@@ -465,7 +495,7 @@ function startDailyPractice(){
 }
 function tidyPracticeResult(hasNext,seriesComplete){
     $('result-kind').textContent='PRACTICE RESULT';$('official-result').hidden=true;$('practice-home').hidden=false;
-    $('replay').hidden=seriesComplete;$('replay').textContent='Replay hole';
+    $('replay').hidden=seriesComplete;$('replay').textContent=crossCountry?'Replay route':'Replay hole';
     $('next-hole').className=hasNext?'button primary':'button';$('next-hole').textContent=series?'Continue practice round':$('next-hole').textContent;
     $('replay').className=hasNext?'':'primary';$('series-replay').className='primary';
     $('complete-home').textContent='Home';

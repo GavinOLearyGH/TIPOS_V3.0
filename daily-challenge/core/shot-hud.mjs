@@ -6,7 +6,7 @@ export function updatePowerRail(get,power){
     get('power-label').textContent=Math.round(power*100)+'%';
 }
 
-export function drawShotMap(minimap,atlas,course,{ball:ballPosition,trail=[],targets=[],aim:aimPoint,selectedTarget=null}){
+export function drawShotMap(minimap,atlas,course,{ball:ballPosition,trail=[],targets=[],aim:aimPoint,selectedTarget=null,start=null}){
     const c=minimap.getContext('2d'),b=course.bounds;
     const pointOnMap=point=>({x:12+(point.z-b.minZ)/(b.maxZ-b.minZ)*(minimap.width-24),
         y:12+(1-(point.x-b.minX)/(b.maxX-b.minX))*(minimap.height-24)});
@@ -26,6 +26,11 @@ export function drawShotMap(minimap,atlas,course,{ball:ballPosition,trail=[],tar
     for(const target of targets){
         const point=pointOnMap(target);
         c.fillStyle='#f3cc74';c.beginPath();c.arc(point.x,point.y,target.radius??6,0,Math.PI*2);c.fill();
+    }
+    if(start){
+        const tee=pointOnMap(start);
+        c.strokeStyle='white';c.lineWidth=1.5;c.beginPath();
+        c.rect(tee.x-4,tee.y-4,8,8);c.stroke();
     }
     const ball=pointOnMap(ballPosition);
     if(aimPoint){
