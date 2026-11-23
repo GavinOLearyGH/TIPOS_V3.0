@@ -65,6 +65,7 @@ export const hole5={
             // The back tees sit below the surrounding holes. The first
             // fairway section comes back up to the shared course grade.
             const uphill=-fairwayRise*(1-ease((x-riseStart)/(riseEnd-riseStart)));
+            const backTeeDrop=2*.3048*(1-ease((x-410)/185))*(1-ease((z-260)/120));
             const approach=approachRise*ease((x-approachStart)/(greenCenter[0]-approachStart));
             const backPad=2*.3048*ease((x-195)/55)*(1-ease((x-310)/14))*
                 ease((z-155)/40)*(1-ease((z-245)/45));
@@ -72,7 +73,7 @@ export const hole5={
             const ridgeLine=84-.18*(x-1760);
             const greensideRidge=2*.3048*ease((x-1680)/55)*(1-ease((x-1815)/55))*
                 ease((z-ridgeLine+66)/66)*(1-ease((z-ridgeLine)/15));
-            return uphill+approach+backPad+greensideRidge;
+            return uphill-backTeeDrop+approach+backPad+greensideRidge;
         }
     },
     green:{

@@ -12,9 +12,10 @@ import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
 import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
 import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
+import {flyoverPath,flyoverCamera} from './flyover.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
-import {clubs,ballRadius,stepTime,clamp,mix,ease,estimatePutt} from '../core/physics.mjs';
+import {clubs,ballRadius,stepTime,clamp,mix,estimatePutt} from '../core/physics.mjs';
 
 const $=id=>document.getElementById(id);
 const links=gameLinks(location.href);links.home+='?build='+buildId;links.practice+='?build='+buildId;
@@ -310,30 +311,23 @@ $('flyover').onclick=()=>{
     if(tour){stopTour();return;}
     if(active()||drag||keyStarted!==null||!renderer)return;
     cancel();
-    const tee=course.tees.find(t=>t.id===$('tee').value),pin=round.settings.pin;
-    tour={start:null,tee,heading:bearing(tee,pin)};
+    const tee=course.tees.find(t=>t.id===$('tee').value)??course.tees[0];
+    const path=flyoverPath(course,tee);
+    tour={start:null,path,duration:clamp(path.length/55,6,10)};
     updateHUD();
 };
 function tourView(now){
     tour.start??=now;
-    const elapsed=(now-tour.start)/1000,arrival=6;
-    if(!tour.reading&&elapsed>=arrival){
+    const elapsed=(now-tour.start)/1000;
+    if(!tour.reading&&elapsed>=tour.duration){
         tour.reading=true;
         updateHUD();
     }
-    const u=tour.reading?1:ease(elapsed/arrival);
-    const dx=Math.cos(tour.heading),dz=Math.sin(tour.heading);
-    const {minX,maxX,minZ,maxZ}=course.greenBounds;
-    const center={x:(minX+maxX)/2,z:(minZ+maxZ)/2};
-    const breadth=Math.max(Math.hypot(maxX-minX,maxZ-minZ)+6,(course.green?.readRadius??22)*2);
-    const framing=.85*breadth*Math.max(1,1.1/(canvas.clientWidth/canvas.clientHeight));
-    const endEye=[center.x-dx*framing*.58,course.ground(center.x,center.z)+framing*.9,center.z-dz*framing*.58];
     const greenGrid=tour.reading&&showGreenGrid;
     $('tour-label').hidden=!greenGrid;
-    if(tour.reading)return {eye:endEye,target:[center.x,course.ground(center.x,center.z),center.z],greenGrid,readOpacity:1};
-    const {tee}=tour,teeY=course.ground(tee.x,tee.z);
-    return {eye:[mix(tee.x-dx*4,endEye[0],u),mix(teeY+1.55,endEye[1],u)+30*Math.sin(Math.PI*u),mix(tee.z-dz*4,endEye[2],u)],
-        target:[mix(tee.x+dx*20,center.x,u),mix(teeY-2,course.ground(center.x,center.z),u),mix(tee.z+dz*20,center.z,u)],greenGrid:false};
+    const progress=tour.reading?1:elapsed/tour.duration;
+    const camera=flyoverCamera(course,tour.path,progress,canvas.clientWidth/canvas.clientHeight);
+    return {...camera,greenGrid,readOpacity:tour.reading?1:undefined};
 }
 function pullGraphics(anchor){
     for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
