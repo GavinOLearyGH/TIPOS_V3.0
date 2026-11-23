@@ -62,7 +62,11 @@ document.title='The Irish Par · '+course.name;
 $('build-version').textContent='Build '+buildId;
 refreshParentWorker();
 
-const atlas=makeAtlas(course);
+const connected=requested.get('view')==='connected'&&!officialSession&&[1,2,8].includes(course.number);
+const view=connected?(await import('./connected-view.mjs')).makeConnectedView(course):null;
+if(view)$('about-copy').textContent='Connected course preview. Holes 1, 2 and 8 are aligned using the current aerial markup.';
+const atlas=makeAtlas(course,view);
+const mapCourse=view?{...course,atlasBounds:view.bounds}:course;
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
 let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,animationId,frameNumber=0,showGreenGrid=true,windPaused=document.hidden;
 const active=()=>round&&!resting(round.state.ball);
@@ -119,7 +123,7 @@ function showSeries(){
         for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
         return;
     }
-    if(!series){$('series-status').hidden=false;$('series-status').textContent=practiceAceDay?'Practice · '+(practiceAceDay===dayKey()?'Today’s Hole-in-One setup':'Hole-in-One setup · '+practiceAceDay):'Practice · Hole '+course.number;return;}
+    if(!series){$('series-status').hidden=false;$('series-status').textContent=practiceAceDay?'Practice · '+(practiceAceDay===dayKey()?'Today’s Hole-in-One setup':'Hole-in-One setup · '+practiceAceDay):(connected?'Connected course preview':'Practice')+' · Hole '+course.number;return;}
     const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));
     $('series-status').textContent='Practice · '+roundProgress(series,course.number)+' · '+running+' strokes';
     for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
@@ -283,7 +287,7 @@ function drawMap(){
     if(!round)return;
     const ball=round.state.ball;
     const aim=editable()?{x:ball.x+Math.cos(heading)*28,z:ball.z+Math.sin(heading)*28}:null;
-    drawShotMap(minimap,atlas,course,{ball,trail:mapTrail,targets:[round.settings.pin],aim});
+    drawShotMap(minimap,atlas,mapCourse,{ball,trail:mapTrail,targets:[round.settings.pin],aim});
 }
 function marker(id,point){
     const element=$(id);
@@ -432,6 +436,7 @@ function holeURL(number){
     const query=new URLSearchParams({hole:number,tee:$('tee').value,...windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value}),
         windTick:round?.state.windTick??holeWindTick,speed:$('green-speed').value,build:buildId});
     if(series)query.set('series',series.id);
+    if(connected&&[1,2,8].includes(number))query.set('view','connected');
     return links.player+'?'+query;
 }
 $('hole').onchange=()=>{
@@ -545,7 +550,7 @@ canvas.addEventListener('webglcontextlost',event=>{
     $('render-error').hidden=false;$('render-error').textContent='3D graphics paused. Reload this page to restart the hole.';
 });
 try{
-    renderer=createRenderer(canvas,course,atlas);
+    renderer=createRenderer(canvas,course,atlas,view);
     startRound();
     if(officialSession){
         $('reset').onclick=()=>{if(!active()&&!officialBusy)location.href=appRoot().href;};
