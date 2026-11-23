@@ -6,6 +6,8 @@ const point=(x,z)=>({x:x*k,z:z*k});
 const tee=(id,name,yards,x,z)=>({id,name,yards,...point(x,z)});
 const greenCenter=[1808,189];
 const fairwayRise=25*.3048;
+const approachStart=1220;
+const approachRise=2.5*.9144;
 
 export const hole5={
     id:'springhaven-5',number:5,name:'The Springhaven Club - Hole 5',
@@ -22,7 +24,7 @@ export const hole5={
         tee('dixon','Dixon (White)',228,863,448)
     ],
     pins:[{id:'center',name:'Center',...point(...greenCenter)}],
-    aimPoints:[point(1220,437)],
+    aimPoints:[point(approachStart,437)],
     shapes:{
         tee:[
             'M265 198L310 209L305 243L257 233Z',
@@ -60,14 +62,17 @@ export const hole5={
             const frontSide=ease((z-276)/142);
             const riseStart=463-28*frontSide;
             const riseEnd=805+29*frontSide;
-            const uphill=fairwayRise*ease((x-riseStart)/(riseEnd-riseStart));
+            // The back tees sit below the surrounding holes. The first
+            // fairway section comes back up to the shared course grade.
+            const uphill=-fairwayRise*(1-ease((x-riseStart)/(riseEnd-riseStart)));
+            const approach=approachRise*ease((x-approachStart)/(greenCenter[0]-approachStart));
             const backPad=2*.3048*ease((x-195)/55)*(1-ease((x-310)/14))*
                 ease((z-155)/40)*(1-ease((z-245)/45));
             // The high edge sits outside the bunker, with a longer fall away from the green.
             const ridgeLine=84-.18*(x-1760);
             const greensideRidge=2*.3048*ease((x-1680)/55)*(1-ease((x-1815)/55))*
                 ease((z-ridgeLine+66)/66)*(1-ease((z-ridgeLine)/15));
-            return uphill+backPad+greensideRidge;
+            return uphill+approach+backPad+greensideRidge;
         }
     },
     green:{
