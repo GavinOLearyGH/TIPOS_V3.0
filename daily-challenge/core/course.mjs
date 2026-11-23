@@ -8,19 +8,21 @@ export function createCourse(definition){
     const contains=(key,x,z)=>paths[key]&&containsPoint(paths[key],x/unit,z/unit);
     const greenBounds={minX:Math.min(...paths.green.map(p=>p.minX))*unit,maxX:Math.max(...paths.green.map(p=>p.maxX))*unit,
         minZ:Math.min(...paths.green.map(p=>p.minZ))*unit,maxZ:Math.max(...paths.green.map(p=>p.maxZ))*unit};
+    const rightBoundary=definition.outOfBoundsSide==='right';
     const boundary=definition.outOfBounds?geometryPath(definition.outOfBounds)[0]:null;
     const landforms=(definition.landforms??[]).map(feature=>({...feature,outline:geometryPath(feature.shape)}));
     function isOutOfBounds(x,z){
+        if(paths.outOfBounds)return contains('outOfBounds',x,z);
         if(!boundary)return false;
         const px=x/unit,pz=z/unit;
         for(let i=1;i<boundary.length;i++){
             const a=boundary[i-1],b=boundary[i];
             if(px>=a[0]&&px<=b[0]){
                 const line=a[1]+(b[1]-a[1])*(px-a[0])/(b[0]-a[0]);
-                return pz<line;
+                return rightBoundary?pz>line:pz<line;
             }
         }
-        return pz<definition.bounds.minZ/unit;
+        return rightBoundary?pz>definition.bounds.maxZ/unit:pz<definition.bounds.minZ/unit;
     }
     const pathLines=(definition.paths??[]).flatMap(path=>geometryPath(path));
     function distanceToLines(lines,px,pz){
@@ -59,10 +61,10 @@ export function createCourse(definition){
         const px=x/unit,pz=z/unit;
         // Provisional elevation model, replaceable with surveyed samples.
         const {terrain,green}=definition;
-        let y=terrain.baseRipple*Math.sin(x/terrain.rippleLength);
+        let y=terrain.baseRipple*Math.sin(x/terrain.rippleLength)+(terrain.elevation?.(px,pz)??0);
         const nearGreen=Math.exp(-(((px-green.center[0])/green.blend[0])**4+((pz-green.center[1])/green.blend[1])**4));
         const depth=clamp((px-green.front)/green.depth,0,1);
-        y+=green.backToFrontRise*depth*nearGreen;
+        y+=(green.backToFrontRise*depth+(green.contour?.(px,pz)??0))*nearGreen;
         if(green.tiers)y+=green.tiers.rise*ease(.5+(depth-green.tiers.at)/green.tiers.width)*nearGreen;
         for(const feature of landforms){
             if(!containsPoint(feature.outline,px,pz))continue;
@@ -74,7 +76,7 @@ export function createCourse(definition){
         for(let i=0;i<(pews?.count??0);i++){
             y+=pews.height*Math.exp(-(((px-pews.x-i*pews.spacing)/pews.width)**2))*ends;
         }
-        if(surface(x,z)==='sand'){
+        if(contains('sand',x,z)&&surface(x,z)==='sand'){
             const edge=distanceToLines(paths.sand,px,pz);
             y-=terrain.bunkerDepth*ease(edge/terrain.bunkerBlend);
         }

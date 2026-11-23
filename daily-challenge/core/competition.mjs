@@ -1,56 +1,76 @@
-import {hole6} from '../course/holes/hole-6.mjs';
 import {createRound,fullBag} from './round.mjs';
-import {createCourse} from './course.mjs';
+import {createConnectedCourse} from '../course/connected-view.mjs';
 import {stepTime} from './physics.mjs';
-import {hole1} from '../course/holes/hole-1.mjs';
-import {hole2} from '../course/holes/hole-2.mjs';
-import {hole3} from '../course/holes/hole-3.mjs';
+import {playableHoles} from '../course/catalog.mjs';
+import {roundHoles,roundTee} from './series.mjs';
 export const competitionVersion='three-v1';
-const courses=[hole1,hole2,hole3].map(createCourse);
+const courses=new Map();
+const rotationStart='2026-11-24';
+const frontNine=playableHoles.map(hole=>hole.number);
+const threeCombinations=[1,4,5,7].flatMap(four=>[2,8].flatMap(five=>[3,6,9].map(three=>[four,five,three])));
+let shuffle=4169;
+for(let index=threeCombinations.length-1;index>0;index--){
+ shuffle=(Math.imul(shuffle,1664525)+1013904223)>>>0;
+ const swap=shuffle%(index+1);
+ [threeCombinations[index],threeCombinations[swap]]=[threeCombinations[swap],threeCombinations[index]];
+}
+export function dailyLineup(day,kind='three'){
+ if(kind==='nine')return [...frontNine];
+ if(day<rotationStart)return [1,2,3];
+ const index=Math.floor((Date.parse(day)-Date.parse(rotationStart))/86400000);
+ return [...threeCombinations[index%threeCombinations.length]];
+}
+function scheduledRound(number,setup,tick=0){
+ if(!courses.has(number))courses.set(number,createConnectedCourse(number));
+ return createRound(courses.get(number),{tee:roundTee(setup.tee,number),greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick});
+}
 const formatter=new Intl.DateTimeFormat('en',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
 export function dayKey(now=new Date()){
  const parts=Object.fromEntries(formatter.formatToParts(now).map(({type,value})=>[type,value]));return parts.year+'-'+parts.month+'-'+parts.day;
 }
-export function dailySetup(day){
+export function dailySetup(day,kind='three'){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isFinite(Date.parse(day)))throw Error('Invalid challenge day');
  let seed=2166136261;for(const c of day)seed=Math.imul(seed^c.charCodeAt(0),16777619)>>>0;
- return {tee:['1896','rawlins','butler','dixon'][seed%4],speed:['.8','1','1.24'][(seed>>>4)%3],windModel:'clock-v1',
-  windAngle:String((seed>>>8)%12*30),mph:String(4+(seed>>>12)%9),windSeed:competitionVersion+':'+day};
+ return {tee:kind==='nine'?'rawlins':['1896','rawlins','butler','dixon'][seed%4],speed:['.8','1','1.24'][(seed>>>4)%3],windModel:'clock-v1',
+  windAngle:String((seed>>>8)%12*30),mph:String(4+(seed>>>12)%9),windSeed:(kind==='nine'?'nine-v1':competitionVersion)+':'+day};
 }
 const copy=value=>JSON.parse(JSON.stringify(value));
 function roundFor(session,tick=session.state.windTick){
- const round=session.kind==='ace'?aceRound(session.setup,tick):createRound(courses[session.hole-1],{tee:session.setup.tee,greenSpeed:Number(session.setup.speed),windProfile:session.setup,windTick:tick});
+ const round=session.kind==='ace'?aceRound(session.setup,tick):scheduledRound(session.hole,session.setup,tick);
  Object.assign(round.state,copy(session.state),{windTick:tick});return round;
 }
 export function newCompetition(day,build,id,kind='three'){
  if(kind==='ace')return newAceCompetition(day,build,id);
- const setup=dailySetup(day),round=createRound(courses[0],{tee:setup.tee,greenSpeed:Number(setup.speed),windProfile:setup});
- return {version:competitionVersion,day,build,id,setup,hole:1,state:copy(round.state),results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
+ if(!['three','nine'].includes(kind))throw Error('Unknown competition');
+ const setup=dailySetup(day,kind),holes=dailyLineup(day,kind),hole=holes[0],round=scheduledRound(hole,setup);
+ return {kind,version:kind==='nine'?'nine-v1':competitionVersion,day,build,id,setup,holes,hole,state:copy(round.state),results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
 }
 export function totalScore(session){return session.results.reduce((sum,row)=>sum+row.strokes,0)+(session.status==='completed'?0:session.state.strokes);}
 export function applyCompetitionShot(original,shot){
  if(original.kind==='ace')return applyAceShot(original,shot);
- if(original.version!==competitionVersion||original.status!=='in-progress')throw Error('This official round is already complete');
+ const version=original.kind==='nine'?'nine-v1':competitionVersion;
+ const holes=roundHoles(original),index=holes.indexOf(original.hole),final=index===holes.length-1;
+ if(original.version!==version||original.status!=='in-progress'||index<0)throw Error('This official round is already complete');
  if(shot.hole!==original.hole||!fullBag.includes(shot.club)||!Number.isFinite(shot.power)||shot.power<.025||shot.power>1||
   Math.abs(shot.power*2000-Math.round(shot.power*2000))>1e-6||!Number.isFinite(shot.heading)||Math.abs(shot.heading)>Math.PI||
   !Number.isFinite(shot.position)||Math.abs(shot.position)>1||!Number.isSafeInteger(shot.releaseTick)||shot.releaseTick<original.state.windTick||
-  shot.releaseTick>original.state.windTick+240*3600*6||original.shots.length>=180)throw Error('Invalid official shot');
+  shot.releaseTick>original.state.windTick+240*3600*6||original.shots.length>=60*holes.length)throw Error('Invalid official shot');
  const session=copy(original),round=roundFor(session,shot.releaseTick);
  if(!round.hit(shot.club,shot.power,shot.heading,shot.position))throw Error('Shot could not start');
  let steps=0;while(['air','roll','drop'].includes(round.state.ball.mode)&&steps++<240*90)round.step();
  if(steps>=240*90)throw Error('Shot did not settle');
  const result=round.state.history.at(-1);
- if(session.hole===3&&session.state.strokes===0){
+ if(final&&session.state.strokes===0){
   session.tieValid=result.outcome==='rest'||result.outcome==='holed';
   session.tieMM=session.tieValid?(result.outcome==='holed'?0:Math.round(Math.hypot(result.to.x-round.settings.pin.x,result.to.z-round.settings.pin.z)*1000)):null;
  }
  session.shots.push({...shot});session.revision++;
  if(round.state.complete){
   session.results.push({hole:session.hole,strokes:round.state.strokes,penalties:round.state.penalties});
-  if(session.hole===3)session.status='completed';
+  if(final)session.status='completed';
   else{
-   session.hole++;
-   const next=createRound(courses[session.hole-1],{tee:session.setup.tee,greenSpeed:Number(session.setup.speed),windProfile:session.setup,windTick:round.state.windTick});
+   session.hole=holes[index+1];
+   const next=scheduledRound(session.hole,session.setup,round.state.windTick);
    session.state=copy(next.state);return session;
   }
  }
@@ -71,7 +91,7 @@ function newAceCompetition(day,build,id){
  session.state=copy(aceRound(setup).state);return session;
 }
 function aceRound(setup,tick=0){
- const course=createCourse(hole6),pin=setup.cup?'daily':setup.pin;
+ const course=createConnectedCourse(6),pin=setup.cup?'daily':setup.pin;
  if(setup.cup)course.pins=[...course.pins,{id:'daily',...setup.cup}];
  return createRound(course,{tee:setup.tee,pin,greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick});
 }

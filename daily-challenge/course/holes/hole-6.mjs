@@ -346,10 +346,7 @@ function meshes({triangle,quad,disk,ellipsoid,post}){
         quad(solid,deckPoint(t,-across,-.29),deckPoint(t,across,-.29),
             deckPoint(t,across,0),deckPoint(t,-across,0),bridgeStone);
     }
-    for(const [oldX,oldZ,h] of [[19,15,7],[31,18,8],[51,13,10],[76,16,8],[88,11,9],[102,14,8],[118,14,8],
-        [145,13,10],[148,20,11],[154,30,10],[153,41,10],[143,47,8],[129,49,8],[116,50,6],
-        [101,47,7],[83,48,8],[65,46,8],[42,49,7],[25,45,8],[15,45,7]]){
-        const x=oldX*scale/.115,z=oldZ*scale/.115;
+    for(const {x,z,height:h} of trees){
         const y=ground(x,z);
         disk(solid,x,y+.035,z,1.2,[.28,.39,.24]);
         post(solid,x,z,y,h*.55,.17,[.28,.21,.14]);
@@ -359,9 +356,13 @@ function meshes({triangle,quad,disk,ellipsoid,post}){
 
     return [{vertices:mesh,kind:1},{vertices:bank,kind:4},{vertices:lake,kind:2},{vertices:shoreline,kind:3},{vertices:solid,kind:0}];
 }
+const trees=[[19,15,7],[31,18,8],[51,13,10],[76,16,8],[88,11,9],[102,14,8],[118,14,8],
+        [145,13,10],[148,20,11],[154,30,10],[153,41,10],[143,47,8],[129,49,8],[116,50,6],
+        [101,47,7],[83,48,8],[65,46,8],[42,49,7],[25,45,8],[15,45,7]].map(([x,z,height])=>({x:x*scale/.115,z:z*scale/.115,height}));
+
 export const hole6={id:'springhaven-6',number:6,name:'The Springhaven Club - Hole 6',par:3,title:'The pond green',
  description:'The original Hole 6, with its pond, stone wall, bridge and two-tier green.',
- plan:{width:1400,height:500,metresPerUnit:scale},shapes,
+ plan:{width:1400,height:500,metresPerUnit:scale},shapes,connectedTrees:trees,
  tees:Object.entries(tees).map(([id,p])=>({id,name:id[0].toUpperCase()+id.slice(1),...p,yards:Math.round(Math.hypot(p.x-greenCenter.x,p.z-greenCenter.z)/.9144)})),
  bounds:{minX:60*scale,maxX:1345*scale,minZ:59*scale,maxZ:470*scale},
  create(){return {...this,ground,surface,terrainGround,terrainSurface,waterHeight,wall,bridgeHeight,

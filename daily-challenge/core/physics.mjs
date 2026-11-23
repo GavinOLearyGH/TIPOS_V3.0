@@ -241,18 +241,22 @@ function land(ball,lie,surface,ground,from,floor){
     ball.spin=(ball.spin||0)*(lie==='green'?.46:.60);
     if(ball.vy<.62){ball.mode='roll';ball.vy=0;}
 }
-function estimatePutt(point,course,heading,power,greenSpeed){
-    if(power<.025)return {reach:0,finish:0};
-    const ball=strike(point,course.ground,'Putter',power,heading,course.surface(point.x,point.z));
-    const settings={greenSpeed,pin:null};
-    const dx=Math.cos(heading),dz=Math.sin(heading);
-    let reach=0,finish=0;
-    while(ball.mode==='roll'){
-        advance(ball,course,settings,1/120);
-        finish=(ball.x-point.x)*dx+(ball.z-point.z)*dz;
-        reach=Math.max(reach,finish);
-    }
-    return {reach,finish};
+function estimatePutt(power,greenSpeed){
+    if(power<.025)return 0;
+    return Math.max(0,putterSpeed(power)**2-.023**2)/(2*surfaces.green.brake)*greenSpeed;
+}
+function followCupRim(ball,pin,ground,dt){
+    const rim=ball.cupRim;
+    const turn=Math.min(rim.remaining,dt*rim.speed/rim.radius);
+    rim.angle+=rim.side*turn;
+    rim.remaining-=turn;
+    ball.x=pin.x+Math.cos(rim.angle)*rim.radius;
+    ball.z=pin.z+Math.sin(rim.angle)*rim.radius;
+    ball.y=ground(ball.x,ball.z)+ballRadius-.008*Math.sin(Math.PI*rim.remaining/rim.sweep);
+    const speed=mix(rim.exitSpeed,rim.speed,rim.remaining/rim.sweep);
+    ball.vx=-Math.sin(rim.angle)*rim.side*speed;
+    ball.vz=Math.cos(rim.angle)*rim.side*speed;
+    if(rim.remaining<=0)delete ball.cupRim;
 }
 function resolveFastPutt(ball,from,pin,speed){
     const miss=Math.abs((pin.x-from.x)*ball.vz-(pin.z-from.z)*ball.vx)/speed;
@@ -266,6 +270,7 @@ function resolveFastPutt(ball,from,pin,speed){
     ball.vz*=retain;
     if(retain<0){
         ball.flag=true;
+        ball.cupResult='Hit the flagstick. ';
         ball.cupCooldown=.32;
     }
 }
@@ -293,6 +298,7 @@ function obstacleContact(ball,from,obstacle){
 }
 function advance(ball, course, settings, dt=stepTime){
     ball.time+=dt;
+    if(ball.putted)dt*=1.14;
     const {ground,surface,wall=[],waterHeight=-Infinity,bridgeHeight,terrainGround,terrainSurface}=course;
     const bounds=course.bounds;
     const insideBounds=(x,z)=>x>=bounds.minX&&x<=bounds.maxX&&z>=bounds.minZ&&z<=bounds.maxZ;
@@ -302,6 +308,10 @@ function advance(ball, course, settings, dt=stepTime){
     const rollsUnderDeck=ball.mode==='roll'&&deckBefore!==undefined&&from.y-ballRadius<deckBefore-.025;
     const rollingGround=rollsUnderDeck?terrainGround:ground;
     let rollingLie;
+    if(ball.cupRim){
+        followCupRim(ball,pin,ground,dt);
+        return;
+    }
     if(ball.mode==='drop'){
         ball.y-=dt*.55;
         if(ball.y<ground(pin.x,pin.z)-.13)ball.mode='holed';
@@ -332,7 +342,7 @@ function advance(ball, course, settings, dt=stepTime){
     }
     ball.y=ball.mode==='air'?ball.y+ball.vy*dt:rollingGround(ball.x,ball.z)+ballRadius;
 
-    for(const obstacle of course.obstacles??[])obstacleContact(ball,from,obstacle);
+    for(const obstacle of course.obstaclesBetween?.(from,ball)??course.obstacles??[])obstacleContact(ball,from,obstacle);
     const wallArea=course.wallBounds;
     if(wall.length>1&&(!wallArea||Math.min(from.y,ball.y)<wallArea.top&&
         Math.max(from.x,ball.x)>=wallArea.minX&&Math.min(from.x,ball.x)<=wallArea.maxX&&
@@ -415,6 +425,18 @@ function advance(ball, course, settings, dt=stepTime){
         if(hit&&ball.putted)ball.cupExitPending=true;
         if(hit==='capture'){
             ball.mode='drop';ball.x=pin.x;ball.z=pin.z;
+        } else if(hit==='lip'&&ball.putted){
+            const dx=ball.vx/speed,dz=ball.vz/speed;
+            const along=(pin.x-from.x)*dx+(pin.z-from.z)*dz;
+            const x=from.x+along*dx-pin.x,z=from.z+along*dz-pin.z;
+            const radius=Math.hypot(x,z);
+            const bite=1-clamp((radius-cupRadius*.55)/(cupRadius*.65),0,1);
+            const sweep=mix(.07,Math.PI,bite**1.5)*mix(1,.45,ease(clamp((speed-1.25)/1.05,0,1)));
+            const rimSpeed=clamp(speed*.62,.16,.8);
+            ball.cupRim={radius,angle:Math.atan2(z,x),side:Math.sign(x*dz-z*dx),
+                sweep,remaining:sweep,speed:rimSpeed,exitSpeed:speed*mix(.88,.38,bite)};
+            ball.cupResult='Lipped out. ';
+            followCupRim(ball,pin,ground,0);
         } else if(hit==='lip'){
             const side=Math.sign((pin.x-from.x)*(ball.z-from.z)-(pin.z-from.z)*(ball.x-from.x))||1;
             const vx=ball.vx,vz=ball.vz;

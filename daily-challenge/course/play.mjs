@@ -11,7 +11,7 @@ import {refreshParentWorker} from '../core/updates.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
 import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
-import {createCourse} from '../core/course.mjs';
+import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
 import {clubs,ballRadius,stepTime,clamp,mix,ease,estimatePutt} from '../core/physics.mjs';
@@ -32,10 +32,8 @@ if(officialDay){
 }
 const definition=holeByNumber(officialSession?.hole||requested.get('hole')||1);
 if(!definition)throw Error('This hole is not available yet.');
-const baseCourse=createCourse(definition);
-const connected=requested.get('view')==='connected'&&!officialSession&&[1,2,8].includes(baseCourse.number);
-const view=connected?(await import('./connected-view.mjs')).makeConnectedView(baseCourse):null;
-const course=view?{...baseCourse,obstacles:view.obstacles}:baseCourse;
+const course=createConnectedCourse(definition.number);
+const view=makeConnectedView(course);
 const canvas=$('scene'),minimap=$('map'),stage=$('stage');
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const yards=metres=>Math.round(metres/.9144);
@@ -66,9 +64,8 @@ document.title='The Irish Par · '+course.name;
 $('build-version').textContent='Build '+buildId;
 refreshParentWorker();
 
-if(view)$('about-copy').textContent='Connected course preview. Holes 1, 2 and 8 are aligned using the current aerial markup.';
 const atlas=makeAtlas(course,view);
-const mapCourse=view?{...course,atlasBounds:view.bounds}:course;
+const mapCourse={...course,bounds:course.playBounds};
 let renderer,round,heading=0,charge=0,drag=null,keyStarted=null,trail=[],mapTrail=[];
 let eye,target,lastTime=0,accumulator=0,lastTrail=0,tour=null,animationId,frameNumber=0,showGreenGrid=true,windPaused=document.hidden;
 const active=()=>round&&!resting(round.state.ball);
@@ -125,7 +122,7 @@ function showSeries(){
         for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
         return;
     }
-    if(!series){$('series-status').hidden=false;$('series-status').textContent=practiceAceDay?'Practice · '+(practiceAceDay===dayKey()?'Today’s Hole-in-One setup':'Hole-in-One setup · '+practiceAceDay):(connected?'Connected course preview':'Practice')+' · Hole '+course.number;return;}
+    if(!series){$('series-status').hidden=false;$('series-status').textContent=practiceAceDay?'Practice · '+(practiceAceDay===dayKey()?'Today’s Hole-in-One setup':'Hole-in-One setup · '+practiceAceDay):'Practice'+' · Hole '+course.number;return;}
     const score=seriesScore(series),running=score.total+(series.results.some(row=>row.hole===course.number)?0:(round?.state.strokes??0));
     $('series-status').textContent='Practice · '+roundProgress(series,course.number)+' · '+running+' strokes';
     for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
@@ -289,6 +286,11 @@ function drawMap(){
     if(!round)return;
     const ball=round.state.ball;
     const aim=editable()?{x:ball.x+Math.cos(heading)*28,z:ball.z+Math.sin(heading)*28}:null;
+    const b=course.playBounds;
+    mapCourse.bounds={
+        minX:Math.min(b.minX,ball.x-12),maxX:Math.max(b.maxX,ball.x+12),
+        minZ:Math.min(b.minZ,ball.z-12),maxZ:Math.max(b.maxZ,ball.z+12)
+    };
     drawShotMap(minimap,atlas,mapCourse,{ball,trail:mapTrail,targets:[round.settings.pin],aim});
 }
 function marker(id,point){
@@ -438,12 +440,11 @@ function holeURL(number){
     const query=new URLSearchParams({hole:number,tee:$('tee').value,...windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value}),
         windTick:round?.state.windTick??holeWindTick,speed:$('green-speed').value,build:buildId});
     if(series)query.set('series',series.id);
-    if(connected&&[1,2,8].includes(number))query.set('view','connected');
     return links.player+'?'+query;
 }
 $('hole').onchange=()=>{
     const selected=$('tee').value,hole=holeByNumber($('hole').value);
-    $('pin').replaceChildren();options('pin',createCourse(hole).pins.map(pin=>[pin.id,pin.id]));
+    $('pin').replaceChildren();options('pin',createConnectedCourse(hole.number).pins.map(pin=>[pin.id,pin.id]));
     $('tee').replaceChildren();options('tee',hole.tees.map(tee=>[tee.id,tee.name+' · '+tee.yards+' yd']));
     if(hole.tees.some(tee=>tee.id===selected))$('tee').value=selected;
 };

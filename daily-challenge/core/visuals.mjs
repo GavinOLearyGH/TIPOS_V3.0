@@ -89,8 +89,8 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
         gl.disable(gl.BLEND);
     }
     let puttingGrid;
-    function drawFrame({pin,ball,aim,trail=[],flying=false,gridTick=null,readOpacity=null}){
-        const moving=[],base=ground(pin.x,pin.z);
+    function drawFrame({pin,ball,aim,trail=[],flying=false,right=[0,0,1],gridTick=null,readOpacity=null}){
+        const moving=[],base=pin?ground(pin.x,pin.z):0;
         if(gridTick!==null&&readOpacity===null){
             puttingGrid??=makePuttingGrid();
             draw(puttingGrid.mesh,0);
@@ -101,17 +101,24 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
                 greenLine(moving,x+span*dx,z+span*dz,dx*.13,dz*.13,.025,.026,shade);
             }
         }
-        disk(moving,pin.x,base+.012,pin.z,cupRadius,[.09,.13,.08]);
-        post(moving,pin.x,pin.z,base,1.95,.018,[.97,.95,.83]);
-        triangle(moving,[pin.x,base+1.94,pin.z],[pin.x,base+1.45,pin.z],[pin.x,base+1.69,pin.z+.63],[.94,.45,.28]);
+        const reading=readOpacity!==null;
+        if(pin){
+            const visibleCup=cupRadius*(reading?2.2:1);
+            disk(moving,pin.x,base+.010,pin.z,visibleCup*1.18,[.79,.84,.65]);
+            disk(moving,pin.x,base+.013,pin.z,visibleCup,[.025,.035,.023]);
+            post(moving,pin.x,pin.z,base,1.95,reading?.029:.021,[1,1,.91]);
+            const flagWidth=reading?.97:.75;
+            triangle(moving,[pin.x,base+1.94,pin.z],[pin.x,base+1.38,pin.z],
+                [pin.x+right[0]*flagWidth,base+1.68,pin.z+right[2]*flagWidth],[1,.22,.13]);
+        }
         if(aim)disk(moving,aim.x,aim.y+.035,aim.z,aim.near?.095:.20,[.95,.79,.41]);
         if(ball.mode!=='holed'){
-            const size=flying?.076:ball.mode==='drop'?ballRadius:.046;
+            const size=flying?.076:ball.mode==='drop'?ballRadius:reading?.085:.052;
             const y=ball.y+(ball.mode==='rest'?.023:0);
             ellipsoid(moving,ball.x,y,ball.z,size,size,size,[1,1,.98],10,5);
             if(ball.mode==='rest'||ball.mode==='roll'||ball.mode==='air'){
                 const flat=ground(ball.x,ball.z);
-                if(surface(ball.x,ball.z)!=='water')disk(moving,ball.x,flat+.012,ball.z,.063,[.35,.48,.25]);
+                if(surface(ball.x,ball.z)!=='water')disk(moving,ball.x,flat+.012,ball.z,size*1.28,[.24,.34,.19]);
             }
         }
         for(let i=1;i<trail.length;i++){
@@ -121,7 +128,7 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
         gl.bindBuffer(gl.ARRAY_BUFFER,mobile());
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(moving),gl.DYNAMIC_DRAW);
         draw({handle:mobile(),count:moving.length/6},0);
-        if(readOpacity>0)drawGreenRead(gridTick,readOpacity);
+        if(gridTick!==null&&readOpacity>0)drawGreenRead(gridTick,readOpacity);
     }
     return {triangle,quad,disk,ellipsoid,post,drawFrame};
 }
