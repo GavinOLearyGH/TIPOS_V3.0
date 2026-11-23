@@ -32,7 +32,11 @@ if(officialDay){
 }
 const definition=holeByNumber(officialSession?.hole||requested.get('hole')||1);
 if(!definition)throw Error('This hole is not available yet.');
-const course=createCourse(definition),canvas=$('scene'),minimap=$('map'),stage=$('stage');
+const baseCourse=createCourse(definition);
+const connected=requested.get('view')==='connected'&&!officialSession&&[1,2,8].includes(baseCourse.number);
+const view=connected?(await import('./connected-view.mjs')).makeConnectedView(baseCourse):null;
+const course=view?{...baseCourse,obstacles:view.obstacles}:baseCourse;
+const canvas=$('scene'),minimap=$('map'),stage=$('stage');
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const yards=metres=>Math.round(metres/.9144);
 const feet=metres=>(metres/.3048).toFixed(1);
@@ -62,8 +66,6 @@ document.title='The Irish Par · '+course.name;
 $('build-version').textContent='Build '+buildId;
 refreshParentWorker();
 
-const connected=requested.get('view')==='connected'&&!officialSession&&[1,2,8].includes(course.number);
-const view=connected?(await import('./connected-view.mjs')).makeConnectedView(course):null;
 if(view)$('about-copy').textContent='Connected course preview. Holes 1, 2 and 8 are aligned using the current aerial markup.';
 const atlas=makeAtlas(course,view);
 const mapCourse=view?{...course,atlasBounds:view.bounds}:course;
