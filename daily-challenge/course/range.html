@@ -1,9 +1,16 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-c793ed337f"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-c793ed337f/course/style.css"><style>
+<html lang="en"><head><meta name="course-build" content="0.3.0-e7a8c542df"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-e7a8c542df/course/style.css"><style>
 .range-play .stage{border-color:#998458}
 .range-play .range-overview .hud,.range-play .range-overview .side-panels,.range-play .range-overview .shot-controls{visibility:hidden}
 .range-play .range-overview .view-tools{position:absolute;top:0;right:0;display:block}
 .range-play .range-overview #flyover{padding-inline:12px;white-space:nowrap}
+.range-play .hud{position:relative;justify-content:space-between;z-index:1}
+#range-wind-toggle{display:flex;align-items:center;gap:7px;min-height:44px;padding:6px 10px;border:0;background:transparent;color:var(--gold);pointer-events:auto}
+#range-wind-toggle:focus-visible{outline-offset:-3px}
+#range-wind-arrow{display:inline-block;font-size:18px;line-height:1}
+#range-wind-panel{position:absolute;top:calc(100% + 6px);right:0;width:min(244px,100%);padding:12px;display:grid;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:9px;pointer-events:auto}
+#range-wind-panel select{width:100%;min-width:0}
+#range-wind-done{justify-self:end}
 .range-play .shot-controls label{min-width:0}
 .range-play .shot-controls select{width:auto;max-width:100%}
 </style></head>
@@ -13,7 +20,15 @@
 <div class="stage" id="range-stage">
 <canvas id="scene" tabindex="0" aria-label="Range view. Drag down and release to swing." aria-describedby="range-result"></canvas>
 <div class="game-hud">
-<div class="hud" aria-label="Shot conditions"><span id="range-lie-label">Mat</span><span>Calm</span></div>
+<div class="hud" role="group" aria-label="Shot conditions">
+<span id="range-lie-label">Mat</span>
+<button id="range-wind-toggle" type="button" aria-expanded="false" aria-controls="range-wind-panel" disabled><span id="range-wind-arrow" aria-hidden="true" hidden>↑</span><span id="range-wind-reading">Wind: Calm</span><span aria-hidden="true">▾</span></button>
+<div id="range-wind-panel" role="group" aria-label="Wind settings" hidden>
+<label>Speed<select id="range-wind-speed"><option value="0">Calm</option><option value="5">5 mph</option><option value="10">10 mph</option><option value="15">15 mph</option><option value="20">20 mph</option><option value="25">25 mph</option></select></label>
+<label>Direction<select id="range-wind-direction" disabled></select></label>
+<button id="range-wind-done" type="button">Done</button>
+</div>
+</div>
 <div class="side-panels">
 <div class="power-rail" aria-label="Shot power"><span class="rail-label">Power</span><span id="power-label">0%</span><div id="power" role="progressbar" aria-label="Shot power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="power-fill"></i></div></div>
 <div class="map"><canvas id="map" width="180" height="510" role="img" aria-label="Overhead range map with targets, shot trail and live ball position"></canvas></div>
@@ -25,4 +40,4 @@
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 </div>
 <p id="range-result" role="status">Drag down for power, slide to aim, and release in the green zone. Keyboard: hold Space, then release.</p>
-</main><script type="module" src="./releases/0.3.0-c793ed337f/course/range.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-e7a8c542df/course/range.mjs"></script></body></html>
