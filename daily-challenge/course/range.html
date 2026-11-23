@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-ba27edc58d"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-ba27edc58d/course/style.css"><style>
+<html lang="en"><head><meta name="course-build" content="0.3.0-1296c000f1"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-1296c000f1/course/style.css"><style>
 .range-play .stage{border-color:#998458}
 .range-play .range-overview .hud,.range-play .range-overview .side-panels,.range-play .range-overview .shot-controls{visibility:hidden}
 .range-play .range-overview .view-tools{position:absolute;top:0;right:0;display:block}
@@ -14,6 +14,12 @@
 #range-wind-panel{position:absolute;top:calc(100% + 6px);right:0;width:min(244px,100%);padding:12px;display:grid;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:9px;pointer-events:auto}
 #range-wind-panel select{width:100%;min-width:0}
 #range-wind-done{justify-self:end}
+#range-target-marker{position:absolute;z-index:1;pointer-events:none;transform:translate(-50%,calc(-100% - 4px));white-space:nowrap}
+#range-target-marker span{display:block;padding:3px 8px;border:1px solid var(--gold);border-radius:5px;background:#14231a;color:#ffe9a9;font-size:13px;font-weight:650;line-height:1.2;box-shadow:0 1px 5px #0c160ddd}
+#range-target-marker::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--gold)}
+#range-target-marker.caught span{background:var(--gold);color:#19271d;animation:basket-pulse .65s ease-out}
+@keyframes basket-pulse{40%{box-shadow:0 0 0 7px #f3d68f80}100%{box-shadow:0 0 0 12px #f3d68f00}}
+@media(prefers-reduced-motion:reduce){#range-target-marker.caught span{animation:none}}
 .range-play .shot-controls label{min-width:0}
 .range-play .shot-controls select{width:auto;max-width:100%}
 </style></head>
@@ -41,7 +47,8 @@
 <div class="shot-controls"><label>Club · carry<select id="range-club"></select></label><label>Lie<select id="range-lie"></select></label></div>
 </div>
 <div id="ball-ring" hidden></div>
+<div id="range-target-marker" aria-hidden="true" hidden><span id="range-target-marker-text"></span></div>
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 </div>
 <p id="range-result" role="status">Drag down for power, slide to aim, and release in the green zone. Keyboard: hold Space, then release.</p>
-</main><script type="module" src="./releases/0.3.0-ba27edc58d/course/range.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-1296c000f1/course/range.mjs"></script></body></html>
