@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta name="course-build" content="0.3.0-cb7e5d3fd4"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Practice</title><link rel="stylesheet" href="./style.css"></head>
+<body><main class="home"><header><div class="brand">THE IRISH PAR</div><a id="daily-home" href="../daily-challenge/">Home</a></header>
+<section class="intro"><p class="brand">PRACTICE</p><h1>The Springhaven Club</h1><p class="muted">Choose a hole and your tee, then play every shot through to the cup. Practice as often as you like.</p></section>
+<section class="play-three"><h2>Three-hole practice · Par 12</h2><p>Play Holes 1–3 with one scorecard. Practice rounds don’t affect your official results.</p><label>Your tee<select id="series-tee"><option value="1896">1896 (Black)</option><option value="rawlins" selected>Rawlins (Blue)</option><option value="butler">Butler (Silver)</option><option value="dixon">Dixon (White)</option></select></label><br><button class="primary" id="play-three">Practice three holes</button></section>
+<div id="holes" class="hole-list"></div>
+<template id="hole-template"><article class="hole-card"><div class="hole-art"></div><div>
+<p class="brand hole-number"></p><h2></h2><p class="muted hole-description"></p>
+<div class="setup"><label>Your tee<select></select></label></div><div class="actions"><a class="button play-hole" href="./play.html">Practice hole</a></div>
+</div></article></template>
+<p class="muted">Course prototype · Green contours and terrain details are being refined.</p>
+<p class="build-line" id="build-version"></p></main>
+<script type="module" src="./home.mjs"></script></body></html>
