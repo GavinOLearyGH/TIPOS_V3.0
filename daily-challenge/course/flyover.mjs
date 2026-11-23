@@ -17,6 +17,27 @@ const centerlines=[
 const distance=(a,b)=>Math.hypot(b.x-a.x,b.z-a.z);
 const between=(a,b,t)=>({x:mix(a.x,b.x,t),z:mix(a.z,b.z,t)});
 
+function terrainProfile(ground,at,length){
+    const count=Math.max(1,Math.ceil(length/2)),step=length/count;
+    const heights=Array.from({length:count+1},(_,i)=>{
+        const {x,z}=at(i*step);
+        return ground(x,z);
+    });
+    // Smooth by distance so a bunker edge or mound cannot kick the camera up.
+    const radius=Math.ceil(18/step);
+    const weights=Array.from({length:radius*2+1},(_,i)=>(1+Math.cos(Math.PI*(i-radius)/radius))/2);
+    const total=weights.reduce((sum,weight)=>sum+weight,0);
+    const profile=heights.map((_,i)=>weights.reduce((sum,weight,j)=>
+        sum+weight*heights[clamp(i+j-radius,0,count)],0)/total);
+    return travel=>{
+        const position=clamp(travel/step,0,count),i=Math.min(Math.floor(position),count-1),t=position-i;
+        const a=profile[i],b=profile[i+1];
+        const inSlope=(b-profile[Math.max(0,i-1)])/2;
+        const outSlope=(profile[Math.min(count,i+2)]-a)/2;
+        return mix(a,b,ease(t))+t*(1-t)*((1-t)*inSlope-t*outSlope);
+    };
+}
+
 export function flyoverPath(course,tee){
     const {minX,maxX,minZ,maxZ}=course.greenBounds;
     const center={x:(minX+maxX)/2,z:(minZ+maxZ)/2};
@@ -30,12 +51,12 @@ export function flyoverPath(course,tee){
     }
     for(let i=1;i<points.length-1;i++){
         const [before,pivot,after]=points.slice(i-1,i+2);
-        const cut=Math.min(10,distance(before,pivot)*.27,distance(after,pivot)*.27);
+        const cut=Math.min(16,distance(before,pivot)*.32,distance(after,pivot)*.32);
         const entry=between(pivot,before,cut/distance(before,pivot));
         const exit=between(pivot,after,cut/distance(after,pivot));
         append(entry);
-        for(let j=1;j<=8;j++){
-            const t=j/8;
+        for(let j=1;j<=16;j++){
+            const t=j/16;
             append(between(between(entry,pivot,t),between(pivot,exit,t),t));
         }
     }
@@ -47,27 +68,37 @@ export function flyoverPath(course,tee){
         const index=samples.findIndex(s=>s.at>=travel),a=samples[index-1],b=samples[index];
         return between(a.point,b.point,(travel-a.at)/(b.at-a.at));
     }
-    return {length,center,at};
+    return {length,center,at,grade:terrainProfile(course.ground,at,length)};
 }
 
 export function flyoverCamera(course,path,progress,aspect){
-    const {length,center,at}=path;
+    const {length,center,at,grade}=path;
     const {minX,maxX,minZ,maxZ}=course.greenBounds;
     const breadth=Math.max(Math.hypot(maxX-minX,maxZ-minZ)+6,(course.green?.readRadius??22)*2);
     const framing=.85*breadth*Math.max(1,1.1/aspect);
     const endTravel=Math.max(0,length-framing*.58);
     const greenY=course.ground(center.x,center.z);
     const u=clamp(progress,0,1),travel=endTravel*ease(u);
-    const point=at(travel),ahead=at(travel+24);
+    const point=at(travel),before=at(travel-28),ahead=at(travel+48);
     const first=at(8),tee=at(0),initialAngle=Math.atan2(first.z-tee.z,first.x-tee.x);
     const setback=4*(1-ease(travel/14));
-    const ground=course.ground(point.x,point.z),aheadGround=course.ground(ahead.x,ahead.z);
-    const startClimb=ease(travel/35);
-    const cruise=ground+1.55+startClimb*(23+Math.max(0,aheadGround-ground));
-    const arrive=ease((u-.73)/.27);
+    const climb=ease(travel/36);
+    const cruise=mix(course.ground(tee.x,tee.z)+1.55,grade(travel)+14,climb);
+    const arrive=ease((u-.74)/.26);
     const eye=[point.x-Math.cos(initialAngle)*setback,
         mix(cruise,greenY+framing*.9,arrive),
         point.z-Math.sin(initialAngle)*setback];
-    const target=[mix(ahead.x,center.x,arrive),mix(aheadGround,greenY,arrive),mix(ahead.z,center.z,arrive)];
+    if(u===1)return {eye,target:[center.x,greenY,center.z]};
+
+    // Average the heading across a longer stretch of fairway, then ease
+    // the viewing angles into the stationary green read.
+    const heading=Math.atan2(ahead.z-before.z,ahead.x-before.x);
+    const dx=center.x-eye[0],dz=center.z-eye[2],dy=greenY-eye[1];
+    const delta=Math.atan2(dz,dx)-heading;
+    const turn=Math.atan2(Math.sin(delta),Math.cos(delta));
+    const yaw=heading+arrive*turn;
+    const pitch=mix(mix(6,16,climb)*Math.PI/180,Math.atan2(-dy,Math.hypot(dx,dz)),arrive);
+    const look=mix(54,Math.hypot(dx,dy,dz),arrive),reach=look*Math.cos(pitch);
+    const target=[eye[0]+reach*Math.cos(yaw),eye[1]-look*Math.sin(pitch),eye[2]+reach*Math.sin(yaw)];
     return {eye,target};
 }
