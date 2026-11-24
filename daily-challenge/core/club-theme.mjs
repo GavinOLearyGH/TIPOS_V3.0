@@ -17,3 +17,9 @@ export function themedURL(url){
     if(clubTheme()==='springhaven')url.searchParams.set('theme','springhaven');
     return url;
 }
+
+// Keep the initial paint and the navigation module on the same theme selection.
+export function clubThemeHead(){
+    return `<head><script>(()=>{const key=${JSON.stringify(key)};${clubTheme.toString()}
+(${applyClubTheme.toString()})();})();</script>`;
+}

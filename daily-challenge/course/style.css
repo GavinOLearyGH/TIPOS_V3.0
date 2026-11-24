@@ -121,6 +121,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
     --club-blue:#1c3a69;
     --club-gold:#c79647;
     --club-gold-light:#f6e3ba;
+    --club-gold-text:#805b20;
     --club-on-gold:#152238;
     --bg:#f6f6f3;
     --panel:#fff;
@@ -131,9 +132,11 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 }
 [data-club-theme="springhaven"] :is(.primary,.button.primary),
 [data-club-theme="springhaven"] .actions a.button{
-    background:var(--club-blue);
-    color:#fff;
+    background:var(--club-gold);
+    color:var(--club-on-gold);
+    border-color:var(--club-gold);
 }
+[data-club-theme="springhaven"] :is(.intro > .brand,.hole-number,dialog .brand){color:var(--club-label,var(--club-gold-text))}
 [data-club-theme="springhaven"] :is(.game-hud,#strike-panel,#tour-label){
     color:#fff;
     --gold:var(--club-gold-light);
@@ -150,6 +153,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 }
 [data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])){
     color-scheme:dark;
+    --club-label:var(--club-gold-light);
     --bg:#142b50;
     --panel:var(--club-blue);
     --line:#8297b4;

@@ -1,5 +1,15 @@
 <!doctype html>
-<html lang="en"><head><meta name="course-build" content="0.3.0-b5ee16d617"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-b5ee16d617/course/style.css"><style>
+<html lang="en"><head><script>(()=>{const key="irish-par-theme";function clubTheme(){
+    const requested=new URLSearchParams(globalThis.location?.search).get('theme');
+    if(requested==='springhaven'||requested==='irish-par')return requested;
+    try{return globalThis.sessionStorage.getItem(key)==='springhaven'?'springhaven':'irish-par';}
+    catch{return 'irish-par';}
+}
+(function applyClubTheme(){
+    const theme=clubTheme();
+    if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
+    try{globalThis.sessionStorage.setItem(key,theme);}catch{}
+})();})();</script><meta name="course-build" content="0.3.0-c085473be0"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-c085473be0/course/style.css"><style>
 .range-play .stage{border-color:#998458}
 .range-play .range-overview .hud,.range-play .range-overview .side-panels,.range-play .range-overview .shot-controls{visibility:hidden}
 .range-play .range-overview .view-tools{position:absolute;top:0;right:0;display:block}
@@ -51,4 +61,4 @@
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 </div>
 <p id="range-result" role="status">Drag down for power, slide to aim, and release in the green zone. Keyboard: hold Space, then release.</p>
-</main><script type="module" src="./releases/0.3.0-b5ee16d617/course/range.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-c085473be0/course/range.mjs"></script></body></html>
