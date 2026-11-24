@@ -1,3 +1,4 @@
+import {applyClubTheme} from '../core/club-theme.mjs';
 import {drawShotMap,updatePowerRail} from '../core/shot-hud.mjs';
 import {recommendClub,clubLie} from '../core/club-lie.mjs';
 import {gameLinks} from '../core/navigation.mjs';
@@ -18,6 +19,8 @@ import {crossCountrySelection,createCrossCountryGame,openPlayTarget,droneCamera}
 import {createRound,fullBag} from '../core/round.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
 import {clubs,ballRadius,stepTime,clamp,mix,ease,newBall,estimatePutt} from '../core/physics.mjs';
+
+applyClubTheme();
 
 const $=id=>document.getElementById(id);
 const links=gameLinks(location.href);links.home+='?build='+buildId;links.practice+='?build='+buildId;

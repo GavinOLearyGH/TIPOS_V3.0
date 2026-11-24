@@ -1,5 +1,8 @@
+import {applyClubTheme} from '../core/club-theme.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {gameLinks} from '../core/navigation.mjs';
+
+applyClubTheme();
 
 const $=id=>document.getElementById(id);
 const links=gameLinks(location.href);

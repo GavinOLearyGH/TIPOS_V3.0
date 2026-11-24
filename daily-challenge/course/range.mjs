@@ -1,3 +1,4 @@
+import {applyClubTheme} from '../core/club-theme.mjs';
 import {drawShotMap,updatePowerRail} from '../core/shot-hud.mjs';
 import {advance,clubs,newBall,strike,stepTime,clamp,windVector,mix} from '../core/physics.mjs';
 import {windReading} from '../core/wind.mjs';
@@ -7,6 +8,8 @@ import {executionWindow,resolveExecution,strikePosition} from '../core/execution
 import {dragPower,dragHeading,shotCamera} from '../core/controls.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
 import {rangeCourse,rangeLength,rangeStart,rangeLies,rangeTargets,netContact,basketContact,bounceOffBasket} from './range-layout.mjs';
+
+applyClubTheme();
 
 const get=id=>document.getElementById(id),$=id=>get('range-'+id);
 const canvas=get('scene'),club=$('club'),lie=$('lie'),result=$('result'),overview=get('flyover');

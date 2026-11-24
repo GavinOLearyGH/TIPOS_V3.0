@@ -1,8 +1,11 @@
+import {applyClubTheme} from '../core/club-theme.mjs';
 import {gameLinks} from '../core/navigation.mjs';
 import {buildId} from '../core/build-info.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
 import {playableHoles as courseCatalog} from './catalog.mjs';
 import {surfaceColors} from '../core/renderer.mjs';
+
+applyClubTheme();
 const links=gameLinks(location.href);links.home+='?build='+buildId;links.practice+='?build='+buildId;
 document.getElementById('daily-home').href=links.home;
 refreshParentWorker();

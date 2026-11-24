@@ -111,3 +111,65 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 #friend-share-status{font-size:13px;color:var(--muted);margin:6px 0}
 #friend-share-status:empty{display:none}
 #friend-copy-text{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+
+.springhaven-wordmark{display:none}
+[data-club-theme="springhaven"] .springhaven-wordmark{display:inline}
+[data-club-theme="springhaven"] :is(.irish-par-wordmark,.club-name){display:none}
+
+:root[data-club-theme="springhaven"]{
+    color-scheme:light;
+    --club-blue:#1c3a69;
+    --club-burgundy:#5c2835;
+    --club-gold:#c79647;
+    --club-gold-light:#f6e3ba;
+    --club-on-gold:#152238;
+    --bg:#f6f6f3;
+    --panel:#fff;
+    --line:#cbd2db;
+    --ink:var(--club-blue);
+    --muted:#414f65;
+    --gold:var(--club-burgundy);
+}
+[data-club-theme="springhaven"] .primary,
+[data-club-theme="springhaven"] .actions a.button{
+    background:var(--club-blue);
+    color:#fff;
+}
+[data-club-theme="springhaven"] :is(.game-hud,#strike-panel,#tour-label){
+    color:#fff;
+    --gold:var(--club-gold-light);
+    --panel:var(--club-blue);
+    --ink:#fff;
+    --muted:#dce5f3;
+    --bg:#162e52;
+    --line:#8297b4;
+    color-scheme:dark;
+}
+[data-club-theme="springhaven"] :is(.hud,.view-tools button,.power-rail,.map,.shot-controls label,.shot-controls button,#strike-panel,#tour-label){
+    background:#162e52ed;
+    color:#fff;
+}
+[data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])){
+    color-scheme:dark;
+    --bg:#142b50;
+    --panel:var(--club-blue);
+    --line:#8297b4;
+    --ink:#fff;
+    --muted:#dce5f3;
+    --gold:var(--club-gold-light);
+}
+[data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])) .primary,
+[data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])) .actions a.button{
+    background:transparent;
+    color:#fff;
+    border:1px solid var(--line);
+}
+[data-club-theme="springhaven"] #complete #share-challenge{
+    background:var(--club-gold);
+    color:var(--club-on-gold);
+    border-color:var(--club-gold);
+}
+[data-club-theme="springhaven"] #complete #official-name{
+    background:var(--bg);
+    color:var(--ink);
+}

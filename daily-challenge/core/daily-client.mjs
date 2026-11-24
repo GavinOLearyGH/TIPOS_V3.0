@@ -1,3 +1,4 @@
+import {themedURL} from './club-theme.mjs';
 import {gameRoot} from './navigation.mjs';
 import {dayKey,newCompetition,applyCompetitionShot,totalScore} from './competition.mjs';
 import {loadPreviewWeather} from './daily-weather.mjs';
@@ -43,7 +44,7 @@ export async function publishThree(session,name){
  const next=localOnly()?{...session,name:session.name||name}:await request('publish',{day:session.day,id:session.id,name},session.kind);
  write(sessionKey(next),next);return next;
 }
-export function officialURL(session){const url=new URL('course/releases/'+session.build+'/course/play.html',appRoot());url.searchParams.set(session.kind==='ace'?'ace':'official',session.day);if(session.kind==='nine')url.searchParams.set('mode','nine');url.searchParams.set('hole',session.hole);return url.href;}
+export function officialURL(session){const url=new URL('course/releases/'+session.build+'/course/play.html',appRoot());url.searchParams.set(session.kind==='ace'?'ace':'official',session.day);if(session.kind==='nine')url.searchParams.set('mode','nine');url.searchParams.set('hole',session.hole);return themedURL(url).href;}
 export function streak(day=dayKey()){
  const completed=date=>Boolean(read('irish-par-official:'+date)||read(aceKey(date))?.status==='completed'||read(threeKey(date))?.status==='completed'||read(nineKey(date))?.status==='completed');
  const previous=date=>new Date(Date.parse(date+'T00:00:00Z')-86400000).toISOString().slice(0,10);
