@@ -61,6 +61,10 @@ const entries=playableHoles.map(definition=>{
     const bounds=extent(corners(course.bounds).map(([x,z])=>toWorld(transform,x,z)));
     return {course,pin,transform,angle,route,unit,areas,ground,bounds};
 });
+// The reference aerial is north-up. The wind engine takes the direction air travels.
+export function courseWindAngle(from){
+    return ((from+90-entries[0].angle*180/Math.PI)%360+360)%360;
+}
 const pond=entries.find(entry=>entry.course.number===6);
 const worldWall=pond.course.wall.map(p=>({...p,...toWorld(pond.transform,p.x,p.z)}));
 

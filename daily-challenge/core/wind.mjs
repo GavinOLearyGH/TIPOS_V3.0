@@ -6,7 +6,9 @@ const wrap=angle=>((angle%360)+360)%360;
 const number=(value,fallback)=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))?Number(value):fallback;
 export function windSetup(input={},seed='practice'){
     const angle=number(input.windAngle,number(input.wind,0)*45);
-    return {windModel,windAngle:String(wrap(angle)),mph:String(clamp(number(input.mph,0),0,25)),
+    const mph=clamp(number(input.mph,0),0,25),gust=number(input.gustMph,null);
+    return {windModel,windAngle:String(wrap(angle)),mph:String(mph),
+        ...(gust!==null?{gustMph:String(clamp(gust,mph,25))}:{}),
         windSeed:String(input.windSeed??seed).slice(0,128)};
 }
 export function randomWindSetup(random=Math.random){
@@ -24,7 +26,10 @@ export function createWind(input={}){
     function values(time){
         const t=Math.max(0,number(time,0));
         const angle=baseAngle+15*(.65*Math.sin(t*Math.PI*2/27+p[0])+.35*Math.sin(t*Math.PI*2/41+p[1]));
-        const mph=clamp(baseMph*(1+.14*Math.sin(t*Math.PI*2/19+p[2])+.06*Math.sin(t*Math.PI*2/31+p[3])),0,25);
+        const pulse=.7*Math.sin(t*Math.PI*2/19+p[2])+.3*Math.sin(t*Math.PI*2/31+p[3]);
+        const mph=setup.gustMph===undefined?
+            clamp(baseMph*(1+.14*Math.sin(t*Math.PI*2/19+p[2])+.06*Math.sin(t*Math.PI*2/31+p[3])),0,25):
+            clamp(baseMph+pulse*(Number(setup.gustMph)-baseMph),0,25);
         return {angle,mph};
     }
     return {setup,sample(time,bearing=0){

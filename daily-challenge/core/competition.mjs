@@ -1,5 +1,5 @@
 import {createRound,fullBag} from './round.mjs';
-import {createConnectedCourse} from '../course/connected-view.mjs';
+import {createConnectedCourse,courseWindAngle} from '../course/connected-view.mjs';
 import {stepTime} from './physics.mjs';
 import {playableHoles} from '../course/catalog.mjs';
 import {roundHoles,roundTee} from './series.mjs';
@@ -28,21 +28,26 @@ const formatter=new Intl.DateTimeFormat('en',{timeZone:'America/New_York',year:'
 export function dayKey(now=new Date()){
  const parts=Object.fromEntries(formatter.formatToParts(now).map(({type,value})=>[type,value]));return parts.year+'-'+parts.month+'-'+parts.day;
 }
-export function dailySetup(day,kind='three'){
+function withWeather(setup,day,weather){
+ if(weather?.day!==day)return setup;
+ return {...setup,windAngle:String(courseWindAngle(weather.from)),mph:String(Math.min(weather.mph,25)),
+  windSeed:'springhaven:'+day,weather,...(weather.gust!==null?{gustMph:String(Math.min(weather.gust,25))}:{})};
+}
+export function dailySetup(day,kind='three',weather){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isFinite(Date.parse(day)))throw Error('Invalid challenge day');
  let seed=2166136261;for(const c of day)seed=Math.imul(seed^c.charCodeAt(0),16777619)>>>0;
- return {tee:kind==='nine'?'rawlins':['1896','rawlins','butler','dixon'][seed%4],speed:['.8','1','1.24'][(seed>>>4)%3],windModel:'clock-v1',
-  windAngle:String((seed>>>8)%12*30),mph:String(4+(seed>>>12)%9),windSeed:(kind==='nine'?'nine-v1':competitionVersion)+':'+day};
+ return withWeather({tee:kind==='nine'?'rawlins':['1896','rawlins','butler','dixon'][seed%4],speed:['.8','1','1.24'][(seed>>>4)%3],windModel:'clock-v1',
+  windAngle:String((seed>>>8)%12*30),mph:String(4+(seed>>>12)%9),windSeed:(kind==='nine'?'nine-v1':competitionVersion)+':'+day},day,weather);
 }
 const copy=value=>JSON.parse(JSON.stringify(value));
 function roundFor(session,tick=session.state.windTick){
  const round=session.kind==='ace'?aceRound(session.setup,tick):scheduledRound(session.hole,session.setup,tick);
  Object.assign(round.state,copy(session.state),{windTick:tick});return round;
 }
-export function newCompetition(day,build,id,kind='three'){
- if(kind==='ace')return newAceCompetition(day,build,id);
+export function newCompetition(day,build,id,kind='three',weather){
+ if(kind==='ace')return newAceCompetition(day,build,id,weather);
  if(!['three','nine'].includes(kind))throw Error('Unknown competition');
- const setup=dailySetup(day,kind),holes=dailyLineup(day,kind),hole=holes[0],round=scheduledRound(hole,setup);
+ const setup=dailySetup(day,kind,weather),holes=dailyLineup(day,kind),hole=holes[0],round=scheduledRound(hole,setup);
  return {kind,version:kind==='nine'?'nine-v1':competitionVersion,day,build,id,setup,holes,hole,state:copy(round.state),results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
 }
 export function totalScore(session){return session.results.reduce((sum,row)=>sum+row.strokes,0)+(session.status==='completed'?0:session.state.strokes);}
@@ -80,14 +85,14 @@ export function restoreCompetitionRound(session){return roundFor(session);}
 export function compareThree(a,b){return a.total-b.total||Number(b.tieValid)-Number(a.tieValid)||(a.tieValid?a.tieMM-b.tieMM:0);}
 export function rankedThree(rows){let previous,rank=0;return [...rows].sort(compareThree).map((row,index)=>{if(!previous||compareThree(previous,row))rank=index+1;previous=row;return {...row,rank};});}
 
-export function dailyAceSetup(day){
+export function dailyAceSetup(day,weather){
  const index=((Math.floor(Date.parse(day+'T00:00:00Z')/86400000)%4)+4)%4;
  const options=[['forward','middle',0,0,1],['middle','back',3,6,1.24,189.16,34.66],['forward','back',7,8,1.24],['back','back',0,8,.8,197.15,36.05]];
  const [tee,pin,dir,mph,speed,x,z]=options[index];
- return {tee,pin,speed:speed===.8?'.8':String(speed),windModel:'clock-v1',windAngle:String(dir*45),mph:String(mph),windSeed:'ace-v2:'+day,...(x===undefined?{}:{cup:{x,z}})};
+ return withWeather({tee,pin,speed:speed===.8?'.8':String(speed),windModel:'clock-v1',windAngle:String(dir*45),mph:String(mph),windSeed:'ace-v2:'+day,...(x===undefined?{}:{cup:{x,z}})},day,weather);
 }
-function newAceCompetition(day,build,id){
- const setup=dailyAceSetup(day),session={kind:'ace',version:'ace-v2',day,build,id,setup,hole:6,results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
+function newAceCompetition(day,build,id,weather){
+ const setup=dailyAceSetup(day,weather),session={kind:'ace',version:'ace-v2',day,build,id,setup,hole:6,results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
  session.state=copy(aceRound(setup).state);return session;
 }
 function aceRound(setup,tick=0){

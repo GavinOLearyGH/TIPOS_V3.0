@@ -114,7 +114,18 @@ function paintTrees(c,trees){
     }
 }
 
-export function createRenderer(canvas,course,atlas,view){
+const defaultSky=[[.58,.76,.83],[.73,.82,.84],1];
+const dailySkies={
+    'clear':[[.50,.73,.86],[.71,.83,.89],1.03],
+    'partly cloudy':[[.63,.75,.82],[.74,.81,.85],.99],
+    'overcast':[[.61,.65,.68],[.68,.71,.73],.92],
+    'rain':[[.48,.54,.59],[.61,.66,.70],.86],
+    'snow':[[.70,.73,.76],[.77,.79,.81],.94],
+    'fog':[[.71,.74,.74],[.74,.77,.77],.89]
+};
+
+export function createRenderer(canvas,course,atlas,view,weather){
+    const [sky,haze,light]=dailySkies[weather?.sky]??defaultSky;
     const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
     if(!gl)throw Error('This browser could not start 3D graphics. Enable graphics acceleration and reload.');
     const b=view?.bounds??course.atlasBounds??course.bounds;
@@ -128,7 +139,7 @@ export function createRenderer(canvas,course,atlas,view){
         }`;
     const fragment=`
         precision highp float;varying vec3 world,color;varying float depth;
-        uniform sampler2D atlas;uniform float kind,opacity,droneView;
+        uniform sampler2D atlas;uniform float kind,opacity,droneView;uniform vec3 haze;uniform float daylight;
         void main(){
             vec3 ink=color;
             if(kind>.5){
@@ -139,7 +150,7 @@ export function createRenderer(canvas,course,atlas,view){
                 if(kind>1.5&&kind<3.5){if(kind<2.5&&!pond)discard;float ripple=sin(world.x*5.4+sin(world.z*3.6))*sin(world.z*5.4)*.035;ink=vec3(.22,.45,.53)+ripple;}
                 else{if(${course.meshes||view?.pond?'true':'false'}&&kind<1.5&&pond)discard;if(pond)sampleColor=vec3(.36,.49,.30);ink=sampleColor*color*(.95+grain);}
             }
-            gl_FragColor=vec4(mix(ink,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)*(1.-droneView*.85)),opacity);
+            gl_FragColor=vec4(mix(ink*(kind>.5?daylight:1.),haze,clamp((depth-115.)/180.,0.,.48)*(1.-droneView*.85)),opacity);
         }`;
     const program=gl.createProgram();
     for(const [kind,source] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){
@@ -150,7 +161,8 @@ export function createRenderer(canvas,course,atlas,view){
     gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
     gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
-    const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','depthScale','droneView','kind','opacity'].map(name=>[name,gl.getUniformLocation(program,name)]));
+    const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','depthScale','droneView','kind','opacity','haze','daylight'].map(name=>[name,gl.getUniformLocation(program,name)]));
+    gl.uniform3fv(uniforms.haze,haze);gl.uniform1f(uniforms.daylight,light);
     gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(uniforms.opacity,1);
     const attributes=['a','c'].map(name=>gl.getAttribLocation(program,name));
     const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
@@ -301,7 +313,7 @@ export function createRenderer(canvas,course,atlas,view){
         gl.uniform1f(uniforms.ratio,camera.ratio);
         gl.uniform1f(uniforms.droneView,Number(drone));
         gl.uniform1f(uniforms.depthScale,drone?1.00007:view?1.0002:1.0003);
-        gl.clearColor(.58,.76,.83,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+        gl.clearColor(...sky,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
         if(tiles){for(const tile of tiles)if(terrainVisible(tile,camera))draw(tile,1);}
         else if(customBuffers){for(const item of customBuffers)draw(item.buffer,item.kind);}
         else draw(groundBuffer,1);

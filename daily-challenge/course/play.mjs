@@ -122,8 +122,10 @@ if(officialSession){
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
 }
 const practiceAceDay=!officialSession&&!isCrossCountry&&course.number===6?requested.get('practiceAce'):null;
+const practiceAceSetup=practiceAceDay?(read('irish-par-ace:'+practiceAceDay)?.setup??dailyAceSetup(practiceAceDay)):null;
+const dailyWeather=(officialSession?.setup??series?.setup??practiceAceSetup)?.weather;
 function applyPracticeAceSetup(){
-    const setup=dailyAceSetup(practiceAceDay);
+    const setup=practiceAceSetup;
     weatherSetup=windSetup(setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
     $('tee').value=setup.tee;$('green-speed').value=Number(setup.speed)===.8?'.8':String(Number(setup.speed));
     if(setup.cup){if(!course.pins.some(pin=>pin.id==='daily'))course.pins.push({id:'daily',...setup.cup});if(![...$('pin').options].some(option=>option.value==='daily'))$('pin').add(new Option('Daily pin','daily'));}
@@ -174,7 +176,7 @@ function drawStrike(now){
 }
 function replaySeries(random=false){
     const id=String(Date.now()),setup={...series.setup};
-    if(random)Object.assign(setup,randomWindSetup());
+    if(random){delete setup.weather;delete setup.gustMph;Object.assign(setup,randomWindSetup());}
     const fresh={...newSeries(id,setup,roundHoles(series)),...(!random&&series.practiceDay?{practiceDay:series.practiceDay}:{})};try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify(fresh));}catch{return;}
     location.href=links.player+'?'+new URLSearchParams({hole:roundHoles(fresh)[0],series:id,...setup,build:buildId});
 }
@@ -252,7 +254,7 @@ function startRound(){
     if(practiceAceDay)applyPracticeAceSetup();
     cancel();tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
     if($('complete').open)$('complete').close();
-    weatherSetup=windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value});
+    if(!officialSession&&!practiceAceDay&&!series?.practiceDay)weatherSetup=windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value});
     round=officialSession?restoreCompetitionRound(officialSession):createRound(course,{tee:$('tee').value,pin:$('pin').value,windProfile:weatherSetup,windTick:holeWindTick,
         greenSpeed:Number($('green-speed').value)});
     const tee=course.tees.find(item=>item.id===$('tee').value);
@@ -652,7 +654,7 @@ canvas.addEventListener('webglcontextlost',event=>{
     $('render-error').hidden=false;$('render-error').textContent='3D graphics paused. Reload this page to restart the hole.';
 });
 try{
-    renderer=createRenderer(canvas,course,atlas,view);
+    renderer=createRenderer(canvas,course,atlas,view,dailyWeather);
     startRound();
     if(officialSession){
         $('reset').onclick=()=>{if(!active()&&!officialBusy)location.href=appRoot().href;};
