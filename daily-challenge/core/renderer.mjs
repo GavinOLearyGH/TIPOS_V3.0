@@ -1,4 +1,4 @@
-import {clamp} from './physics.mjs';
+import {ballRadius,clamp,ease} from './physics.mjs';
 import {createVisuals} from './visuals.mjs';
 import {sampleTerrain,meshTerrain,terrainVisible} from './terrain-tiles.mjs';
 
@@ -124,6 +124,16 @@ const dailySkies={
     'fog':[[.71,.74,.74],[.74,.77,.77],.89]
 };
 
+// Use the rendered sand for ball presentation while retaining the exact shot terrain.
+export function bunkerBallPosition(ball,course,renderHeight){
+    if(!renderHeight||!['rest','roll','air'].includes(ball.mode)||course.surface(ball.x,ball.z)!=='sand')return ball;
+    const floor=course.ground(ball.x,ball.z),sand=renderHeight(ball.x,ball.z);
+    const clearance=Math.max(0,ball.y-floor-ballRadius);
+    const blend=ball.mode==='air'?1-ease(clearance/Math.max(.65,Math.abs(sand-floor)*2)):1;
+    const y=Math.max(sand+ballRadius,ball.y+(sand-floor)*blend);
+    return y===ball.y?ball:{...ball,y};
+}
+
 export function createRenderer(canvas,course,atlas,view,weather){
     const [sky,haze,light]=dailySkies[weather?.sky]??defaultSky;
     const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
@@ -173,6 +183,7 @@ export function createRenderer(canvas,course,atlas,view,weather){
     const unit=course.renderStep??1.15;
     const renderGround=view?.ground??course.renderGround??course.ground;
     const terrainField=view&&sampleTerrain(b,course.playBounds,unit,renderGround,6,view.detailBounds);
+    const ballPosition=ball=>bunkerBallPosition(ball,course,terrainField?.height);
     const visuals=createVisuals({gl,uniform:uniforms,draw,buffer:upload,mobile:()=>mobile,
         ground:course.ground,surface:course.surface,greenBounds:course.greenBounds??course.bounds,
         gridGround:terrainField?.height,release:mesh=>gl.deleteBuffer(mesh.handle)});
@@ -338,7 +349,9 @@ export function createRenderer(canvas,course,atlas,view,weather){
             draw(net,0);
             gl.uniform1f(uniforms.opacity,1);gl.depthMask(true);gl.disable(gl.BLEND);
         }
-        visuals.drawFrame({pin,ball,aim,trail,flying,right,
+        const visibleBall=ballPosition(ball);
+        visuals.drawFrame({pin,ball:visibleBall,aim,trail,flying,right,
+            ballGround:visibleBall===ball?undefined:terrainField.height,
             gridTick:greenGrid?Math.floor(time/50):null,readOpacity,gridRegion});
     }
     function project(point){
@@ -348,5 +361,5 @@ export function createRenderer(canvas,course,atlas,view,weather){
         return {x:(.5+.86*dot(d,camera.right)/depth/camera.ratio)*canvas.clientWidth,
             y:(.5-.86*dot(d,camera.up)/depth)*canvas.clientHeight};
     }
-    return {frame,project};
+    return {frame,project,ballPosition};
 }

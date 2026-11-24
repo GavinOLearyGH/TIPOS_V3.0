@@ -97,7 +97,7 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
         }
         return puttingGrid;
     }
-    function drawFrame({pin,ball,aim,trail=[],flying=false,right=[0,0,1],gridTick=null,readOpacity=null,gridRegion}){
+    function drawFrame({pin,ball,ballGround=ground,aim,trail=[],flying=false,right=[0,0,1],gridTick=null,readOpacity=null,gridRegion}){
         const moving=[],base=pin?ground(pin.x,pin.z):0;
         if(gridTick!==null&&readOpacity===null){
             const grid=getPuttingGrid(gridRegion);
@@ -125,7 +125,7 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
             const y=ball.y+(ball.mode==='rest'?.023:0);
             ellipsoid(moving,ball.x,y,ball.z,size,size,size,[1,1,.98],10,5);
             if(ball.mode==='rest'||ball.mode==='roll'||ball.mode==='air'){
-                const flat=ground(ball.x,ball.z);
+                const flat=ballGround(ball.x,ball.z);
                 if(surface(ball.x,ball.z)!=='water')disk(moving,ball.x,flat+.012,ball.z,size*1.28,[.24,.34,.19]);
             }
         }

@@ -363,8 +363,10 @@ function marker(id,point){
     if(!element.hidden){element.style.left=point.x+'px';element.style.top=point.y+'px';}
 }
 function cameraForBall(){
-    const ball=round.state.ball,near=$('club').value==='Putter';
-    return shotCamera(ball,course.ground,drag?drag.heading:heading,near,active()&&ball.time>.3&&ball.mode!=='drop');
+    const ball=round.state.ball,visible=renderer.ballPosition(ball),near=$('club').value==='Putter';
+    const offset=visible.y-ball.y;
+    const ground=offset?(x,z)=>course.ground(x,z)+offset:course.ground;
+    return shotCamera(visible,ground,drag?drag.heading:heading,near,active()&&ball.time>.3&&ball.mode!=='drop');
 }
 function stopTour(){
     tour=null;$('fade').hidden=true;$('tour-label').hidden=true;
@@ -424,7 +426,7 @@ function drawDrone(){
 function pullGraphics(anchor){
     for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
     if(!drag||!anchor)return;
-    const ball=round.state.ball,near=$('club').value==='Putter';
+    const ball=renderer.ballPosition(round.state.ball),near=$('club').value==='Putter';
     const distance=(near?12:36)*charge**.82;
     const ahead=renderer.project({x:ball.x+Math.cos(heading)*Math.max(1,distance),
         y:ball.y+.022,z:ball.z+Math.sin(heading)*Math.max(1,distance)});
@@ -471,7 +473,7 @@ function frame(now){
         gridRegion:openTarget?.gridRegion,flying:active(),drone:Boolean(tour?.drone)});
     drawPrecipitation?.(now,Boolean(tour?.drone));
     if(tour?.drone)drawDrone();
-    const anchor=ready?renderer.project({x:ball.x,y:ball.y+.022,z:ball.z}):null;
+    const anchor=ready?projectBall(ball):null;
     marker('ball-ring',anchor);
     const ahead=ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength}:null;
     marker('aim-ring',ahead?renderer.project({...ahead,y:course.ground(ahead.x,ahead.z)+.06}):null);
@@ -480,6 +482,10 @@ function frame(now){
     if(frameNumber++%5===0){updateHUD();drawMap();}
     animationId=requestAnimationFrame(frame);
 }
+function projectBall(ball){
+    const visible=renderer.ballPosition(ball);
+    return renderer.project({...visible,y:visible.y+.022});
+}
 function previewDrag(event){
     heading=dragHeading(drag.heading,bearing(round.state.ball,round.settings.pin),event.clientX-drag.x);
     drag.depth=clamp((event.clientY-drag.y)/drag.travel,0,1);
@@ -487,7 +493,7 @@ function previewDrag(event){
 }
 canvas.addEventListener('pointerdown',event=>{
     if(!editable()||drag||turnDrag||keyStarted!==null||event.button>0||event.isPrimary===false)return;
-    const rect=canvas.getBoundingClientRect(),point=renderer.project({...round.state.ball,y:round.state.ball.y+.022});
+    const rect=canvas.getBoundingClientRect(),point=projectBall(round.state.ball);
     if(!point||Math.hypot(event.clientX-rect.left-point.x,event.clientY-rect.top-point.y)>55){
         event.preventDefault();canvas.setPointerCapture(event.pointerId);
         turnDrag={id:event.pointerId,x:event.clientX,heading};return;
