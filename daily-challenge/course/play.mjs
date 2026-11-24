@@ -494,7 +494,7 @@ function startDailyPractice(){
     location.href=new URL('course/play.html',appRoot()).href+'?'+new URLSearchParams({hole:roundHoles(officialSession)[0],series:id,...setup,build:buildId});
 }
 function tidyPracticeResult(hasNext,seriesComplete){
-    $('result-kind').textContent='PRACTICE RESULT';$('official-result').hidden=true;$('practice-home').hidden=false;
+    $('result-kind').textContent='PRACTICE RESULT';$('official-result').hidden=true;$('official-board').hidden=true;$('practice-home').hidden=false;
     $('replay').hidden=seriesComplete;$('replay').textContent=crossCountry?'Replay route':'Replay hole';
     $('next-hole').className=hasNext?'button primary':'button';$('next-hole').textContent=series?'Continue practice round':$('next-hole').textContent;
     $('replay').className=hasNext?'':'primary';$('series-replay').className='primary';
@@ -534,8 +534,8 @@ function showOfficialDialog(){
     $('official-name').value=officialSession.name||read('springhaven-player-name')||'';
     const eligible=!aceMode||officialSession.outcome==='in-play',posted=Boolean(officialSession.name);
     $('publish-official').hidden=!eligible||posted;$('official-name-label').hidden=!eligible||posted;
-    $('official-board').className=posted?'button primary':'button';
-    $('next-hole').className='button primary';$('replay').className=completed&&!eligible?'primary':'';
+    $('official-board').hidden=!completed;
+    $('next-hole').className='button primary';$('replay').className='';
     $('publish-official').disabled=Boolean(officialSession.name);$('official-name').disabled=Boolean(officialSession.name);
     $('official-post-status').textContent=officialSession.name?'Added to '+(location.hostname.endsWith('.github.io')||location.protocol==='file:'?'this browser’s preview leaderboard.':'today’s leaderboard.'):eligible?'Your official result is saved. Add a name to appear on the leaderboard.':'Result saved · Streak kept.';
     $('official-board').href=new URL('?board='+mode+'&build='+buildId+'#leaderboards',appRoot()).href;
