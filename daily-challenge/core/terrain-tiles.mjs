@@ -14,10 +14,36 @@ function axis(outerMin,min,max,outerMax,step,outerStep,detailMin,detailMax){
     return samples;
 }
 
-export function* terrainTiles(viewBounds,playBounds,step,ground,outerStep=3.6,detail){
+function bracket(values,point){
+    let low=0,high=values.length-1;
+    while(high-low>1){
+        const mid=(low+high)>>1;
+        if(values[mid]<=point)low=mid;
+        else high=mid;
+    }
+    return low;
+}
+
+export function sampleTerrain(viewBounds,playBounds,step,ground,outerStep=3.6,detail){
     const xs=axis(viewBounds.minX,playBounds.minX,playBounds.maxX,viewBounds.maxX,step,outerStep,detail?.minX,detail?.maxX);
     const zs=axis(viewBounds.minZ,playBounds.minZ,playBounds.maxZ,viewBounds.maxZ,step,outerStep,detail?.minZ,detail?.maxZ);
     const heights=xs.map(x=>Float32Array.from(zs,z=>ground(x,z)));
+    const height=(x,z)=>{
+        const i=bracket(xs,x),j=bracket(zs,z);
+        const tx=clamp((x-xs[i])/(xs[i+1]-xs[i]),0,1);
+        const tz=clamp((z-zs[j])/(zs[j+1]-zs[j]),0,1);
+        const a=heights[i][j],b=heights[i+1][j],c=heights[i][j+1],d=heights[i+1][j+1];
+        // Match the diagonal used by the rendered triangles.
+        return tx>=tz?a+(b-a)*tx+(d-b)*tz:a+(d-c)*tx+(c-a)*tz;
+    };
+    return {xs,zs,heights,height};
+}
+
+export function terrainTiles(viewBounds,playBounds,step,ground,outerStep=3.6,detail){
+    return meshTerrain(sampleTerrain(viewBounds,playBounds,step,ground,outerStep,detail));
+}
+
+export function* meshTerrain({xs,zs,heights}){
     const tileSize=48;
     for(let firstX=0;firstX<xs.length-1;firstX+=tileSize)for(let firstZ=0;firstZ<zs.length-1;firstZ+=tileSize){
         const lastX=Math.min(firstX+tileSize,xs.length-1),lastZ=Math.min(firstZ+tileSize,zs.length-1);

@@ -192,6 +192,11 @@ function updateWindDisplay(){
     $('wind-text').textContent=reading.text;
     $('wind-label').setAttribute('aria-label',reading.text+'; direction the wind blows relative to your aim');
 }
+function canReadPutt(){
+    const {ball}=round.state;
+    return editable()&&$('club').value==='Putter'&&
+        (openTarget?openTarget.onGreen(ball):course.surface(ball.x,ball.z)==='green');
+}
 function updateHUD(){
     if(!round)return;
     const ball=round.state.ball,pin=round.settings.pin,metres=distance(ball,pin);
@@ -212,7 +217,7 @@ function updateHUD(){
         $('slope').textContent='At the ball · '+Math.abs(rise*100).toFixed(1)+'% '+(rise>=0?'uphill':'downhill')+
             (Math.abs(across)<.002?' · Minimal break':across>0?' · breaks left':' · breaks right');
     }
-    $('green-grid').hidden=!tour?.reading&&!(editable()&&$('club').value==='Putter'&&course.surface(ball.x,ball.z)==='green');
+    $('green-grid').hidden=!tour?.reading&&!canReadPutt();
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
     $('green-grid').textContent=showGreenGrid?'Hide green grid':'Show green grid';
     const locked=active()||!!tour||officialBusy;
@@ -447,7 +452,8 @@ function frame(now){
     renderer.frame({eye,target,ball,pin:round.settings.pin,heading,trail,time:now,
         aim:ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength,
             y:course.ground(ball.x+Math.cos(heading)*aimLength,ball.z+Math.sin(heading)*aimLength),near}:null,
-        readOpacity:view?.readOpacity??null,greenGrid:view?.greenGrid||showGreenGrid&&ready&&near&&course.surface(ball.x,ball.z)==='green'&&!openPlay,flying:active(),drone:Boolean(tour?.drone)});
+        readOpacity:view?.readOpacity??null,greenGrid:view?.greenGrid||showGreenGrid&&canReadPutt(),
+        gridRegion:openTarget?.gridRegion,flying:active(),drone:Boolean(tour?.drone)});
     if(tour?.drone)drawDrone();
     const anchor=ready?renderer.project({x:ball.x,y:ball.y+.022,z:ball.z}):null;
     marker('ball-ring',anchor);

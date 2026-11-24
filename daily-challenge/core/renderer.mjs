@@ -1,6 +1,6 @@
 import {clamp} from './physics.mjs';
 import {createVisuals} from './visuals.mjs';
-import {terrainTiles,terrainVisible} from './terrain-tiles.mjs';
+import {sampleTerrain,meshTerrain,terrainVisible} from './terrain-tiles.mjs';
 
 export const surfaceColors={rough:'#4e6c40',tee:'#78a66b',fairway:'#7da65c',
     bridge:'#a69677',water:'#356a7e',teeArea:'#577b46',surround:'#668a4f',green:'#92b864',sand:'#d7be88',path:'#98998a',road:'#777875'};
@@ -158,8 +158,12 @@ export function createRenderer(canvas,course,atlas,view){
     for(const axis of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,axis,gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    const unit=course.renderStep??1.15;
+    const renderGround=view?.ground??course.renderGround??course.ground;
+    const terrainField=view&&sampleTerrain(b,course.playBounds,unit,renderGround,6,view.detailBounds);
     const visuals=createVisuals({gl,uniform:uniforms,draw,buffer:upload,mobile:()=>mobile,
-        ground:course.ground,surface:course.surface,greenBounds:course.greenBounds??course.bounds});
+        ground:course.ground,surface:course.surface,greenBounds:course.greenBounds??course.bounds,
+        gridGround:terrainField?.height,release:mesh=>gl.deleteBuffer(mesh.handle)});
     const {triangle,quad,disk,ellipsoid:sphere}=visuals;
     function box(mesh,x,y,z,w,h,d,color){
         const a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],c=[x+w/2,y,z+d/2],e=[x-w/2,y,z+d/2];
@@ -175,8 +179,6 @@ export function createRenderer(canvas,course,atlas,view){
     }
     const terrain=[],scenery=[];
     const custom=view?undefined:course.meshes?.(visuals);
-    const unit=course.renderStep??1.15;
-    const renderGround=view?.ground??course.renderGround??course.ground;
     const sceneryLayout=view?.scenery??course.scenery;
     const sceneryGround=course.ground;
     if(!view&&!custom){
@@ -263,7 +265,7 @@ export function createRenderer(canvas,course,atlas,view){
             }
         }
     }
-    const tiles=view&&Array.from(terrainTiles(b,course.playBounds,unit,renderGround,6,view.detailBounds),({vertices,indices,center,radius})=>{
+    const tiles=terrainField&&Array.from(meshTerrain(terrainField),({vertices,indices,center,radius})=>{
         const handle=upload(vertices).handle,elements=gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,elements);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
@@ -288,7 +290,7 @@ export function createRenderer(canvas,course,atlas,view){
             gl.drawElements(gl.TRIANGLES,buffer.count,gl.UNSIGNED_SHORT,0);
         }else gl.drawArrays(gl.TRIANGLES,0,buffer.count);
     }
-    function frame({eye,target,ball,pin,aim,trail=[],greenGrid=false,time=0,flying=false,readOpacity=null,selectedTarget=null,drone=false}){
+    function frame({eye,target,ball,pin,aim,trail=[],greenGrid=false,gridRegion,time=0,flying=false,readOpacity=null,selectedTarget=null,drone=false}){
         const ratio=Math.min(devicePixelRatio||1,1.5);
         const width=Math.max(1,Math.round(canvas.clientWidth*ratio)),height=Math.max(1,Math.round(canvas.clientHeight*ratio));
         if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
@@ -325,7 +327,7 @@ export function createRenderer(canvas,course,atlas,view){
             gl.uniform1f(uniforms.opacity,1);gl.depthMask(true);gl.disable(gl.BLEND);
         }
         visuals.drawFrame({pin,ball,aim,trail,flying,right,
-            gridTick:greenGrid?Math.floor(time/50):null,readOpacity});
+            gridTick:greenGrid?Math.floor(time/50):null,readOpacity,gridRegion});
     }
     function project(point){
         if(!camera)return null;

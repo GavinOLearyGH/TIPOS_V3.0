@@ -1,7 +1,7 @@
 import {ballRadius,cupRadius,clamp,mix} from './physics.mjs';
 
 // Canonical Hole 6 ball, cup, flag, putting grid and flyover green read.
-export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,greenBounds}){
+export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,greenBounds,gridGround=ground,release}){
     function triangle(mesh,a,b,c,color){
         for(const p of [a,b,c])mesh.push(...p,...color);
     }
@@ -28,30 +28,31 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
         quad(mesh,[x-width,bottom,z],[x+width,bottom,z],[x+width,bottom+height,z],[x-width,bottom+height,z],shade);
         quad(mesh,[x,bottom,z-width],[x,bottom,z+width],[x,bottom+height,z+width],[x,bottom+height,z-width],shade);
     }
-    function greenLine(mesh,x,z,dx,dz,halfWidth,height,shade){
+    function greenLine(mesh,x,z,dx,dz,halfWidth,height,shade,elevation=ground){
         const size=Math.hypot(dx,dz),sideX=-dz/size*halfWidth,sideZ=dx/size*halfWidth;
         const point=(t,side)=>{
             const px=x+t*dx+side*sideX,pz=z+t*dz+side*sideZ;
-            return [px,ground(px,pz)+height,pz];
+            return [px,elevation(px,pz)+height,pz];
         };
         quad(mesh,point(0,-1),point(0,1),point(1,1),point(1,-1),shade);
     }
-    function makePuttingGrid(){
-        const {minX,maxX,minZ,maxZ}=greenBounds;
+    function makePuttingGrid(region){
+        const {minX,maxX,minZ,maxZ}=region?.bounds??greenBounds;
+        const elevation=region?gridGround:ground,rise=region ? .04 : .018;
         const spacing=.5,cells=4,mesh=[],streams=[],sample=.07;
         const x0=Math.floor(minX/spacing);
         const x1=Math.ceil(maxX/spacing);
         const z0=Math.floor(minZ/spacing);
         const z1=Math.ceil(maxZ/spacing);
-        const onGreen=(x,z)=>surface(x,z)==='green';
+        const onGreen=region?.contains??((x,z)=>surface(x,z)==='green');
         const lineColor=[.50,.64,.35];
         for(let i=x0;i<=x1;i++)for(let j=z0;j<=z1;j++){
             const row=i%cells===0,col=j%cells===0;
             if(!row&&!col)continue;
             const x=i*spacing,z=j*spacing;
             if(!onGreen(x,z))continue;
-            if(col&&onGreen(x+spacing,z))greenLine(mesh,x,z,spacing,0,.018,.018,lineColor);
-            if(row&&onGreen(x,z+spacing))greenLine(mesh,x,z,0,spacing,.018,.018,lineColor);
+            if(col&&onGreen(x+spacing,z))greenLine(mesh,x,z,spacing,0,.018,rise,lineColor,elevation);
+            if(row&&onGreen(x,z+spacing))greenLine(mesh,x,z,0,spacing,.018,rise,lineColor,elevation);
             if(!row||!col)continue;
             const gx=(ground(x+sample,z)-ground(x-sample,z))/(2*sample);
             const gz=(ground(x,z+sample)-ground(x,z-sample))/(2*sample);
@@ -68,8 +69,7 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
     }
     function drawGreenRead(tick,opacity){
         const arrows=[];
-        puttingGrid??=makePuttingGrid();
-        for(const {x,z,dx,dz,preview,period,phase} of puttingGrid.streams){
+        for(const {x,z,dx,dz,preview,period,phase} of getPuttingGrid().streams){
             if(!preview)continue;
             const t=(tick/period+phase)%1,span=(t-.5)*.9;
             const ax=x+span*dx,az=z+span*dz;
@@ -88,17 +88,25 @@ export function createVisuals({gl,uniform,draw,buffer,mobile,ground,surface,gree
         gl.uniform1f(uniform.opacity,1);
         gl.disable(gl.BLEND);
     }
-    let puttingGrid;
-    function drawFrame({pin,ball,aim,trail=[],flying=false,right=[0,0,1],gridTick=null,readOpacity=null}){
+    let puttingGrid,puttingRegion;
+    function getPuttingGrid(region){
+        if(!puttingGrid||region!==puttingRegion){
+            if(puttingGrid)release?.(puttingGrid.mesh);
+            puttingGrid=makePuttingGrid(region);
+            puttingRegion=region;
+        }
+        return puttingGrid;
+    }
+    function drawFrame({pin,ball,aim,trail=[],flying=false,right=[0,0,1],gridTick=null,readOpacity=null,gridRegion}){
         const moving=[],base=pin?ground(pin.x,pin.z):0;
         if(gridTick!==null&&readOpacity===null){
-            puttingGrid??=makePuttingGrid();
-            draw(puttingGrid.mesh,0);
-            for(const {x,z,dx,dz,period,phase} of puttingGrid.streams){
+            const grid=getPuttingGrid(gridRegion);
+            draw(grid.mesh,0);
+            for(const {x,z,dx,dz,period,phase} of grid.streams){
                 const t=(gridTick/period+phase)%1;
                 const span=(t-.5)*1.03,light=Math.sin(Math.PI*t);
                 const shade=[mix(.54,.98,light),mix(.67,1,light),mix(.37,.76,light)];
-                greenLine(moving,x+span*dx,z+span*dz,dx*.13,dz*.13,.025,.026,shade);
+                greenLine(moving,x+span*dx,z+span*dz,dx*.13,dz*.13,.025,gridRegion ? .05 : .026,shade,gridRegion?gridGround:ground);
             }
         }
         const reading=readOpacity!==null;

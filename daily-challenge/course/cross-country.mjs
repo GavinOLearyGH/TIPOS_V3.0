@@ -59,14 +59,17 @@ export function openPlayTarget(course,view,number){
     const pin={...onLayer(view.layers,number,center),id:'hole-'+number};
     const green=geometryPath(shapes.green);
     const {a,b,x,z}=layer.transform,unit=plan.metresPerUnit;
-    const outline=green.flatMap(path=>path.filter((_,i)=>i%3===0||i===path.length-1).map(([px,pz])=>{
-        const point=onLayer(view.layers,number,{x:px*unit,z:pz*unit});
-        return {...point,y:course.ground(point.x,point.z)+.1};
-    }));
-    return {number,pin,outline,onGreen(point){
-        const dx=point.x-x,dz=point.z-z;
+    const projected=green.map(path=>path.map(([px,pz])=>onLayer(view.layers,number,{x:px*unit,z:pz*unit})));
+    const points=projected.flat(),xs=points.map(point=>point.x),zs=points.map(point=>point.z);
+    const bounds={minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};
+    const outline=projected.flatMap(path=>path.filter((_,i)=>i%3===0||i===path.length-1).map(point=>({
+        ...point,y:course.ground(point.x,point.z)+.1
+    })));
+    const contains=(px,pz)=>{
+        const dx=px-x,dz=pz-z;
         return containsPoint(green,(a*dx+b*dz)/unit,(-b*dx+a*dz)/unit);
-    }};
+    };
+    return {number,pin,outline,gridRegion:{bounds,contains},onGreen:point=>contains(point.x,point.z)};
 }
 
 export function droneCamera(ball,pin,ground,aspect){
