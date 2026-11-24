@@ -649,17 +649,18 @@ async function finishOfficialShot(){
 }
 $('share-challenge').onclick=async()=>{
     if(officialSession?.status!=='completed')return;
-    const invitation=challengeShare(officialSession,appRoot());
-    if(!invitation)return;
+    const message=challengeShare(officialSession,appRoot());
+    if(!message)return;
+    // Messages can drop the caption when the URL is supplied separately.
+    const shareData={text:message};
     const status=$('friend-share-status'),manual=$('friend-copy');
     status.textContent='';manual.hidden=true;
     try{
-        if(navigator.share&&(!navigator.canShare||navigator.canShare(invitation))){
-            await navigator.share(invitation);
+        if(navigator.share&&(!navigator.canShare||navigator.canShare(shareData))){
+            await navigator.share(shareData);
             return;
         }
     }catch(error){if(error.name==='AbortError')return;}
-    const message=invitation.text+'\n'+invitation.url;
     try{
         await navigator.clipboard.writeText(message);
         status.textContent='Challenge invitation copied.';

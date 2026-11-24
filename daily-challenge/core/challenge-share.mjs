@@ -37,5 +37,5 @@ export function challengeShare(session,root){
     if(!invite)return null;
     const {name,lead}=describeChallenge(invite);
     const url=new URL(root);url.search=params;
-    return {title:name+' · The Irish Par',text:lead+' in the '+name+' at Springhaven. Can you beat it?',url:url.href};
+    return lead+' in the '+name+' at Springhaven. Can you beat it?\n'+url.href;
 }
