@@ -157,7 +157,7 @@ function surfaceGrade(surface,ground,x,z,floor,dx,dz,lie){
     const low=behind?ground(x-dx*sample,z-dz*sample):floor;
     return clamp((high-low)/(sample*(Number(ahead)+Number(behind))),-4,4);
 }
-function landOnGrass(ball,lie,surface,ground,floor){
+function landOnGrass(ball,lie,surface,ground,floor,softness){
     const {x,z,vx,vy,vz}=ball;
     const gx=surfaceGrade(surface,ground,x,z,floor,1,0,lie);
     const gz=surfaceGrade(surface,ground,x,z,floor,0,1,lie);
@@ -174,7 +174,7 @@ function landOnGrass(ball,lie,surface,ground,floor){
     // Iron release is calibrated separately from carry and green checking.
     const release=lie==='fairway'?(ball.grassRelease??1):1;
     const retained=Math.min(1,material.forward*(ball.roll||1)*mix(.90,.49,check)*release);
-    const rebound=impact*material.bounce*mix(1,.76,check);
+    const rebound=impact*material.bounce*mix(1,.76,check)*(1-.28*softness);
     ball.vx=tx*retained+nx*rebound;
     ball.vz=tz*retained+nz*rebound;
     ball.vy=ty*retained+ny*rebound;
@@ -183,7 +183,8 @@ function landOnGrass(ball,lie,surface,ground,floor){
     ball.spin=spin*.60;
     if(rebound*normalLength<.48){ball.mode='roll';ball.vy=0;}
 }
-function land(ball,lie,surface,ground,from,floor){
+function land(ball,lie,surface,ground,from,floor,wetness){
+    const softness=ball.firstContact?0:wetness;
     ball.firstContact??={x:ball.x,y:floor,z:ball.z,vx:ball.vx,vy:ball.vy,vz:ball.vz};
     const material=surfaces[lie]||surfaces.rough;
     const horizontal=Math.hypot(ball.vx,ball.vz);
@@ -211,6 +212,8 @@ function land(ball,lie,surface,ground,from,floor){
         const check=steep*clamp(.20+.75*spin,0,1);
         forward*=1+.16*shallow-.57*check;
         bounce*=1-.30*check;
+        bounce*=1-.28*softness;
+        forward*=1-.12*softness;
         if(firstGreen&&spin>.98&&impactDescent>.90&&horizontal>=2&&horizontal<20){
             // A steep, high-spin wedge may grip enough to come back a short distance.
             const grip=ease((spin-.98)/.18)*ease((impactDescent-.90)/.24);
@@ -229,7 +232,7 @@ function land(ball,lie,surface,ground,from,floor){
         }
     }
     if(['tee','fairway','rough','surround'].includes(lie)&&!hitBunkerLip){
-        landOnGrass(ball,lie,surface,ground,floor);
+        landOnGrass(ball,lie,surface,ground,floor,softness);
         return;
     }
     const retained=Math.min(1,forward*(ball.roll||1));
@@ -302,7 +305,7 @@ function advance(ball, course, settings, dt=stepTime){
     const {ground,surface,wall=[],waterHeight=-Infinity,bridgeHeight,terrainGround,terrainSurface}=course;
     const bounds=course.bounds;
     const insideBounds=(x,z)=>x>=bounds.minX&&x<=bounds.maxX&&z>=bounds.minZ&&z<=bounds.maxZ;
-    const {pin,wind,greenSpeed}=settings;
+    const {pin,wind,greenSpeed,wetness=0}=settings;
     const from={x:ball.x,y:ball.y,z:ball.z};
     const deckBefore=bridgeHeight?.(from.x,from.z);
     const rollsUnderDeck=ball.mode==='roll'&&deckBefore!==undefined&&from.y-ballRadius<deckBefore-.025;
@@ -327,7 +330,7 @@ function advance(ball, course, settings, dt=stepTime){
         ball.vz-=7*clamp(gradeZ,-.55,.55)*dt;
         const pace=Math.hypot(ball.vx,ball.vz);
         rollingLie=(rollsUnderDeck?terrainSurface:surface)(ball.x,ball.z);
-        const base=(surfaces[rollingLie]||surfaces.rough).brake;
+        const base=(surfaces[rollingLie]||surfaces.rough).brake*(rollingLie==='fairway'&&!ball.putted?1+.30*wetness:1);
         const remaining=Math.max(0,pace-(rollingLie==='green'?base/greenSpeed:base)*dt);
         if(remaining<.023){ball.mode='rest';return;}
         ball.vx*=remaining/pace;
@@ -412,7 +415,7 @@ function advance(ball, course, settings, dt=stepTime){
         ball.vz*=surfaces[lie].entry;
     }
     if(ball.mode==='air'&&ball.y<=floor+ballRadius){
-        land(ball,lie,lieAt,groundAt,from,floor);
+        land(ball,lie,lieAt,groundAt,from,floor,wetness);
     }
     ball.cupCooldown-=dt;
     if(pin&&ball.putted&&ball.cupExitPending&&

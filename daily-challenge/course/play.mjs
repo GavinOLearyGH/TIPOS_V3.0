@@ -17,6 +17,8 @@ import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
 import {flyoverPath,flyoverCamera} from './flyover.mjs';
 import {crossCountrySelection,createCrossCountryGame,openPlayTarget,droneCamera} from './cross-country.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
+import {precipitationOverlay} from './precipitation.mjs';
+import {turfLabel} from '../core/daily-weather.mjs';
 import {createRenderer,makeAtlas} from '../core/renderer.mjs';
 import {clubs,ballRadius,stepTime,clamp,mix,ease,newBall,estimatePutt} from '../core/physics.mjs';
 
@@ -128,7 +130,11 @@ if(officialSession){
 }
 const practiceAceDay=!officialSession&&!isCrossCountry&&course.number===6?requested.get('practiceAce'):null;
 const practiceAceSetup=practiceAceDay?(read('irish-par-ace:'+practiceAceDay)?.setup??dailyAceSetup(practiceAceDay)):null;
-const dailyWeather=(officialSession?.setup??series?.setup??practiceAceSetup)?.weather;
+const previewSky=requested.get('weather');
+const weatherPreview=!officialSession&&!series&&!practiceAceDay&&!isCrossCountry&&location.hostname.endsWith('.github.io')&&
+    ['rain','snow'].includes(previewSky)?{sky:previewSky,recentPrecipMm:previewSky==='rain'?12:0}:null;
+const dailyWeather=(officialSession?.setup??series?.setup??practiceAceSetup)?.weather??weatherPreview;
+const drawPrecipitation=precipitationOverlay($('weather-effects'),dailyWeather?.sky);
 function applyPracticeAceSetup(){
     const setup=practiceAceSetup;
     weatherSetup=windSetup(setup);setWindAngle(weatherSetup.windAngle);$('wind-speed').value=weatherSetup.mph;
@@ -261,10 +267,12 @@ function startRound(){
     if($('complete').open)$('complete').close();
     if(!officialSession&&!practiceAceDay&&!series?.practiceDay)weatherSetup=windSetup({...weatherSetup,windAngle:$('wind').value,mph:$('wind-speed').value});
     round=officialSession?restoreCompetitionRound(officialSession):createRound(course,{tee:$('tee').value,pin:$('pin').value,windProfile:weatherSetup,windTick:holeWindTick,
-        greenSpeed:Number($('green-speed').value)});
+        greenSpeed:Number($('green-speed').value),dailyWeather});
     const tee=course.tees.find(item=>item.id===$('tee').value);
     $('setup-label').textContent=openPlay?'Hole 1 · '+tee.name+' tee':crossCountry?crossCountry.name+' · '+tee.name+' · '+crossCountry.yards+' yd':
         tee.name+' · '+yards(distance(tee,round.settings.pin))+' yd · '+round.settings.pin.id+' pin';
+    const turf=turfLabel(dailyWeather);
+    if(turf)$('setup-label').textContent+=' · '+turf;
     heading=bearing(round.state.ball,course.aimTarget(round.state.ball,round.settings.pin));
     trail=[];mapTrail=[];eye=null;target=null;accumulator=0;
     $('shot-summary').hidden=true;
@@ -461,6 +469,7 @@ function frame(now){
             y:course.ground(ball.x+Math.cos(heading)*aimLength,ball.z+Math.sin(heading)*aimLength),near}:null,
         readOpacity:view?.readOpacity??null,greenGrid:view?.greenGrid||showGreenGrid&&canReadPutt(),
         gridRegion:openTarget?.gridRegion,flying:active(),drone:Boolean(tour?.drone)});
+    drawPrecipitation?.(now,Boolean(tour?.drone));
     if(tour?.drone)drawDrone();
     const anchor=ready?renderer.project({x:ball.x,y:ball.y+.022,z:ball.z}):null;
     marker('ball-ring',anchor);

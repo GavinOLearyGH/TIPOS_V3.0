@@ -1,3 +1,4 @@
+import {turfWetness} from './daily-weather.mjs';
 import {createWind} from './wind.mjs';
 import {relativeWind} from './wind-setup.mjs';
 import {resolveExecution} from './execution.mjs';
@@ -15,13 +16,13 @@ for(const [name,carry,loft,apex,roll] of [
 export const fullBag=['Driver','3 Wood','4 Hybrid','4 Iron','5 Iron','6 Iron','7 Iron','8 Iron','9 Iron','PW','GW','SW','LW','Putter'];
 
 export function createRound(course,{tee=course.tees[0].id,pin=course.pins[0].id,
-    windDirection=0,windMph=0,greenSpeed=1,windProfile=null,windTick=0}={}){
+    windDirection=0,windMph=0,greenSpeed=1,windProfile=null,windTick=0,dailyWeather}={}){
     const startingTee=course.tees.find(item=>item.id===tee);
     const startingPin=course.pins.find(item=>item.id===pin);
     if(!startingTee||!startingPin)throw Error('Unknown tee or pin');
     const weather=windProfile?createWind(windProfile):null;
     greenSpeed=Number.isFinite(Number(greenSpeed))&&Number(greenSpeed)>0?Number(greenSpeed):1;
-    const settings={pin:{...startingPin},wind:relativeWind(windDirection,windMph,course.bearing??0),greenSpeed};
+    const settings={pin:{...startingPin},wind:relativeWind(windDirection,windMph,course.bearing??0),greenSpeed,wetness:turfWetness(dailyWeather)};
     const initialWindTick=Number(windTick);
     const state={teed:true,ball:newBall(startingTee,course.ground),strokes:0,penalties:0,history:[],complete:false,windTick:Number.isFinite(initialWindTick)?Math.max(0,Math.floor(initialWindTick)):0};
     if(weather)settings.wind=weather.sample(state.windTick*stepTime,course.bearing??0);

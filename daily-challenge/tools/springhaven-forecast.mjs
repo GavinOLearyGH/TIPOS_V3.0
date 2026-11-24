@@ -7,12 +7,32 @@ const directions=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW'
 const pointURL='https://api.weather.gov/points/39.8875,-75.3630';
 const matchesHour=(date,day)=>localDate.format(date)===day&&Number(localHour.format(date))===10;
 
+function gridWindow(validTime){
+    const [start,duration]=validTime.split('/'),ms=Date.parse(start);
+    const [,days='0',hours='0',minutes='0']=duration?.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/)??[];
+    return [ms,ms+((Number(days)*24+Number(hours))*60+Number(minutes))*60000];
+}
+
 function gridValue(grid,time){
-    return grid?.values.find(({validTime})=>{
-        const [start,duration]=validTime.split('/'),ms=Date.parse(start);
-        const [,days='0',hours='0',minutes='0']=duration.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/)??[];
-        return time>=ms&&time<ms+((Number(days)*24+Number(hours))*60+Number(minutes))*60000;
+    return grid?.values?.find(({validTime})=>{
+        const [start,end]=gridWindow(validTime);
+        return time>=start&&time<end;
     })?.value;
+}
+
+function recentPrecipitation(grid,time){
+    if(grid?.uom!=='wmoUnit:mm'||!Array.isArray(grid.values))return null;
+    const since=time-24*3600000;
+    let mm=0,covered=0;
+    for(const {validTime,value} of grid.values){
+        if(!Number.isFinite(value)||value<0)continue;
+        const [start,end]=gridWindow(validTime);
+        const overlap=Math.min(end,time)-Math.max(start,since);
+        if(!(overlap>0))continue;
+        covered+=overlap;
+        mm+=value*overlap/(end-start);
+    }
+    return covered>0?Math.round(mm*10)/10:null;
 }
 
 export function forecastWeather(day,hourly,grid){
@@ -32,7 +52,8 @@ export function forecastWeather(day,hourly,grid){
     const sky=/snow|sleet|flurr/i.test(shortForecast)?'snow':/rain|shower|drizzle|thunder/i.test(shortForecast)?'rain':
         /fog|mist/i.test(shortForecast)?'fog':Number.isFinite(clouds)?clouds>=75?'overcast':clouds>=25?'partly cloudy':'clear':
         /partly|mostly sunny/i.test(shortForecast)?'partly cloudy':/cloud|overcast/i.test(shortForecast)?'overcast':'clear';
-    return {day,source:'NWS',mph,from,gust:Number.isFinite(gustMph)?Math.max(mph,Math.round(gustMph)):null,
+    const precipitation=recentPrecipitation(grid?.quantitativePrecipitation,time);
+    return {day,source:'NWS',mph,from,...(precipitation===null?{}:{recentPrecipMm:precipitation}),gust:Number.isFinite(gustMph)?Math.max(mph,Math.round(gustMph)):null,
         temperature:temperatureUnit==='C'?Math.round(temperature*9/5+32):temperature,sky};
 }
 

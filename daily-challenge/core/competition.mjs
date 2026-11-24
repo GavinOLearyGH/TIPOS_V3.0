@@ -22,7 +22,7 @@ export function dailyLineup(day,kind='three'){
 }
 function scheduledRound(number,setup,tick=0){
  if(!courses.has(number))courses.set(number,createConnectedCourse(number));
- return createRound(courses.get(number),{tee:roundTee(setup.tee,number),greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick});
+ return createRound(courses.get(number),{tee:roundTee(setup.tee,number),greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick,dailyWeather:setup.weather});
 }
 const formatter=new Intl.DateTimeFormat('en',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
 export function dayKey(now=new Date()){
@@ -98,7 +98,7 @@ function newAceCompetition(day,build,id,weather){
 function aceRound(setup,tick=0){
  const course=createConnectedCourse(6),pin=setup.cup?'daily':setup.pin;
  if(setup.cup)course.pins=[...course.pins,{id:'daily',...setup.cup}];
- return createRound(course,{tee:setup.tee,pin,greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick});
+ return createRound(course,{tee:setup.tee,pin,greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick,dailyWeather:setup.weather});
 }
 function applyAceShot(original,shot){
  if(original.version!=='ace-v2'||original.status!=='in-progress'||shot.hole!==6)throw Error('This official shot is already complete');
