@@ -105,3 +105,9 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 .drone-view .game-hud>:not(.view-tools),.drone-view #face-pin{visibility:hidden}
 .drone-view .view-tools{position:absolute;right:0;bottom:0;display:block}
 .drone-view #flyover{width:auto;padding-inline:10px}
+
+#friend-share{margin:18px 0}
+#share-challenge{width:100%}
+#friend-share-status{font-size:13px;color:var(--muted);margin:6px 0}
+#friend-share-status:empty{display:none}
+#friend-copy-text{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}

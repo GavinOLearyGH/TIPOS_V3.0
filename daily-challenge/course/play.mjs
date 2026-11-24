@@ -2,6 +2,7 @@ import {drawShotMap,updatePowerRail} from '../core/shot-hud.mjs';
 import {recommendClub,clubLie} from '../core/club-lie.mjs';
 import {gameLinks} from '../core/navigation.mjs';
 import {dayKey,read,write,startOfficial,submitOfficialShot,publishThree,officialURL,appRoot,totalScore} from '../core/daily-client.mjs';
+import {challengeShare} from '../core/challenge-share.mjs';
 import {restoreCompetitionRound,dailyAceSetup} from '../core/competition.mjs';
 import {turnHeading} from '../core/view-controls.mjs';
 import {randomWindSetup,windSetup,windReading} from '../core/wind.mjs';
@@ -570,6 +571,7 @@ function startDailyPractice(){
     location.href=new URL('course/play.html',appRoot()).href+'?'+new URLSearchParams({hole:roundHoles(officialSession)[0],series:id,...setup,build:buildId});
 }
 function tidyPracticeResult(hasNext,seriesComplete){
+    $('friend-share').hidden=true;
     $('result-kind').textContent='PRACTICE RESULT';$('official-result').hidden=true;$('official-board').hidden=true;$('practice-home').hidden=openPlay;
     $('choose-open-target').hidden=!openPlay;
     $('replay').hidden=seriesComplete;$('replay').textContent=openPlay?'Back to first tee':crossCountry?'Replay route':'Replay hole';
@@ -605,6 +607,9 @@ function showOfficialDialog(){
     $('series-replay').hidden=$('series-new').hidden=true;$('series-best').textContent='';
     $('series-card').replaceChildren();
     if(!aceMode)showScorecard(officialSession);
+    $('friend-share').hidden=!completed;
+    $('friend-copy').hidden=true;
+    $('friend-share-status').textContent='';
     $('official-result').hidden=!completed;
     $('official-detail').hidden=aceMode;
     $('official-detail').textContent='Hole '+closingHole+' first tee shot · Tiebreaker: '+(officialSession.tieValid?(officialSession.tieMM===0?'Hole in one':(officialSession.tieMM/304.8).toFixed(1)+' ft'):'Penalty · behind in-play results');
@@ -642,6 +647,30 @@ async function finishOfficialShot(){
     }catch(error){$('status').textContent=error.message+' Retry saving before continuing.';$('retry-official').hidden=false;}
     finally{officialBusy=false;updateHUD();updatePower();drawMap();}
 }
+$('share-challenge').onclick=async()=>{
+    if(officialSession?.status!=='completed')return;
+    const invitation=challengeShare(officialSession,appRoot());
+    if(!invitation)return;
+    const status=$('friend-share-status'),manual=$('friend-copy');
+    status.textContent='';manual.hidden=true;
+    try{
+        if(navigator.share&&(!navigator.canShare||navigator.canShare(invitation))){
+            await navigator.share(invitation);
+            return;
+        }
+    }catch(error){if(error.name==='AbortError')return;}
+    const message=invitation.text+'\n'+invitation.url;
+    try{
+        await navigator.clipboard.writeText(message);
+        status.textContent='Challenge invitation copied.';
+    }catch{
+        const text=$('friend-copy-text');
+        text.value=message;
+        manual.hidden=false;
+        text.focus();
+        text.select();
+    }
+};
 $('retry-official').onclick=finishOfficialShot;$('review-official').onclick=showOfficialDialog;
 $('publish-official').onclick=async()=>{
     $('publish-official').disabled=true;
