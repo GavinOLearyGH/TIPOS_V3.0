@@ -123,6 +123,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
     --club-gold-light:#f6e3ba;
     --club-gold-text:#805b20;
     --club-on-gold:#152238;
+    --club-soft-blue:#ecf1f7;
     --bg:#f6f6f3;
     --panel:#fff;
     --line:#cbd2db;
@@ -136,7 +137,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
     color:var(--club-on-gold);
     border-color:var(--club-gold);
 }
-[data-club-theme="springhaven"] :is(.intro > .brand,.hole-number,dialog .brand){color:var(--club-label,var(--club-gold-text))}
+[data-club-theme="springhaven"] :is(.intro > .brand,.hole-number,dialog .brand){color:var(--club-gold-text)}
 [data-club-theme="springhaven"] :is(.game-hud,#strike-panel,#tour-label){
     color:#fff;
     --gold:var(--club-gold-light);
@@ -152,27 +153,16 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
     color:#fff;
 }
 [data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])){
-    color-scheme:dark;
-    --club-label:var(--club-gold-light);
-    --bg:#142b50;
-    --panel:var(--club-blue);
-    --line:#8297b4;
-    --ink:#fff;
-    --muted:#dce5f3;
-    --gold:var(--club-gold-light);
+    --bg:#fff;
+    --panel:var(--club-soft-blue);
 }
-[data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])) .primary,
-[data-club-theme="springhaven"] #complete:has(#friend-share:not([hidden])) .actions a.button{
-    background:transparent;
+[data-club-theme="springhaven"] #complete #publish-official{
+    background:var(--club-blue);
     color:#fff;
-    border:1px solid var(--line);
+    border-color:var(--club-blue);
 }
 [data-club-theme="springhaven"] #complete #share-challenge{
     background:var(--club-gold);
     color:var(--club-on-gold);
     border-color:var(--club-gold);
-}
-[data-club-theme="springhaven"] #complete #official-name{
-    background:var(--bg);
-    color:var(--ink);
 }
