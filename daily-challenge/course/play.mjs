@@ -31,7 +31,8 @@ if(officialDay){
     try{
         if(officialDay!==dayKey())throw Error('This daily challenge has closed. Return Home to play today.');
         officialSession=await startOfficial(mode);
-        if(officialSession.build!==buildId){location.replace(officialURL(officialSession));throw Error('Opening your saved round version…');}
+        // Completed rounds can use the current result screen; live shots stay pinned.
+        if(officialSession.status!=='completed'&&officialSession.build!==buildId){location.replace(officialURL(officialSession));throw Error('Opening your saved round version…');}
     }catch(error){$('render-error').hidden=false;$('render-error').textContent=error.message;$('stage').hidden=true;throw error;}
 }
 const crossCountry=isCrossCountry&&!openPlay?crossCountrySelection(requested.get('from'),requested.get('tee'),requested.get('green')):null;
