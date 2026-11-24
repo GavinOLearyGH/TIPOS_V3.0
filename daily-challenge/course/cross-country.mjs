@@ -51,3 +51,32 @@ export function createCrossCountryGame(route){
         return blend===0?exact:exact+(view.ground(x,z)-exact)*blend;
     }}};
 }
+
+export function openPlayTarget(course,view,number){
+    const layer=view.layers.find(item=>item.course.number===number);
+    const {pins,shapes,plan}=layer.course;
+    const center=pins.find(pin=>pin.id==='center'||pin.id==='middle')??pins[0];
+    const pin={...onLayer(view.layers,number,center),id:'hole-'+number};
+    const green=geometryPath(shapes.green);
+    const {a,b,x,z}=layer.transform,unit=plan.metresPerUnit;
+    const outline=green.flatMap(path=>path.filter((_,i)=>i%3===0||i===path.length-1).map(([px,pz])=>{
+        const point=onLayer(view.layers,number,{x:px*unit,z:pz*unit});
+        return {...point,y:course.ground(point.x,point.z)+.1};
+    }));
+    return {number,pin,outline,onGreen(point){
+        const dx=point.x-x,dz=point.z-z;
+        return containsPoint(green,(a*dx+b*dz)/unit,(-b*dx+a*dz)/unit);
+    }};
+}
+
+export function droneCamera(ball,pin,ground,aspect){
+    const dx=pin.x-ball.x,dz=pin.z-ball.z,span=Math.hypot(dx,dz);
+    const heading=Math.atan2(dz,dx);
+    const x=(ball.x+pin.x)/2,z=(ball.z+pin.z)/2;
+    const base=Math.max(ground(ball.x,ball.z),ground(x,z),ground(pin.x,pin.z));
+    const height=Math.max(34/Math.min(1,aspect),span*1.18+20);
+    return {
+        eye:[x-Math.cos(heading)*height*.42,base+height,z-Math.sin(heading)*height*.42],
+        target:[x,base,z]
+    };
+}

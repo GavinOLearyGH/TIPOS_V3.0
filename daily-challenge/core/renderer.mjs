@@ -120,15 +120,15 @@ export function createRenderer(canvas,course,atlas,view){
     const b=view?.bounds??course.atlasBounds??course.bounds;
     const vertex=`
         attribute vec3 a,c;uniform vec3 eye,right,up,forward;
-        uniform float ratio;varying vec3 world,color;varying float depth;
+        uniform float ratio,depthScale;varying vec3 world,color;varying float depth;
         void main(){
             vec3 d=a-eye;float z=dot(d,forward);
-            gl_Position=vec4(dot(d,right)*1.72/ratio,dot(d,up)*1.72,z*${view?"1.0002":"1.0003"}-.14,z);
+            gl_Position=vec4(dot(d,right)*1.72/ratio,dot(d,up)*1.72,z*depthScale-.14,z);
             world=a;color=c;depth=z;
         }`;
     const fragment=`
         precision highp float;varying vec3 world,color;varying float depth;
-        uniform sampler2D atlas;uniform float kind,opacity;
+        uniform sampler2D atlas;uniform float kind,opacity,droneView;
         void main(){
             vec3 ink=color;
             if(kind>.5){
@@ -139,7 +139,7 @@ export function createRenderer(canvas,course,atlas,view){
                 if(kind>1.5&&kind<3.5){if(kind<2.5&&!pond)discard;float ripple=sin(world.x*5.4+sin(world.z*3.6))*sin(world.z*5.4)*.035;ink=vec3(.22,.45,.53)+ripple;}
                 else{if(${course.meshes||view?.pond?'true':'false'}&&kind<1.5&&pond)discard;if(pond)sampleColor=vec3(.36,.49,.30);ink=sampleColor*color*(.95+grain);}
             }
-            gl_FragColor=vec4(mix(ink,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)),opacity);
+            gl_FragColor=vec4(mix(ink,vec3(.73,.82,.84),clamp((depth-115.)/180.,0.,.48)*(1.-droneView*.85)),opacity);
         }`;
     const program=gl.createProgram();
     for(const [kind,source] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){
@@ -150,7 +150,7 @@ export function createRenderer(canvas,course,atlas,view){
     gl.linkProgram(program);
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
     gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
-    const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','kind','opacity'].map(name=>[name,gl.getUniformLocation(program,name)]));
+    const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','depthScale','droneView','kind','opacity'].map(name=>[name,gl.getUniformLocation(program,name)]));
     gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(uniforms.opacity,1);
     const attributes=['a','c'].map(name=>gl.getAttribLocation(program,name));
     const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
@@ -288,15 +288,17 @@ export function createRenderer(canvas,course,atlas,view){
             gl.drawElements(gl.TRIANGLES,buffer.count,gl.UNSIGNED_SHORT,0);
         }else gl.drawArrays(gl.TRIANGLES,0,buffer.count);
     }
-    function frame({eye,target,ball,pin,aim,trail=[],greenGrid=false,time=0,flying=false,readOpacity=null,selectedTarget=null}){
+    function frame({eye,target,ball,pin,aim,trail=[],greenGrid=false,time=0,flying=false,readOpacity=null,selectedTarget=null,drone=false}){
         const ratio=Math.min(devicePixelRatio||1,1.5);
         const width=Math.max(1,Math.round(canvas.clientWidth*ratio)),height=Math.max(1,Math.round(canvas.clientHeight*ratio));
         if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
         const forward=normalize(target.map((n,i)=>n-eye[i])),right=normalize(cross(forward,[0,1,0])),up=cross(right,forward);
-        camera={eye,forward,right,up,ratio:width/height};
+        camera={eye,forward,right,up,ratio:width/height,far:drone?1800:700};
         gl.viewport(0,0,width,height);
         for(const name of ['eye','forward','right','up'])gl.uniform3fv(uniforms[name],camera[name]);
         gl.uniform1f(uniforms.ratio,camera.ratio);
+        gl.uniform1f(uniforms.droneView,Number(drone));
+        gl.uniform1f(uniforms.depthScale,drone?1.00007:view?1.0002:1.0003);
         gl.clearColor(.58,.76,.83,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
         if(tiles){for(const tile of tiles)if(terrainVisible(tile,camera))draw(tile,1);}
         else if(customBuffers){for(const item of customBuffers)draw(item.buffer,item.kind);}

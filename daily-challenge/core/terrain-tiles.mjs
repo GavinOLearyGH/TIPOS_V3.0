@@ -45,10 +45,10 @@ export function* terrainTiles(viewBounds,playBounds,step,ground,outerStep=3.6,de
     }
 }
 
-export function terrainVisible({center,radius},{eye,forward,right,up,ratio}){
+export function terrainVisible({center,radius},{eye,forward,right,up,ratio,far=700}){
     const x=center[0]-eye[0],y=center[1]-eye[1],z=center[2]-eye[2];
     const depth=x*forward[0]+y*forward[1]+z*forward[2],horizontal=ratio/1.72,vertical=1/1.72;
-    if(depth+radius<.07||depth-radius>700)return false;
+    if(depth+radius<.07||depth-radius>far)return false;
     return Math.abs(x*right[0]+y*right[1]+z*right[2])<=depth*horizontal+radius*Math.hypot(1,horizontal)&&
         Math.abs(x*up[0]+y*up[1]+z*up[2])<=depth*vertical+radius*Math.hypot(1,vertical);
 }
