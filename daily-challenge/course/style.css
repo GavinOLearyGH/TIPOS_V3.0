@@ -119,7 +119,6 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 :root[data-club-theme="springhaven"]{
     color-scheme:light;
     --club-blue:#1c3a69;
-    --club-burgundy:#5c2835;
     --club-gold:#c79647;
     --club-gold-light:#f6e3ba;
     --club-on-gold:#152238;
@@ -128,9 +127,9 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
     --line:#cbd2db;
     --ink:var(--club-blue);
     --muted:#414f65;
-    --gold:var(--club-burgundy);
+    --gold:var(--club-blue);
 }
-[data-club-theme="springhaven"] .primary,
+[data-club-theme="springhaven"] :is(.primary,.button.primary),
 [data-club-theme="springhaven"] .actions a.button{
     background:var(--club-blue);
     color:#fff;
