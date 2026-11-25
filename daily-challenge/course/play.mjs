@@ -275,7 +275,7 @@ function startRound(){
     if(turf)$('setup-label').textContent+=' · '+turf;
     heading=bearing(round.state.ball,course.aimTarget(round.state.ball,round.settings.pin));
     trail=[];mapTrail=[];eye=null;target=null;accumulator=0;
-    $('shot-summary').hidden=true;
+    showLastShot(round.state.history.at(-1),round.state.history.length,Boolean(officialSession));
     suggestClub();updatePower();updateHUD();drawMap();
     $('status').textContent='Ready. Pull back from the ball to play your tee shot.';
 }
@@ -292,21 +292,25 @@ function shoot(){
     cancel();
     if(!played){if(officialSession){pendingShot=null;try{localStorage.removeItem(pendingKey());}catch{}}return;}
     trail=[];mapTrail=[{...round.state.ball}];lastTrail=0;accumulator=0;
-    $('shot-summary').hidden=true;
+
     $('status').textContent='Ball in play.';
     updateHUD();
+}
+function showLastShot(last,count,saved=false){
+    const metrics=last?.metrics;
+    const unit=metrics?.total<10?.3048:.9144,suffix=unit===.3048?' ft':' yd';
+    for(const [id,key] of [['shot-carry','carry'],['shot-roll','bounceRoll'],['shot-total','total']]){
+        $(id).textContent=metrics?(metrics[key]/unit).toFixed(1)+suffix:'—';
+    }
+    if(!metrics){$('shot-summary-detail').textContent='Hit a shot to see your data.';return;}
+    const outcome={out:'Out of bounds · 1 penalty stroke',water:'Water · 1 penalty stroke',holed:'Holed'}[last.outcome];
+    $('shot-summary-detail').textContent=['Shot '+count,metrics.club,Math.round(metrics.power*100)+'%',metrics.contact,
+        'From '+(metrics.startingLieLabel??lieNames[metrics.startingLie]),outcome,saved?'Saved':null].filter(Boolean).join(' · ');
 }
 function finishShot(){
     if(officialSession){finishOfficialShot();return;}
     const ball=round.state.ball,last=round.state.history.at(-1);
-    const metrics=last.metrics,unit=metrics.total<10?.3048:.9144,suffix=unit===.3048?' ft':' yd';
-    for(const [id,key] of [['shot-carry','carry'],['shot-roll','bounceRoll'],['shot-total','total']]){
-        $(id).textContent=(metrics[key]/unit).toFixed(1)+suffix;
-    }
-    $('shot-summary-title').textContent='Shot '+round.state.history.length+' · '+metrics.club;
-    $('shot-summary-detail').textContent=Math.round(metrics.power*100)+'% · '+metrics.contact+' · From '+(metrics.startingLieLabel??lieNames[metrics.startingLie])+
-        (last.outcome==='out'?' · Out of bounds':last.outcome==='water'?' · Water':last.outcome==='holed'?' · Holed':'');
-    $('shot-summary').hidden=false;
+    showLastShot(last,round.state.history.length);
     heading=bearing(ball,course.aimTarget(ball,round.settings.pin));
     trail=[];eye=null;target=null;
     if(round.state.complete){
@@ -338,7 +342,7 @@ function finishShot(){
         $('complete').showModal();(! $('next-hole').hidden?$('next-hole'):series&&seriesScore(series).complete?$('series-replay'):$('replay')).focus();
     }else{
         const penalty=['out','water'].includes(last.outcome);
-        $('status').textContent=penalty?(last.outcome==='out'?'Out of bounds':'Water')+' · One penalty stroke. Replay from the previous position.':
+        $('status').textContent=penalty?'Replay from the previous position.':
             (ball.obstacle?'Hit '+ball.obstacle+'. ':'')+
             (distance(ball,round.settings.pin)<27?feet(distance(ball,round.settings.pin))+' ft':yards(distance(ball,round.settings.pin))+' yd')+
             ' to the cup · '+(course.lieAt?.(ball.x,ball.z)?.label??lieNames[course.surface(ball.x,ball.z)])+'.';
@@ -541,7 +545,7 @@ $('cross-target').onchange=()=>{
     Object.assign(state,{complete:false,strokes:0,penalties:0,history:[]});
     heading=bearing(state.ball,openTarget.pin);
     trail=[];mapTrail=[];eye=null;target=null;
-    $('shot-summary').hidden=true;
+    showLastShot();
     $('status').textContent='Now targeting Hole '+number+'.';
     suggestClub();updateHUD();updatePower();
 };
@@ -650,17 +654,13 @@ async function finishOfficialShot(){
     try{
         const next=await submitOfficialShot(officialSession,pendingShot);officialSession=next;pendingShot=null;
         try{localStorage.removeItem(pendingKey());}catch{}
+        const history=next.hole===course.number?next.state.history:round.state.history;
+        showLastShot(history.at(-1),history.length,true);
         if(next.hole!==course.number||next.status==='completed'){
             round.state.complete=true;showOfficialDialog();
             $('status').textContent=next.status==='completed'?(next.kind==='ace'?'Official shot complete · Streak kept.':'Official round complete · Streak kept.'):'Hole complete · Saved. Continue when ready.';
         }else{
             round=restoreCompetitionRound(next);heading=bearing(round.state.ball,course.aimTarget(round.state.ball,round.settings.pin));
-            const metrics=round.state.history.at(-1)?.metrics;
-            if(metrics){$('shot-summary-title').textContent='Official shot '+round.state.history.length+' · '+metrics.club;
-                $('shot-summary-detail').textContent=metrics.contact+' · Saved';
-                const unit=metrics.total<10?.3048:.9144,suffix=metrics.total<10?' ft':' yd';
-                for(const [id,key] of [['shot-carry','carry'],['shot-roll','bounceRoll'],['shot-total','total']])$(id).textContent=(metrics[key]/unit).toFixed(1)+suffix;
-                $('shot-summary').hidden=false;}
             trail=[];eye=null;target=null;suggestClub();$('status').textContent='Official shot saved. Ready for your next shot.';
         }
     }catch(error){$('status').textContent=error.message+' Retry saving before continuing.';$('retry-official').hidden=false;}
