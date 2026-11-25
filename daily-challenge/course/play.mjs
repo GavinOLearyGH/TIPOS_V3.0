@@ -614,7 +614,7 @@ function showScorecard(session){
     const holes=roundHoles(session);
     if(holes.length===9){
         table.className='play-nine-card';
-        addRow(head,['Hole','Par','Strokes','Round score'],'th');
+        addRow(head,['Hole','Par','Strokes','Hole score'],'th');
         let relative=0,total=0,lastHole;
         for(const hole of holes){
             const par=holeByNumber(hole).par,result=session.results.find(row=>row.hole===hole);
@@ -629,10 +629,11 @@ function showScorecard(session){
             }
             const score=document.createElement('td');
             if(result){
-                relative+=result.strokes-par;total+=result.strokes;lastHole=hole;
+                const holeScore=result.strokes-par;
+                relative+=holeScore;total+=result.strokes;lastHole=hole;
                 const badge=document.createElement('span');
-                badge.className='score-badge';badge.textContent=relative===0?'E':formatRelative(relative);
-                badge.setAttribute('aria-label',formatRelative(relative)+' through Hole '+hole);
+                badge.className='score-badge';badge.textContent=holeScore===0?'E':formatRelative(holeScore);
+                badge.setAttribute('aria-label',formatRelative(holeScore)+' on Hole '+hole);
                 if(result===session.results.at(-1))row.className='latest-score';
                 score.append(badge);
             }

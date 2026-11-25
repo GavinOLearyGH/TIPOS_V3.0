@@ -188,5 +188,4 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 #series-card .play-nine-card th{white-space:nowrap;font-size:clamp(11px,3.4vw,14px)}
 .play-nine-card td small{display:block;color:var(--muted)}
 .play-nine-card .latest-score{background:var(--club-soft-blue,var(--panel))}
-#complete:has(#series-replay:not([hidden]),#official-result:not([hidden])) #round-score,
-.play-nine-card tr:last-child .score-badge{background:var(--club-gold,var(--gold));color:#18263a}
+#complete:has(#series-replay:not([hidden]),#official-result:not([hidden])) #round-score{background:var(--club-gold,var(--gold));color:#18263a}
