@@ -178,3 +178,15 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 }
 
 #weather-effects{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+.result-summary:has(#round-score:not([hidden])){display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+[data-club-theme="springhaven"] .result-summary:has(#round-score:not([hidden])){background:var(--club-soft-blue)}
+.result-summary:has(#round-score:not([hidden])) p{margin:0;font-weight:700}
+.score-badge:not([hidden]){display:inline-grid;place-items:center;min-width:2.1rem;height:2.1rem;padding:0 4px;border-radius:5px;background:var(--club-blue,#223e64);color:#fff;font-weight:700}
+#round-score:not([hidden]){flex:none;min-width:2.6rem;height:2.6rem}
+#series-card .play-nine-card :is(th,td){text-align:center;padding:4px}
+#series-card .play-nine-card th{white-space:nowrap;font-size:clamp(11px,3.4vw,14px)}
+.play-nine-card td small{display:block;color:var(--muted)}
+.play-nine-card .latest-score{background:var(--club-soft-blue,var(--panel))}
+#complete:has(#series-replay:not([hidden]),#official-result:not([hidden])) #round-score,
+.play-nine-card tr:last-child .score-badge{background:var(--club-gold,var(--gold));color:#18263a}
