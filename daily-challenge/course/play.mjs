@@ -327,10 +327,7 @@ function finishShot(){
         if(series){
             series=recordHole(series,course.number,round.state.strokes,round.state.penalties);series.windTick=round.state.windTick;saveSeries();
             const total=seriesScore(series);
-            if(roundHoles(series).length===9&&!total.complete)$('complete-detail').textContent=score+' on Hole '+course.number+' · '+round.state.strokes+' strokes';
             if(total.complete){
-                $('complete-title').textContent='Practice round complete';
-                $('complete-detail').textContent=total.total+' strokes · '+formatRelative(total.relative)+' · Par '+roundPar(series);
                 $('series-replay').hidden=$('series-new').hidden=false;
                 try{const lineup=roundHoles(series).join('-'),scope=lineup==='1-2-3'?'':lineup+'-';
                     const key='irish-par-best-'+scope+setupKey(series.setup),best=Number(localStorage.getItem(key))||Infinity;
@@ -599,7 +596,7 @@ function tidyPracticeResult(hasNext,seriesComplete){
     $('result-kind').textContent='PRACTICE RESULT';$('official-result').hidden=true;$('official-board').hidden=true;$('practice-home').hidden=openPlay;
     $('choose-open-target').hidden=!openPlay;
     $('replay').hidden=seriesComplete;$('replay').textContent=openPlay?'Back to first tee':crossCountry?'Replay route':'Replay hole';
-    $('next-hole').className=hasNext?'button primary':'button';if(series&&hasNext)$('next-hole').textContent=roundHoles(series).length===9?'Continue to Hole '+nextHole():'Continue practice round';
+    $('next-hole').className=hasNext?'button primary':'button';if(series&&hasNext)$('next-hole').textContent='Continue to Hole '+nextHole();
     $('replay').className=hasNext?'':'primary';$('series-replay').className='primary';
     $('complete-home').textContent='Home';
 }
@@ -612,68 +609,59 @@ function showScorecard(session){
         parent.append(row);
     }
     const holes=roundHoles(session);
-    if(holes.length===9){
-        table.className='play-nine-card';
-        addRow(head,['Hole','Par','Strokes','Hole score'],'th');
-        let relative=0,total=0,lastHole;
-        for(const hole of holes){
-            const par=holeByNumber(hole).par,result=session.results.find(row=>row.hole===hole);
-            const row=document.createElement('tr');
-            for(const value of [hole,par,result?.strokes??'—']){
-                const cell=document.createElement('td');cell.textContent=String(value);row.append(cell);
-            }
-            if(result?.penalties){
-                const penalty=document.createElement('small');
-                penalty.textContent='Includes '+result.penalties+(result.penalties===1?' penalty':' penalties');
-                row.lastChild.append(penalty);
-            }
-            const score=document.createElement('td');
-            if(result){
-                const holeScore=result.strokes-par;
-                relative+=holeScore;total+=result.strokes;lastHole=hole;
-                const badge=document.createElement('span');
-                badge.className='score-badge';badge.textContent=holeScore===0?'E':formatRelative(holeScore);
-                badge.setAttribute('aria-label',formatRelative(holeScore)+' on Hole '+hole);
-                if(result===session.results.at(-1))row.className='latest-score';
-                score.append(badge);
-            }
-            row.append(score);body.append(row);
-        }
-        const complete=session.results.length===holes.length,badge=$('round-score');
-        badge.hidden=false;badge.textContent=relative===0?'E':formatRelative(relative);
-        badge.setAttribute('aria-label','Round score '+formatRelative(relative));
-        $('complete-title').textContent=complete?'Round complete':'Through Hole '+lastHole;
-        if(complete)$('complete-detail').textContent=total+' strokes · Par '+roundPar(session);
-        table.append(head,body);$('series-card').replaceChildren(table);
-        return;
-    }
-    addRow(head,['Hole','Par','Strokes','Penalties','To par'],'th');
+    table.className='round-scorecard';
+    addRow(head,['Hole','Par','Strokes','Hole score'],'th');
+    let relative=0,total=0;
+    const last=session.results.at(-1);
     for(const hole of holes){
-        const par=holeByNumber(hole).par,row=session.results.find(row=>row.hole===hole);
-        addRow(body,[hole,par,row?.strokes??'—',row?.penalties??'—',row?formatRelative(row.strokes-par):'—'],'td');
+        const par=holeByNumber(hole).par,result=session.results.find(row=>row.hole===hole);
+        const row=document.createElement('tr');
+        for(const value of [hole,par,result?.strokes??'—']){
+            const cell=document.createElement('td');cell.textContent=String(value);row.append(cell);
+        }
+        if(result?.penalties){
+            const penalty=document.createElement('small');
+            penalty.textContent='Includes '+result.penalties+(result.penalties===1?' penalty':' penalties');
+            row.lastChild.append(penalty);
+        }
+        const score=document.createElement('td');
+        if(result){
+            const holeScore=result.strokes-par;
+            relative+=holeScore;total+=result.strokes;
+            const badge=document.createElement('span');
+            badge.className='score-badge';badge.textContent=holeScore===0?'E':formatRelative(holeScore);
+            badge.setAttribute('aria-label',formatRelative(holeScore)+' on Hole '+hole);
+            if(result===last)row.className='latest-score';
+            score.append(badge);
+        }
+        row.append(score);body.append(row);
     }
+    const complete=session.results.length===holes.length,badge=$('round-score');
+    badge.hidden=false;badge.textContent=relative===0?'E':formatRelative(relative);
+    badge.setAttribute('aria-label','Round score '+formatRelative(relative));
+    $('complete-title').textContent=complete?'Round complete':last?'Through Hole '+last.hole:'Scorecard';
+    if(complete)$('complete-detail').textContent=total+' strokes · Par '+roundPar(session);
+    else if(last){
+        const holeScore=last.strokes-holeByNumber(last.hole).par;
+        $('complete-detail').textContent=(holeScore===0?'Par':formatRelative(holeScore))+' on Hole '+last.hole+' · '+last.strokes+' strokes';
+    }else $('complete-detail').textContent='No holes completed';
     table.append(head,body);$('series-card').replaceChildren(table);
 }
 function showOfficialDialog(){
     const completed=officialSession.status==='completed',aceMode=officialSession.kind==='ace';
-    const par=roundPar(officialSession),closingHole=roundHoles(officialSession).at(-1);
+    const closingHole=roundHoles(officialSession).at(-1);
     $('result-kind').textContent=completed?'OFFICIAL RESULT':'ROUND SAVED';
     $('practice-home').hidden=true;
     $('complete-home').textContent=completed?'Home':'Save and exit';
     $('replay').hidden=!completed;
-    $('complete-title').textContent=aceMode?'Official result':completed?'Official result':'Hole '+course.number+' complete';
-    $('complete-detail').textContent=aceMode?(officialSession.ace?'Hole in one!':officialSession.outcome==='in-play'?(officialSession.mm/304.8).toFixed(1)+' ft to the pin':(officialSession.outcome==='water'?'Water':'Out of play')+' · Played today'):completed?totalScore(officialSession)+' strokes · '+formatRelative(totalScore(officialSession)-par)+' · Par '+par:
-        totalScore(officialSession)+' strokes so far · Your round is saved.';
+    if(aceMode){
+        $('complete-title').textContent='Official result';
+        $('complete-detail').textContent=officialSession.ace?'Hole in one!':officialSession.outcome==='in-play'?
+            (officialSession.mm/304.8).toFixed(1)+' ft to the pin':(officialSession.outcome==='water'?'Water':'Out of play')+' · Played today';
+    }
     $('series-replay').hidden=$('series-new').hidden=true;$('series-best').textContent='';
     $('series-card').replaceChildren();
-    if(!aceMode){
-        if(officialSession.kind==='nine'&&!completed){
-            const last=officialSession.results.at(-1);
-            const relative=last.strokes-holeByNumber(last.hole).par;
-            $('complete-detail').textContent=(relative===0?'Par':formatRelative(relative))+' on Hole '+last.hole+' · '+last.strokes+' strokes';
-        }
-        showScorecard(officialSession);
-    }
+    if(!aceMode)showScorecard(officialSession);
     $('friend-share').hidden=!completed;
     $('friend-copy').hidden=true;
     $('friend-share-status').textContent='';
@@ -688,7 +676,7 @@ function showOfficialDialog(){
     $('publish-official').disabled=Boolean(officialSession.name);$('official-name').disabled=Boolean(officialSession.name);
     $('official-post-status').textContent=officialSession.name?'Added to '+(location.hostname.endsWith('.github.io')||location.protocol==='file:'?'this browser’s preview leaderboard.':'today’s leaderboard.'):eligible?'Your official result is saved. Add a name to appear on the leaderboard.':'Result saved · Streak kept.';
     $('official-board').href=new URL('?board='+mode+'&build='+buildId+'#leaderboards',appRoot()).href;
-    $('next-hole').hidden=completed;$('next-hole').href=officialURL(officialSession);$('next-hole').textContent=(officialSession.kind==='nine'?'Continue to Hole ':'Next hole · ')+officialSession.hole;
+    $('next-hole').hidden=completed;$('next-hole').href=officialURL(officialSession);$('next-hole').textContent='Continue to Hole '+officialSession.hole;
     $('replay').textContent='Play again for practice';$('review-official').hidden=false;
     if(!$('complete').open)$('complete').showModal();
 }
