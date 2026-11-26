@@ -1,24 +1,41 @@
 import {createRound,fullBag} from './round.mjs';
 import {createConnectedCourse,courseWindAngle} from '../course/connected-view.mjs';
 import {stepTime} from './physics.mjs';
-import {playableHoles} from '../course/catalog.mjs';
+import {holeByNumber,playableHoles} from '../course/catalog.mjs';
 import {roundHoles,roundTee} from './series.mjs';
 export const competitionVersion='three-v1';
 const courses=new Map();
 const rotationStart='2026-11-24';
-const frontNine=playableHoles.map(hole=>hole.number);
-const threeCombinations=[1,4,5,7].flatMap(four=>[2,8].flatMap(five=>[3,6,9].map(three=>[four,five,three])));
-let shuffle=4169;
-for(let index=threeCombinations.length-1;index>0;index--){
- shuffle=(Math.imul(shuffle,1664525)+1013904223)>>>0;
- const swap=shuffle%(index+1);
- [threeCombinations[index],threeCombinations[swap]]=[threeCombinations[swap],threeCombinations[index]];
+// Change the schedule at the start of a new Eastern challenge day.
+const expandedRotationStart='2026-11-27';
+const frontNine=Array.from({length:9},(_,index)=>index+1);
+function shuffle(items,seed){
+ const result=[...items];
+ for(let index=result.length-1;index>0;index--){
+  seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+  const swap=seed%(index+1);
+  [result[index],result[swap]]=[result[swap],result[index]];
+ }
+ return result;
 }
+const legacyLineups=shuffle([1,4,5,7].flatMap(four=>[2,8].flatMap(five=>[3,6,9].map(three=>[four,five,three]))),4169);
+const holesOfPar=par=>playableHoles.filter(hole=>hole.par===par).map(hole=>hole.number).sort((a,b)=>a-b);
+const parThrees=shuffle(holesOfPar(3),4169);
+const openingPairs=holesOfPar(4).flatMap(four=>holesOfPar(5).map(five=>[four,five]));
+// Interleave a shuffled set of opening pairs for each closing par 3.
+const pairsByClosingHole=parThrees.map(hole=>shuffle(openingPairs,4169+hole));
+const daysSince=(day,start)=>Math.floor((Date.parse(day)-Date.parse(start))/86400000);
 export function dailyLineup(day,kind='three'){
  if(kind==='nine')return [...frontNine];
  if(day<rotationStart)return [1,2,3];
- const index=Math.floor((Date.parse(day)-Date.parse(rotationStart))/86400000);
- return [...threeCombinations[index%threeCombinations.length]];
+ if(day<expandedRotationStart)return [...legacyLineups[daysSince(day,rotationStart)%legacyLineups.length]];
+ const index=daysSince(day,expandedRotationStart),slot=index%parThrees.length;
+ const pairIndex=Math.floor(index/parThrees.length)%openingPairs.length;
+ return [...pairsByClosingHole[slot][pairIndex],parThrees[slot]];
+}
+export function dailyAceHole(day){
+ if(day<expandedRotationStart)return 6;
+ return parThrees[(daysSince(day,expandedRotationStart)+1)%parThrees.length];
 }
 function scheduledRound(number,setup,tick=0){
  if(!courses.has(number))courses.set(number,createConnectedCourse(number));
@@ -41,7 +58,7 @@ export function dailySetup(day,kind='three',weather){
 }
 const copy=value=>JSON.parse(JSON.stringify(value));
 function roundFor(session,tick=session.state.windTick){
- const round=session.kind==='ace'?aceRound(session.setup,tick):scheduledRound(session.hole,session.setup,tick);
+ const round=session.kind==='ace'?aceRound(session.hole,session.setup,tick):scheduledRound(session.hole,session.setup,tick);
  Object.assign(round.state,copy(session.state),{windTick:tick});return round;
 }
 export function newCompetition(day,build,id,kind='three',weather){
@@ -88,20 +105,23 @@ export function rankedThree(rows){let previous,rank=0;return [...rows].sort(comp
 export function dailyAceSetup(day,weather){
  const index=((Math.floor(Date.parse(day+'T00:00:00Z')/86400000)%4)+4)%4;
  const options=[['forward','middle',0,0,1],['middle','back',3,6,1.24,189.16,34.66],['forward','back',7,8,1.24],['back','back',0,8,.8,197.15,36.05]];
- const [tee,pin,dir,mph,speed,x,z]=options[index];
- return withWeather({tee,pin,speed:speed===.8?'.8':String(speed),windModel:'clock-v1',windAngle:String(dir*45),mph:String(mph),windSeed:'ace-v2:'+day,...(x===undefined?{}:{cup:{x,z}})},day,weather);
+ const [pondTee,pondPin,dir,mph,speed,x,z]=options[index],hole=dailyAceHole(day);
+ const tee=hole===6?pondTee:['dixon','rawlins','butler','1896'][index];
+ const pin=hole===6?pondPin:holeByNumber(hole).pins[0].id;
+ return withWeather({tee,pin,speed:speed===.8?'.8':String(speed),windModel:'clock-v1',windAngle:String(dir*45),mph:String(mph),windSeed:'ace-v2:'+day,...(hole===6&&x!==undefined?{cup:{x,z}}:{})},day,weather);
 }
 function newAceCompetition(day,build,id,weather){
- const setup=dailyAceSetup(day,weather),session={kind:'ace',version:'ace-v2',day,build,id,setup,hole:6,results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
- session.state=copy(aceRound(setup).state);return session;
+ const hole=dailyAceHole(day),setup=dailyAceSetup(day,weather);
+ const session={kind:'ace',version:'ace-v2',day,build,id,setup,hole,results:[],shots:[],revision:0,status:'in-progress',tieValid:false,tieMM:null};
+ session.state=copy(aceRound(hole,setup).state);return session;
 }
-function aceRound(setup,tick=0){
- const course=createConnectedCourse(6),pin=setup.cup?'daily':setup.pin;
+function aceRound(hole,setup,tick=0){
+ const course=createConnectedCourse(hole),pin=setup.cup?'daily':setup.pin;
  if(setup.cup)course.pins=[...course.pins,{id:'daily',...setup.cup}];
  return createRound(course,{tee:setup.tee,pin,greenSpeed:Number(setup.speed),windProfile:setup,windTick:tick,dailyWeather:setup.weather});
 }
 function applyAceShot(original,shot){
- if(original.version!=='ace-v2'||original.status!=='in-progress'||shot.hole!==6)throw Error('This official shot is already complete');
+ if(original.version!=='ace-v2'||original.status!=='in-progress'||shot.hole!==original.hole)throw Error('This official shot is already complete');
  const session=copy(original),round=roundFor(session,shot.releaseTick);
  if(!fullBag.includes(shot.club)||!Number.isFinite(shot.power)||shot.power<.025||shot.power>1||Math.abs(shot.power*2000-Math.round(shot.power*2000))>1e-6||
  !Number.isFinite(shot.heading)||Math.abs(shot.heading)>Math.PI||!Number.isFinite(shot.position)||Math.abs(shot.position)>1||

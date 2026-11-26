@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset="utf-8"><title>The Irish Par · Hole 6</title></head><body><p>Opening Hole 6…</p><script>
+<!doctype html><html><head><meta charset="utf-8"><title>The Irish Par · Hole-in-One</title></head><body><p>Opening Hole-in-One…</p><script type="module">
+import {dayKey} from './course/releases/0.3.0-2763763236/core/competition.mjs';
 const params=new URLSearchParams(location.search),target=new URL('course/play.html',location.href);
-target.searchParams.set('hole','6');target.searchParams.set(params.has('practice')?'practiceAce':'ace',new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));
+target.searchParams.set(params.has('practice')?'practiceAce':'ace',dayKey());
 location.replace(target.href);</script></body></html>

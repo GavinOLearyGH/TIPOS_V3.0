@@ -4,7 +4,7 @@ import {recommendClub,clubLie} from '../core/club-lie.mjs';
 import {gameLinks} from '../core/navigation.mjs';
 import {dayKey,read,write,startOfficial,submitOfficialShot,publishThree,officialURL,appRoot,totalScore} from '../core/daily-client.mjs';
 import {challengeShare} from '../core/challenge-share.mjs';
-import {restoreCompetitionRound,dailyAceSetup} from '../core/competition.mjs';
+import {restoreCompetitionRound,dailyAceHole,dailyAceSetup} from '../core/competition.mjs';
 import {turnHeading} from '../core/view-controls.mjs';
 import {randomWindSetup,windSetup,windReading} from '../core/wind.mjs';
 import {executionWindow,strikePosition} from '../core/execution.mjs';
@@ -45,7 +45,14 @@ if(isCrossCountry&&!openPlay&&!crossCountry){
     location.replace(new URL('course/cross-country.html',appRoot()).href);
     throw Error('Choose a valid tee and green');
 }
-const definition=holeByNumber(openPlay?1:crossCountry?.to??(officialSession?.hole||requested.get('hole')||1));
+const requestedPracticeAceDay=requested.get('practiceAce');
+const savedAcePractice=requestedPracticeAceDay?read('irish-par-ace:'+requestedPracticeAceDay):null;
+const legacyAcePractice=requestedPracticeAceDay?read('irish-par-official:'+requestedPracticeAceDay):null;
+const practiceAceDay=!officialSession&&!isCrossCountry&&/^\d{4}-\d{2}-\d{2}$/.test(requestedPracticeAceDay??'')&&
+    Number.isFinite(Date.parse(requestedPracticeAceDay))&&
+    (requestedPracticeAceDay!==dayKey()||savedAcePractice?.status==='completed'||legacyAcePractice)?requestedPracticeAceDay:null;
+const practiceAceHole=practiceAceDay?(savedAcePractice?.hole??(legacyAcePractice?6:dailyAceHole(practiceAceDay))):null;
+const definition=holeByNumber(openPlay?1:crossCountry?.to??officialSession?.hole??practiceAceHole??requested.get('hole')??1);
 if(!definition)throw Error('This hole is not available yet.');
 const crossGame=crossCountry?createCrossCountryGame(crossCountry):null;
 const course=crossGame?.course??createConnectedCourse(definition.number);
@@ -128,11 +135,7 @@ if(officialSession){
     const pending=read(pendingKey());
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
 }
-const requestedPracticeAceDay=requested.get('practiceAce');
-const eligibleAcePractice=requestedPracticeAceDay!==dayKey()||
-    read('irish-par-ace:'+requestedPracticeAceDay)?.status==='completed'||Boolean(read('irish-par-official:'+requestedPracticeAceDay));
-const practiceAceDay=!officialSession&&!isCrossCountry&&course.number===6&&eligibleAcePractice?requestedPracticeAceDay:null;
-const practiceAceSetup=practiceAceDay?(read('irish-par-ace:'+practiceAceDay)?.setup??dailyAceSetup(practiceAceDay)):null;
+const practiceAceSetup=practiceAceDay?(savedAcePractice?.setup??dailyAceSetup(practiceAceDay)):null;
 const previewSky=requested.get('weather');
 const weatherPreview=!officialSession&&!series&&!practiceAceDay&&!isCrossCountry&&location.hostname.endsWith('.github.io')&&
     ['rain','snow'].includes(previewSky)?{sky:previewSky,recentPrecipMm:previewSky==='rain'?12:0}:null;
@@ -167,7 +170,7 @@ function pendingKey(){return 'irish-par-'+(officialSession?.kind??'three')+'-pen
 function saveSeries(){try{sessionStorage.setItem('irish-par-series-'+series.id,JSON.stringify(series));}catch{}}
 function showSeries(){
     if(officialSession){
-        $('series-status').hidden=false;$('series-status').textContent=officialSession.kind==='ace'?'Official Hole-in-One Challenge · Hole 6 · First shot counts':'Official '+roundModes[mode].label+' · '+roundProgress(officialSession,officialSession.hole)+' · '+totalScore(officialSession)+' strokes';
+        $('series-status').hidden=false;$('series-status').textContent=officialSession.kind==='ace'?'Official Hole-in-One Challenge · Hole '+course.number+' · First shot counts':'Official '+roundModes[mode].label+' · '+roundProgress(officialSession,officialSession.hole)+' · '+totalScore(officialSession)+' strokes';
         for(const id of ['hole','tee','pin','wind','wind-speed','green-speed','apply'])$(id).disabled=true;
         return;
     }
@@ -589,7 +592,7 @@ $('complete').addEventListener('close',()=>updateHUD());
 
 function startDailyPractice(){
     const setup=officialSession.setup,id=String(Date.now());
-    if(officialSession.kind==='ace'){location.href=new URL('course/play.html',appRoot()).href+'?hole=6&practiceAce='+officialSession.day+'&build='+buildId;return;}
+    if(officialSession.kind==='ace'){location.href=new URL('course/play.html',appRoot()).href+'?hole='+officialSession.hole+'&practiceAce='+officialSession.day+'&build='+buildId;return;}
     try{sessionStorage.setItem('irish-par-series-'+id,JSON.stringify({...newSeries(id,setup,roundHoles(officialSession)),practiceDay:officialSession.day}));}
     catch{$('status').textContent='Allow browser storage to play a practice round.';return;}
     location.href=new URL('course/play.html',appRoot()).href+'?'+new URLSearchParams({hole:roundHoles(officialSession)[0],series:id,...setup,build:buildId});

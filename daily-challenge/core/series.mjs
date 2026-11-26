@@ -7,7 +7,7 @@ export const roundModes={
 };
 const pondTees={1896:'back',rawlins:'middle',butler:'forward',dixon:'forward'};
 
-export function roundHoles(round){return round.holes??(round.kind==='ace'?[6]:legacyHoles);}
+export function roundHoles(round){return round.holes??(round.kind==='ace'?[round.hole??6]:legacyHoles);}
 export function roundPar(round){return roundHoles(round).reduce((sum,number)=>sum+holeByNumber(number).par,0);}
 export function roundTee(tee,hole){return hole===6?(pondTees[tee]??tee):tee;}
 export function newSeries(id,setup,holes=legacyHoles){return {id,setup,holes:[...holes],results:[]};}
