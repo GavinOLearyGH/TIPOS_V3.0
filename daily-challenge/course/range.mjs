@@ -13,9 +13,11 @@ import {rangeCourse,rangeLength,rangeStart,rangeLies,rangeTargets,netContact,bas
 applyClubTheme();
 
 const get=id=>document.getElementById(id),$=id=>get('range-'+id);
-if(new URLSearchParams(location.search).get('warmup')==='ace'){
+const warmupCards=new Map([['ace','hole-in-one'],['three','three-holes'],['nine','play-nine']]);
+const warmupCard=warmupCards.get(new URLSearchParams(location.search).get('warmup'));
+if(warmupCard){
     const home=gameRoot(location.href);
-    home.hash='hole-in-one';
+    home.hash=warmupCard;
     $('home').href=themedURL(home).href;
     $('home').textContent='Back to today’s challenge';
 }
