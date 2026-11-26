@@ -13,7 +13,7 @@ import {rangeCourse,rangeLength,rangeStart,rangeLies,rangeTargets,netContact,bas
 applyClubTheme();
 
 const get=id=>document.getElementById(id),$=id=>get('range-'+id);
-const warmupCards=new Map([['ace','hole-in-one'],['three','three-holes'],['nine','play-nine']]);
+const warmupCards=new Map([['ace','hole-in-one'],['three','three-holes'],['nine','play-nine-card']]);
 const warmupCard=warmupCards.get(new URLSearchParams(location.search).get('warmup'));
 if(warmupCard){
     const home=gameRoot(location.href);
