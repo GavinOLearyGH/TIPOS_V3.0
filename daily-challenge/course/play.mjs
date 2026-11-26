@@ -128,7 +128,10 @@ if(officialSession){
     const pending=read(pendingKey());
     if(pending?.id===officialSession.id&&pending.revision===officialSession.revision)pendingShot=pending.shot;
 }
-const practiceAceDay=!officialSession&&!isCrossCountry&&course.number===6?requested.get('practiceAce'):null;
+const requestedPracticeAceDay=requested.get('practiceAce');
+const eligibleAcePractice=requestedPracticeAceDay!==dayKey()||
+    read('irish-par-ace:'+requestedPracticeAceDay)?.status==='completed'||Boolean(read('irish-par-official:'+requestedPracticeAceDay));
+const practiceAceDay=!officialSession&&!isCrossCountry&&course.number===6&&eligibleAcePractice?requestedPracticeAceDay:null;
 const practiceAceSetup=practiceAceDay?(read('irish-par-ace:'+practiceAceDay)?.setup??dailyAceSetup(practiceAceDay)):null;
 const previewSky=requested.get('weather');
 const weatherPreview=!officialSession&&!series&&!practiceAceDay&&!isCrossCountry&&location.hostname.endsWith('.github.io')&&

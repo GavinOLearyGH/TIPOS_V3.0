@@ -1,4 +1,5 @@
-import {applyClubTheme} from '../core/club-theme.mjs';
+import {applyClubTheme,themedURL} from '../core/club-theme.mjs';
+import {gameRoot} from '../core/navigation.mjs';
 import {drawShotMap,updatePowerRail} from '../core/shot-hud.mjs';
 import {advance,clubs,newBall,strike,stepTime,clamp,windVector,mix} from '../core/physics.mjs';
 import {windReading} from '../core/wind.mjs';
@@ -12,6 +13,12 @@ import {rangeCourse,rangeLength,rangeStart,rangeLies,rangeTargets,netContact,bas
 applyClubTheme();
 
 const get=id=>document.getElementById(id),$=id=>get('range-'+id);
+if(new URLSearchParams(location.search).get('warmup')==='ace'){
+    const home=gameRoot(location.href);
+    home.hash='hole-in-one';
+    $('home').href=themedURL(home).href;
+    $('home').textContent='Back to today’s challenge';
+}
 const canvas=get('scene'),club=$('club'),lie=$('lie'),result=$('result'),overview=get('flyover');
 const minimap=get('map'),targetSelect=$('target'),targetMarker=$('target-marker');
 for(const {yards} of rangeTargets)targetSelect.add(new Option(yards+' yd',yards));
