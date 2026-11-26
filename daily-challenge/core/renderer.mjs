@@ -135,7 +135,7 @@ export function bunkerBallPosition(ball,course,renderHeight){
 }
 
 export function createRenderer(canvas,course,atlas,view,weather){
-    const [sky,haze,light]=dailySkies[weather?.sky]??defaultSky;
+    let sky;
     const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
     if(!gl)throw Error('This browser could not start 3D graphics. Enable graphics acceleration and reload.');
     const b=view?.bounds??course.atlasBounds??course.bounds;
@@ -172,7 +172,12 @@ export function createRenderer(canvas,course,atlas,view,weather){
     if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
     gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
     const uniforms=Object.fromEntries(['eye','right','up','forward','ratio','depthScale','droneView','kind','opacity','haze','daylight'].map(name=>[name,gl.getUniformLocation(program,name)]));
-    gl.uniform3fv(uniforms.haze,haze);gl.uniform1f(uniforms.daylight,light);
+    function setWeather(weather){
+        const [background,haze,light]=dailySkies[weather?.sky]??defaultSky;
+        sky=background;
+        gl.uniform3fv(uniforms.haze,haze);gl.uniform1f(uniforms.daylight,light);
+    }
+    setWeather(weather);
     gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(uniforms.opacity,1);
     const attributes=['a','c'].map(name=>gl.getAttribLocation(program,name));
     const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
@@ -361,5 +366,5 @@ export function createRenderer(canvas,course,atlas,view,weather){
         return {x:(.5+.86*dot(d,camera.right)/depth/camera.ratio)*canvas.clientWidth,
             y:(.5-.86*dot(d,camera.up)/depth)*canvas.clientHeight};
     }
-    return {frame,project,ballPosition};
+    return {frame,project,ballPosition,setWeather};
 }

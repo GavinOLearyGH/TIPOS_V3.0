@@ -1,8 +1,12 @@
 import {applyClubTheme,themedURL} from '../core/club-theme.mjs';
 import {gameRoot} from '../core/navigation.mjs';
+import {aceKey,challengeWeather,dayKey,nineKey,read,threeKey} from '../core/daily-client.mjs';
+import {dailyAceSetup,dailySetup} from '../core/competition.mjs';
+import {turfWetness,weatherSummary} from '../core/daily-weather.mjs';
+import {precipitationOverlay} from './precipitation.mjs';
 import {drawShotMap,updatePowerRail} from '../core/shot-hud.mjs';
-import {advance,clubs,newBall,strike,stepTime,clamp,windVector,mix} from '../core/physics.mjs';
-import {windReading} from '../core/wind.mjs';
+import {advance,clubs,newBall,strike,stepTime,clamp,mix} from '../core/physics.mjs';
+import {createWind,windReading} from '../core/wind.mjs';
 import {fullBag} from '../core/round.mjs';
 import {clubLie,contactProfile} from '../core/club-lie.mjs';
 import {executionWindow,resolveExecution,strikePosition} from '../core/execution.mjs';
@@ -14,7 +18,8 @@ applyClubTheme();
 
 const get=id=>document.getElementById(id),$=id=>get('range-'+id);
 const warmupCards=new Map([['ace','hole-in-one'],['three','three-holes'],['nine','play-nine-card']]);
-const warmupCard=warmupCards.get(new URLSearchParams(location.search).get('warmup'));
+const warmupKind=new URLSearchParams(location.search).get('warmup');
+const warmupCard=warmupCards.get(warmupKind);
 if(warmupCard){
     const home=gameRoot(location.href);
     home.hash=warmupCard;
@@ -24,7 +29,8 @@ if(warmupCard){
 const canvas=get('scene'),club=$('club'),lie=$('lie'),result=$('result'),overview=get('flyover');
 const minimap=get('map'),targetSelect=$('target'),targetMarker=$('target-marker');
 for(const {yards} of rangeTargets)targetSelect.add(new Option(yards+' yd',yards));
-const windToggle=$('wind-toggle'),windPanel=$('wind-panel'),windSpeed=$('wind-speed'),windDirection=$('wind-direction');
+const weatherControls=$('weather-controls'),weatherMode=$('weather-mode'),custom=$('custom-weather');
+const windSpeed=$('wind-speed'),windDirection=$('wind-direction'),sky=$('sky'),weatherCanvas=get('weather-effects');
 const cardinalDirections={0:'downrange',3:'left to right',6:'toward the mats',9:'right to left'};
 for(let hour=0;hour<12;hour++){
     const direction=cardinalDirections[hour];
@@ -39,29 +45,54 @@ catch(error){result.textContent=error.message;club.disabled=lie.disabled=overvie
 const ground=rangeCourse.ground,settings={greenSpeed:1,wind:{x:0,z:0}};
 let selectedTarget=null,ball,trail=[],lastMap=-Infinity,gesture=null,shot=null,power=0,heading=0,view=false,lastTime=0,accumulator=0;
 const active=()=>shot&&!shot.done;
-function showWindPanel(open,restoreFocus=false){
-    windPanel.hidden=!open;
-    windToggle.setAttribute('aria-expanded',String(open));
-    if(restoreFocus)windToggle.focus();
-}
+let todaySetup,wind,drawPrecipitation,windTime=0;
 function updateWindReading(){
     const reading=windReading(settings.wind,heading),arrow=$('wind-arrow');
     arrow.hidden=reading.calm;
     arrow.style.transform='rotate('+reading.rotation+'deg)';
-    $('wind-reading').textContent=reading.calm?'Wind: Calm':windSpeed.value+' mph';
-    windToggle.setAttribute('aria-label',reading.calm?'Wind, calm':'Wind blowing '+reading.text+' relative to aim');
+    $('wind-reading').textContent=reading.calm?'Wind: Calm':reading.text;
 }
-function updateWind(){
-    const mph=Number(windSpeed.value);
-    windDirection.disabled=mph===0;
-    settings.wind=windVector(Number(windDirection.value)/45,mph);
+function applyWeather(){
+    const isCustom=weatherMode.value==='custom';
+    custom.hidden=!isCustom;
+    const setup=isCustom?{mph:windSpeed.value,windAngle:windDirection.value,windSeed:'range-custom',weather:{sky:sky.value}}:todaySetup;
+    const weather=setup.weather;
+    wind=isCustom?null:createWind(setup);
+    const angle=Number(setup.windAngle)*Math.PI/180,mph=clamp(Number(setup.mph)||0,0,25);
+    settings.wind=wind?.sample(windTime)??{x:Math.cos(angle)*mph*.44704,z:Math.sin(angle)*mph*.44704};
+    settings.wetness=turfWetness(weather);
+    renderer?.setWeather(weather);
+    weatherCanvas.hidden=true;
+    drawPrecipitation=precipitationOverlay(weatherCanvas,weather?.sky);
+    $('conditions').textContent=isCustom?'Custom · '+sky.selectedOptions[0].textContent:
+        weather?weatherSummary(weather):'Today’s conditions · Generated wind · '+setup.mph+' mph';
     updateWindReading();
+}
+async function loadToday(){
+    const day=dayKey(),keys={ace:aceKey,three:threeKey,nine:nineKey};
+    const saved=warmupCard?read(keys[warmupKind](day))?.setup:null;
+    const weather=saved?null:await challengeWeather(day).catch(()=>null);
+    todaySetup=saved??(warmupKind==='ace'?dailyAceSetup(day,weather):dailySetup(day,warmupKind==='nine'?'nine':'three',weather));
+    windSpeed.value=todaySetup.mph;
+    windDirection.value=String((Math.round(Number(todaySetup.windAngle)/30)%12)*30);
+    sky.value=todaySetup.weather?.sky??'clear';
+    weatherMode.value='today';
+    applyWeather();
+    weatherControls.disabled=false;
+}
+function showShotData(outcome){
+    const yards=distance=>(distance/.9144).toFixed(1)+' yd';
+    $('data-detail').textContent=[shot.club,shot.contact,outcome].filter(Boolean).join(' · ');
+    $('carry').textContent=yards(shot.carry);
+    $('roll').textContent=yards(shot.roll);
+    $('total').textContent=yards(shot.carry+shot.roll);
 }
 function placeBall(){
     $('lie-label').textContent=lie.value;
     ball=newBall(rangeStart,ground);
     gesture=shot=null;power=accumulator=0;
-    club.disabled=lie.disabled=windToggle.disabled=targetSelect.disabled=false;
+    club.disabled=lie.disabled=targetSelect.disabled=false;
+    weatherControls.disabled=!todaySetup;
     lastMap=-Infinity;
 }
 function fire(now){
@@ -72,16 +103,19 @@ function fire(now){
     const start={...rangeStart,...rangeLies[lie.value]},name=club.value;
     trail=[];lastMap=-Infinity;
     const contact=resolveExecution(name,power,timing,start.id),suitability=clubLie(name,start);
-    shot={start,heading,contact:contact.label,firstContact:null,done:false};
+    shot={start,heading,club:name,contact:contact.label,firstContact:null,carry:0,roll:0,done:false};
+    weatherControls.disabled=true;
     ball=strike(start,ground,name,power,heading+contact.heading,start.surface,contactProfile(name,start));
     ball.spin*=contact.spin;ball.lift*=contact.lift*suitability.lift;ball.curve=contact.curve;
-    power=0;club.disabled=lie.disabled=windToggle.disabled=targetSelect.disabled=true;result.textContent=contact.label+' · Ball in flight';
+    power=0;club.disabled=lie.disabled=targetSelect.disabled=true;result.textContent=contact.label+' · Ball in flight';
 }
 function step(now){
     const before={x:ball.x,y:ball.y,z:ball.z},wasAirborne=ball.mode==='air';
     advance(ball,rangeCourse,settings);
     const net=netContact(before,ball),basket=wasAirborne?basketContact(before,ball):null;
-    if(basket&&(!net||basket.t<net.t)){
+    const hitsBasket=basket&&(!net||basket.t<net.t),end=hitsBasket?basket:net??ball;
+    shot[shot.firstContact?'roll':'carry']+=Math.hypot(end.x-before.x,end.z-before.z);
+    if(hitsBasket){
         if(basket.kind==='rim'){
             bounceOffBasket(ball,basket);
             return;
@@ -94,6 +128,7 @@ function step(now){
         trail.push({x:ball.x,z:ball.z});
         lastMap=-Infinity;
         result.textContent='In the basket · '+basket.target.yards+' yd';
+        showShotData('In the basket · '+basket.target.yards+' yd');
         return;
     }
     if(net)Object.assign(ball,net,{mode:'rest'});
@@ -107,9 +142,16 @@ function step(now){
     const carry=shot.firstContact?'Carry '+Math.round(distance(shot.firstContact))+' yd · ':'';
     const outcome=net?'Hit net · '+Math.round(distance(ball))+' yd to contact':(ball.mode==='out'?'Out of range · ':'')+carry+'Total '+Math.round(distance(ball))+' yd';
     result.textContent=outcome+' · '+finish+' · '+shot.contact;
+    showShotData(net?'Hit net':ball.mode==='out'?'Out of range':finish);
 }
 function frame(now){
-    accumulator+=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));lastTime=now;
+    const elapsed=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));
+    accumulator+=elapsed;lastTime=now;
+    if(wind){
+        windTime+=elapsed;
+        settings.wind=wind.sample(windTime);
+        updateWindReading();
+    }
     while(accumulator>=stepTime&&active()){step(now);accumulator-=stepTime;}
     if(!active())accumulator=0;
     if(shot?.done&&now>=shot.returnAt)placeBall();
@@ -143,6 +185,7 @@ function frame(now){
     }
     const aim=!view&&!shot?{x:ball.x+18*Math.cos(heading),z:ball.z+18*Math.sin(heading),y:.15,near:false}:null;
     renderer.frame({...camera,ball,pin:null,aim,flying:active(),selectedTarget:highlighted});
+    drawPrecipitation?.(now,view);
     const targetPoint=highlighted&&(!shot||caught)
         ?renderer.project({x:highlighted.x,y:ground(highlighted.x,highlighted.z)+.6,z:highlighted.z}):null;
     targetMarker.hidden=!targetPoint||targetPoint.x<35||targetPoint.x>canvas.clientWidth-35||
@@ -164,7 +207,7 @@ function frame(now){
     }
     requestAnimationFrame(frame);
 }
-const ready=()=>renderer&&!shot&&!gesture&&!view&&windPanel.hidden;
+const ready=()=>renderer&&todaySetup&&!shot&&!gesture&&!view;
 canvas.addEventListener('pointerdown',event=>{
     if(!ready()||event.button!==0)return;
     canvas.focus({preventScroll:true});canvas.setPointerCapture(event.pointerId);
@@ -191,33 +234,19 @@ canvas.addEventListener('keydown',event=>{
 });
 canvas.addEventListener('keyup',event=>{if(event.code==='Space'&&gesture?.keyboard){event.preventDefault();fire(performance.now());}});
 canvas.addEventListener('blur',()=>{if(gesture?.keyboard){gesture=null;power=0;}});
-targetSelect.onfocus=()=>showWindPanel(false);
 targetSelect.onchange=()=>{
     selectedTarget=rangeTargets.find(target=>target.yards===Number(targetSelect.value))??null;
     heading=selectedTarget?Math.atan2(selectedTarget.z-rangeStart.z,selectedTarget.x-rangeStart.x):0;
     lastMap=-Infinity;
     updateWindReading();
 };
-windToggle.onclick=()=>{
-    if(!gesture&&!view&&!shot)showWindPanel(windPanel.hidden);
-};
-$('wind-done').onclick=()=>showWindPanel(false,true);
-windSpeed.onchange=windDirection.onchange=updateWind;
-document.addEventListener('click',event=>{
-    if(!windPanel.hidden&&!windPanel.contains(event.target)&&!windToggle.contains(event.target))showWindPanel(false);
-});
-document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'&&!windPanel.hidden){
-        event.preventDefault();
-        showWindPanel(false,true);
-    }
-});
+weatherMode.onchange=windSpeed.onchange=windDirection.onchange=sky.onchange=applyWeather;
 lie.onchange=placeBall;
 overview.onclick=()=>{
     view=!view;gesture=null;power=0;
-    showWindPanel(false);
     $('stage').classList.toggle('range-overview',view);
     overview.textContent=view?'Back to shot':'Overview';
     overview.setAttribute('aria-label',view?'Back to shot':'Range overview');
 };
-if(renderer){updateWind();placeBall();targetSelect.onchange();requestAnimationFrame(frame);}
+if(renderer){placeBall();targetSelect.onchange();requestAnimationFrame(frame);}
+loadToday();
