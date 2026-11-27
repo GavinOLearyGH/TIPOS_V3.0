@@ -11,7 +11,7 @@ import {executionWindow,strikePosition} from '../core/execution.mjs';
 import {newSeries,recordHole,seriesScore,setupKey,roundHoles,roundPar,roundTee,roundModes} from '../core/series.mjs';
 import {refreshParentWorker} from '../core/updates.mjs';
 import {buildId} from '../core/build-info.mjs';
-import {dragPower,dragHeading,shotCamera,pullGuideGeometry} from '../core/controls.mjs';
+import {dragPower,dragHeading,shotCamera,startBallPull,pullDepth,shotPower,drawShotPullGuide} from '../core/controls.mjs';
 import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
 import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
 import {flyoverPath,flyoverCamera} from './flyover.mjs';
@@ -260,7 +260,7 @@ function updatePower(){
     }
     $('putt-roll').textContent=charge>=.025?'Flat roll · '+feet(estimatePutt(charge,round.settings.greenSpeed))+' ft':'';
 }
-function setPower(value){charge=Math.round(clamp(value,0,1)*2000)/2000;updatePower();}
+function setPower(value){charge=shotPower(value);updatePower();}
 function cancel(){
     drag=null;turnDrag=null;keyStarted=null;strikeStarted=null;$('strike-panel').hidden=true;setPower(0);
     $('ball-ring').classList.remove('grabbed');
@@ -431,25 +431,6 @@ function drawDrone(){
         if($('drone-target').textContent!==label)$('drone-target').textContent=label;
     }
 }
-function pullGraphics(anchor){
-    for(const id of ['pull-handle','pull-line','pull-aim'])$(id).hidden=true;
-    if(!drag||!anchor)return;
-    const ball=renderer.ballPosition(round.state.ball),near=$('club').value==='Putter';
-    const distance=(near?12:36)*charge**.82;
-    const ahead=renderer.project({x:ball.x+Math.cos(heading)*Math.max(1,distance),
-        y:ball.y+.022,z:ball.z+Math.sin(heading)*Math.max(1,distance)});
-    if(!ahead)return;
-    const guide=pullGuideGeometry(anchor,ahead,drag.depth,canvas.clientWidth,canvas.clientHeight,distance);
-    if(!guide)return;
-    const {dx,dy,angle,forward,back}=guide;
-    const position=(id,x,y,length)=>{
-        const line=$(id);line.hidden=false;line.style.left=x+'px';line.style.top=y+'px';
-        line.style.width=length+'px';line.style.transform='translateY(-50%) rotate('+angle+'rad)';
-    };
-    if(forward>=13)position('pull-aim',anchor.x+dx*10,anchor.y+dy*10,forward-10);
-    if(back>=6)marker('pull-handle',{x:anchor.x-dx*back,y:anchor.y-dy*back});
-    if(back>=17)position('pull-line',anchor.x-dx*(back-8),anchor.y-dy*(back-8),back-16);
-}
 function frame(now){
     const dt=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));lastTime=now;
     if(!renderer)return;
@@ -485,7 +466,7 @@ function frame(now){
     marker('ball-ring',anchor);
     const ahead=ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength}:null;
     marker('aim-ring',ahead?renderer.project({...ahead,y:course.ground(ahead.x,ahead.z)+.06}):null);
-    pullGraphics(anchor);
+    drawShotPullGuide($,anchor,drag,renderer,drag?renderer.ballPosition(ball):ball,heading,charge,near,canvas);
     updateWindDisplay();
     if(frameNumber++%5===0){updateHUD();drawMap();}
     animationId=requestAnimationFrame(frame);
@@ -496,19 +477,18 @@ function projectBall(ball){
 }
 function previewDrag(event){
     heading=dragHeading(drag.heading,bearing(round.state.ball,round.settings.pin),event.clientX-drag.x);
-    drag.depth=clamp((event.clientY-drag.y)/drag.travel,0,1);
+    drag.depth=pullDepth(drag,event.clientY);
     setPower(dragPower(drag.depth,$('club').value==='Putter'));
 }
 canvas.addEventListener('pointerdown',event=>{
     if(!editable()||drag||turnDrag||keyStarted!==null||event.button>0||event.isPrimary===false)return;
-    const rect=canvas.getBoundingClientRect(),point=projectBall(round.state.ball);
-    if(!point||Math.hypot(event.clientX-rect.left-point.x,event.clientY-rect.top-point.y)>55){
+    const pull=startBallPull(event,canvas.getBoundingClientRect(),projectBall(round.state.ball),window.visualViewport?.height||innerHeight,heading);
+    if(!pull){
         event.preventDefault();canvas.setPointerCapture(event.pointerId);
         turnDrag={id:event.pointerId,x:event.clientX,heading};return;
     }
     event.preventDefault();canvas.focus({preventScroll:true});canvas.setPointerCapture(event.pointerId);
-    drag={id:event.pointerId,x:event.clientX,y:event.clientY,heading,depth:0,
-        travel:clamp((window.visualViewport?.height||innerHeight)-event.clientY-20,110,200)};
+    drag=pull;
     strikeStarted=performance.now();$('ball-ring').classList.add('grabbed');setPower(0);
 });
 canvas.addEventListener('pointermove',event=>{if(turnDrag?.id===event.pointerId){event.preventDefault();heading=turnHeading(turnDrag.heading,event.clientX-turnDrag.x);updatePower();return;}if(drag?.id===event.pointerId){event.preventDefault();previewDrag(event);}});

@@ -27,3 +27,32 @@ export function pullGuideGeometry(anchor,bearing,depth,width,height,distance){
     return {dx,dy,angle,forward:Math.min(span*Math.min(1,distance),room(dx,dy,10)),
         back:Math.min(54*depth,room(-dx,-dy,18))};
 }
+
+
+export function startBallPull(event,rect,point,viewportHeight,heading){
+    if(!point||Math.hypot(event.clientX-rect.left-point.x,event.clientY-rect.top-point.y)>55)return null;
+    return {id:event.pointerId,x:event.clientX,y:event.clientY,heading,depth:0,
+        travel:clamp(viewportHeight-event.clientY-20,110,200)};
+}
+export const pullDepth=(pull,y)=>clamp((y-pull.y)/pull.travel,0,1);
+export const shotPower=value=>Math.round(clamp(value,0,1)*2000)/2000;
+
+export function drawShotPullGuide(get,anchor,drag,renderer,ball,heading,power,putting,canvas){
+    for(const id of ['pull-handle','pull-line','pull-aim'])get(id).hidden=true;
+    if(!drag||!anchor)return;
+    const distance=(putting?12:36)*power**.82;
+    const ahead=renderer.project({x:ball.x+Math.cos(heading)*Math.max(1,distance),
+        y:ball.y+.022,z:ball.z+Math.sin(heading)*Math.max(1,distance)});
+    if(!ahead)return;
+    const guide=pullGuideGeometry(anchor,ahead,drag.depth,canvas.clientWidth,canvas.clientHeight,distance);
+    if(!guide)return;
+    const {dx,dy,angle,forward,back}=guide;
+    const position=(id,x,y,length)=>{
+        const node=get(id);
+        node.hidden=false;node.style.left=x+'px';node.style.top=y+'px';
+        if(length!==undefined){node.style.width=length+'px';node.style.transform='translateY(-50%) rotate('+angle+'rad)';}
+    };
+    if(forward>=13)position('pull-aim',anchor.x+dx*10,anchor.y+dy*10,forward-10);
+    if(back>=6)position('pull-handle',anchor.x-dx*back,anchor.y-dy*back);
+    if(back>=17)position('pull-line',anchor.x-dx*(back-8),anchor.y-dy*(back-8),back-16);
+}
