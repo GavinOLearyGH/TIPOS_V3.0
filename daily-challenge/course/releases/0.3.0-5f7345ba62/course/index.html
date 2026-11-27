@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><script>(()=>{const key="irish-par-theme";function clubTheme(){
+    const requested=new URLSearchParams(globalThis.location?.search).get('theme');
+    if(requested==='springhaven'||requested==='irish-par')return requested;
+    try{return globalThis.sessionStorage.getItem(key)==='springhaven'?'springhaven':'irish-par';}
+    catch{return 'irish-par';}
+}
+(function applyClubTheme(){
+    const theme=clubTheme();
+    if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
+    try{globalThis.sessionStorage.setItem(key,theme);}catch{}
+})();})();</script><meta name="course-build" content="0.3.0-5f7345ba62"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Practice</title><link rel="stylesheet" href="./style.css"></head>
+<body><main class="home"><header><div class="brand"><span class="irish-par-wordmark">THE IRISH PAR</span><span class="springhaven-wordmark">THE SPRINGHAVEN CLUB</span></div><a id="daily-home" href="../daily-challenge/">Home</a></header>
+<section class="intro"><p class="brand">PRACTICE</p><h1>The Springhaven Club</h1><p class="muted">Choose a hole and your tee, then play every shot through to the cup. Practice as often as you like.</p></section>
+<div id="holes" class="hole-list"></div>
+<template id="hole-template"><article class="hole-card"><div class="hole-art"></div><div>
+<p class="brand hole-number"></p><h2></h2><p class="muted hole-description"></p>
+<div class="setup"><label>Your tee<select></select></label></div><div class="actions"><a class="button play-hole" href="./play.html">Practice hole</a></div>
+</div></article></template>
+<p class="muted">Course prototype · Green contours and terrain details are being refined.</p>
+<p class="build-line" id="build-version"></p></main>
+<script type="module" src="./home.mjs"></script></body></html>

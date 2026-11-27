@@ -9,7 +9,7 @@
     const theme=clubTheme();
     if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
     try{globalThis.sessionStorage.setItem(key,theme);}catch{}
-})();})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Daily Challenge</title><meta name="description" content="Take one tee shot on a rotating par 3, play a rotating three-hole round, or play the front nine."><meta name="theme-color" content="#111d17"><link rel="stylesheet" href="./course/releases/0.3.0-a76e160bc2/daily/style.css"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./install-icons/icon-180.png"><meta name="apple-mobile-web-app-title" content="Irish Par Golf"></head>
+})();})();</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Daily Challenge</title><meta name="description" content="Take one tee shot on a rotating par 3, play a rotating three-hole round, or play the front nine."><meta name="theme-color" content="#111d17"><link rel="stylesheet" href="./course/releases/0.3.0-5f7345ba62/daily/style.css"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./install-icons/icon-180.png"><meta name="apple-mobile-web-app-title" content="Irish Par Golf"></head>
 <body><main class="daily-home">
 <header class="daily-header">
     <div><div class="brand">The Irish Par</div><h1>Daily Challenge</h1></div>
@@ -30,7 +30,11 @@
     <p class="muted">Sample results for this preview</p>
     <dl id="winners-list"></dl>
     <p id="winners-empty" hidden>No scores were posted yesterday.</p>
-    <a id="jump-yesterday" class="winners-link" href="#leaderboards">See yesterday’s standings <span aria-hidden="true">→</span></a>
+    <nav class="winners-links" aria-label="Standings by day">
+        <a id="jump-yesterday" href="#leaderboards">Yesterday’s Standings</a>
+        <span aria-hidden="true">|</span>
+        <a id="jump-today" href="#leaderboards">Today’s Standings</a>
+    </nav>
 </section>
 <div id="home-cta" class="home-cta">
     <button id="home-install" type="button" aria-haspopup="dialog" aria-controls="install-help">Add game to Home Screen</button>
@@ -63,4 +67,4 @@
     </div>
 </div><div class="board-tabs" role="group" aria-label="Choose leaderboard"><button id="tab-ace" aria-pressed="true">Hole-in-One</button><button id="tab-three" aria-pressed="false">Three Holes</button><button id="tab-nine" aria-pressed="false">Play 9</button></div><p id="board-source" class="muted"></p><div class="board-layout"><div class="table-wrap"><table><thead id="board-head"></thead><tbody id="board-rows"></tbody></table><p id="board-empty">No scores yet. Be the first on today’s leaderboard.</p></div><aside><h3>Score distribution</h3><p id="board-count" class="muted"></p><div id="distribution"></div></aside></div><p id="tie-rule" class="muted" hidden>Lowest total score wins. Ties are decided by the distance remaining after your first tee shot on the closing par 3. Closer wins. A penalty on that shot ranks behind an in-play shot. Matching results share a position.</p></section>
 <p class="build-line" id="build-version"></p>
-</main><script type="module" src="./course/releases/0.3.0-a76e160bc2/daily/home.mjs"></script></body></html>
+</main><script type="module" src="./course/releases/0.3.0-5f7345ba62/daily/home.mjs"></script></body></html>
