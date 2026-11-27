@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><script>(()=>{const key="irish-par-theme";function clubTheme(){
+    const requested=new URLSearchParams(globalThis.location?.search).get('theme');
+    if(requested==='springhaven'||requested==='irish-par')return requested;
+    try{return globalThis.sessionStorage.getItem(key)==='springhaven'?'springhaven':'irish-par';}
+    catch{return 'irish-par';}
+}
+(function applyClubTheme(){
+    const theme=clubTheme();
+    if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
+    try{globalThis.sessionStorage.setItem(key,theme);}catch{}
+})();})();</script><meta name="course-build" content="0.3.0-a76e160bc2"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Cross Country Mode</title><link rel="stylesheet" href="./style.css"></head>
+<body><main class="home">
+<header><div class="brand"><span class="irish-par-wordmark">THE IRISH PAR</span><span class="springhaven-wordmark">THE SPRINGHAVEN CLUB</span></div><nav class="game-nav" aria-label="Game navigation"><a id="daily-home" href="../">Home</a><a id="practice-home" href="./">Practice</a></nav></header>
+<section class="intro"><h1>Cross Country Mode</h1></section>
+<section class="cross-country-form" aria-labelledby="open-play-title">
+<h2 id="open-play-title">Open Play</h2>
+<p>Start on the first tee, pick any target green, and play from wherever the ball lands. Use Drone view to see the ball and target from above.</p>
+<div class="actions"><a id="play-open" class="button" href="./play.html?cross=open">Start Open Play</a></div>
+</section>
+<p class="build-line" id="build-version"></p>
+</main><script type="module" src="./cross-country-setup.mjs"></script></body></html>
