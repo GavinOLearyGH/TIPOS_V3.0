@@ -89,7 +89,7 @@ function restoreToday(){
 }
 function showShotData(outcome){
     const yards=distance=>(distance/.9144).toFixed(1)+' yd';
-    $('data-detail').textContent=[shot.club,shot.contact,outcome].filter(Boolean).join(' · ');
+    result.textContent='Finish: '+outcome;
     $('carry').textContent=yards(shot.carry);
     $('roll').textContent=yards(shot.roll);
     $('total').textContent=yards(shot.carry+shot.roll);
@@ -121,11 +121,16 @@ function fire(now){
     const start={...rangeStart,...rangeLies[lie.value]},name=club.value;
     trail=[];lastMap=-Infinity;
     const contact=resolveExecution(name,power,timing,start.id),suitability=clubLie(name,start);
-    shot={start,heading,club:name,contact:contact.label,firstContact:null,carry:0,roll:0,done:false};
+    shot={start,heading,firstContact:null,carry:0,roll:0,done:false};
     setWeatherControlsDisabled(true);
     ball=strike(start,ground,name,power,heading+contact.heading,start.surface,contactProfile(name,start));
     ball.spin*=contact.spin;ball.lift*=contact.lift*suitability.lift;ball.curve=contact.curve;
-    power=0;club.disabled=lie.disabled=targetSelect.disabled=true;result.textContent=contact.label+' · Ball in flight';
+    power=0;club.disabled=lie.disabled=targetSelect.disabled=true;
+    const feedback=contact.error===0?'Clean strike':timing<0?'Early release · Draw':'Late release · Fade';
+    $('data-detail').textContent=name+' · '+feedback;
+    $('data-detail').hidden=false;
+    for(const field of ['carry','roll','total'])$(field).textContent='—';
+    result.textContent='Ball in flight…';
 }
 function step(now){
     const before={x:ball.x,y:ball.y,z:ball.z},wasAirborne=ball.mode==='air';
@@ -145,7 +150,6 @@ function step(now){
         Object.assign(ball,{x:basket.x,y:basket.y,z:basket.z,mode:'basket'});
         trail.push({x:ball.x,z:ball.z});
         lastMap=-Infinity;
-        result.textContent='In the basket · '+basket.target.yards+' yd';
         showShotData('In the basket · '+basket.target.yards+' yd');
         return;
     }
@@ -154,13 +158,11 @@ function step(now){
     if(ball.mode==='air'||ball.mode==='roll')return;
     shot.done=true;
     shot.returnAt=now+1100;
-    const distance=({x,z})=>Math.hypot(x-shot.start.x,z-shot.start.z)/.9144;
     const offline=((ball.z-shot.start.z)*Math.cos(shot.heading)-(ball.x-shot.start.x)*Math.sin(shot.heading))/.9144;
-    const finish=Math.abs(offline)<.5?'On line':Math.abs(offline).toFixed(0)+' yd '+(offline>0?'right':'left');
-    const carry=shot.firstContact?'Carry '+Math.round(distance(shot.firstContact))+' yd · ':'';
-    const outcome=net?'Hit net · '+Math.round(distance(ball))+' yd to contact':(ball.mode==='out'?'Out of range · ':'')+carry+'Total '+Math.round(distance(ball))+' yd';
-    result.textContent=outcome+' · '+finish+' · '+shot.contact;
-    showShotData(net?'Hit net':ball.mode==='out'?'Out of range':finish);
+    const finish=Math.abs(offline)<.5?'On your aim line':
+        Math.abs(offline).toFixed(0)+' yd '+(offline>0?'right':'left')+' of your aim line';
+    const netDistance=net?Math.round(Math.hypot(ball.x-shot.start.x,ball.z-shot.start.z)/.9144):null;
+    showShotData(net?'Hit net at '+netDistance+' yd':ball.mode==='out'?'Out of range':finish);
 }
 function frame(now){
     const elapsed=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));

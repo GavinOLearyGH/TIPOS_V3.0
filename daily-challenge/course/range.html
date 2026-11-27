@@ -9,7 +9,7 @@
     const theme=clubTheme();
     if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
     try{globalThis.sessionStorage.setItem(key,theme);}catch{}
-})();})();</script><meta name="course-build" content="0.3.0-5f7345ba62"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-5f7345ba62/course/style.css"><style>
+})();})();</script><meta name="course-build" content="0.3.0-ebf451b7e7"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Driving range · Irish Par Golf</title><link rel="stylesheet" href="./releases/0.3.0-ebf451b7e7/course/style.css"><style>
 .range-play .stage{border-color:#998458}
 .range-play .range-overview .hud,.range-play .range-overview .side-panels,.range-play .range-overview .shot-controls{visibility:hidden}
 .range-play .range-overview .view-tools{position:absolute;top:0;right:0;display:block}
@@ -42,6 +42,12 @@
 .range-play .shot-controls{justify-content:space-between}
 .range-play .shot-controls label{min-width:0}
 .range-play .shot-controls select{width:auto;max-width:100%}
+.range-play .shot-summary-heading{display:block}
+.range-play #range-data-detail{display:block;margin-top:4px}
+.range-play #range-data-detail[hidden]{display:none}
+#range-result{margin:10px 0 0;font-size:14px;color:var(--muted)}
+#range-help{font-size:14px}
+#range-help summary{min-height:44px;padding-block:10px;cursor:pointer}
 </style></head>
 <body class="course-play range-play"><main>
 <header><div><div class="brand"><span class="irish-par-wordmark">THE IRISH PAR</span><span class="springhaven-wordmark">THE SPRINGHAVEN CLUB</span></div><div class="club-name">The Springhaven Club</div><h1 class="play-title">Driving range</h1></div><a id="range-home" href="../">Home</a></header>
@@ -54,7 +60,7 @@
 </div>
 </section>
 <div class="stage" id="range-stage">
-<canvas id="scene" tabindex="0" aria-label="Range view. Swipe away from the ball to turn. Pull back from the ball for power, slide left to aim right, and release to swing." aria-describedby="range-result"></canvas>
+<canvas id="scene" tabindex="0" aria-label="Range view. Swipe away from the ball to turn. Pull back from the ball for power, slide left to aim right, and release to swing." aria-describedby="range-instructions"></canvas>
 <canvas id="weather-effects" aria-hidden="true" hidden></canvas>
 <div class="game-hud">
 <div class="hud" role="group" aria-label="Shot conditions">
@@ -74,8 +80,9 @@
 <div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
 </div>
 <section class="shot-summary" aria-labelledby="range-data-title">
-<div class="shot-summary-heading"><h2 id="range-data-title">Patchman Data · Last shot</h2><span id="range-data-detail">Hit a shot to see your data.</span></div>
-<dl><div><dt>Carry</dt><dd id="range-carry">—</dd></div><div><dt>Bounce + roll</dt><dd id="range-roll">—</dd></div><div><dt>Total travel</dt><dd id="range-total">—</dd></div></dl>
+<div class="shot-summary-heading"><h2 id="range-data-title">Patchman Data · Last shot</h2><span id="range-data-detail" hidden></span></div>
+<dl><div><dt>Carry</dt><dd id="range-carry">—</dd></div><div><dt>Bounce + roll</dt><dd id="range-roll">—</dd></div><div><dt>Total</dt><dd id="range-total">—</dd></div></dl>
+<p id="range-result" role="status">Hit a shot to see your data.</p>
 </section>
 <dialog id="range-settings" aria-labelledby="range-settings-title"><h2 id="range-settings-title">Range conditions</h2>
 <fieldset id="range-weather-controls" class="setup settings" disabled>
@@ -85,6 +92,8 @@
 </fieldset>
 <form method="dialog"><button type="submit">Done</button></form>
 </dialog>
-<p id="range-result" role="status">Swipe away from the ball to turn. Pull back for power and slide left to aim right, or right to aim left. Hold, then release in the green zone.</p>
+<details id="range-help"><summary>How to play</summary>
+<p id="range-instructions">Swipe away from the ball to turn. Pull back for power and slide left to aim right, or right to aim left. Hold, then release in the green zone.</p>
 <p class="keyboard-help">Keyboard · ← → to aim · Hold Space for power, release to hit · Esc cancels</p>
-</main><script type="module" src="./releases/0.3.0-5f7345ba62/course/range.mjs"></script></body></html>
+</details>
+</main><script type="module" src="./releases/0.3.0-ebf451b7e7/course/range.mjs"></script></body></html>
