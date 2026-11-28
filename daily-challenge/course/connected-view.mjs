@@ -54,7 +54,7 @@ const entries=playableHoles.map(definition=>{
     const angle=heading(teeReference,greenReference)-heading(tee,pin);
     const a=Math.cos(angle),b=Math.sin(angle);
     const transform={a,b,x:greenReference.x-a*pin.x+b*pin.z,z:greenReference.z-b*pin.x-a*pin.z};
-    const route=[tee,...(course.aimPoints??[]),pin];
+    const route=[tee,...(course.flyoverPoints??course.aimPoints??[]),pin];
     const unit=course.plan.metresPerUnit;
     const sandIslands=shapes.sandIsland?geometryPath(shapes.sandIsland):[];
     const areas=playingKinds.map(kind=>shapes[kind]?geometryPath(shapes[kind]):[]);

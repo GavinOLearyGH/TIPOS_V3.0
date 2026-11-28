@@ -24,8 +24,37 @@ const sandIsland=graphTrace('M825 650 Q848 636 870 657 Q901 679 881 716 Q867 742
 // Distances along the approach line use the book's 50-yard layup-to-bank
 // measurement and 17-yard crossing. The banks fan out into the existing corridor.
 const ditch=trace('M-29 -40 Q-16 -43 0 -41 Q16 -39 28 -34 Q37 -31 39 -27 L38 -14 Q30 -16 23 -19 Q12 -23 0 -24 Q-15 -25 -28 -23 L-31 -29 Z');
-const fairway=trace('M7 -398 Q11 -407 22 -400 Q30 -389 31 -360 Q34 -333 31 -313 Q40 -279 42 -252 Q42 -220 36 -198 Q33 -168 26 -134 Q19 -103 15 -79 Q13 -55 11 -39 L10 -24 Q7 -20 5 -16 L-7 -16 Q-12 -28 -14 -42 Q-15 -66 -17 -81 Q-17 -106 -14 -134 Q0 -166 11 -198 Q16 -217 13 -232 Q10 -249 11 -267 Q10 -291 6 -316 Q2 -352 4 -377 Q4 -391 7 -398 Z');
-const fairwayRoute=[[16,-390],[19,-344],[18,-307],[25,-252],[23,-198],[12,-145],[4,-106],[0,-91],[-1,-49],[0,-24]];
+// The book's lateral markers anchor the yardages. The overhead supplies the
+// mow lines: a long, nearly straight drive corridor with a gentle left finish.
+const fairway=trace(
+    'M6 -393 Q9 -407 20 -403 Q30 -401 33 -386 '+
+    'Q37 -363 36 -331 Q37 -301 36 -273 Q36 -241 34 -213 '+
+    'Q33 -176 29 -142 Q26 -110 22 -81 Q17 -53 11 -39 '+
+    'L10 -24 Q8 -20 5 -16 L-7 -16 Q-13 -28 -14 -42 '+
+    'Q-13 -62 -12 -82 Q-10 -111 -7 -143 Q-4 -180 -2 -214 '+
+    'Q0 -243 2 -273 Q4 -303 4 -331 Q3 -365 4 -380 Q4 -389 6 -393 Z');
+const fairwayRoute=[[19,-390],[20,-344],[20,-310],[19,-273],[17,-240],
+    [15,-200],[12,-160],[8,-120],[6,-91],[2,-55],[0,-24]];
+const route=fairwayRoute.map(([across,forward])=>point(across,forward));
+
+// Groupings follow the book's tee-side trees, opposite flanks of the
+// landing area, the approach-side gaps, and the lone tree short of the green.
+const trees=[
+    // Left edge, from tee toward the green.
+    [-20,-423,9],[-10,-388,10],[-14,-351,9],[-11,-319,10],
+    [-9,-281,10],[-13,-256,10],[-18,-227,10],[-20,-193,10],
+    [-23,-170,10],[-22,-151,9],[-23,-124,10],
+    [-43,-121,10],[-25,-95,9],[-27,-76,9],[-20,-69,10],
+    [-31,-40,10],
+    // Right edge. Several trees share the mid-fairway station in the book.
+    [55,-423,9],[52,-388,10],[53,-350,10],[55,-319,9],
+    [54,-286,10],[50,-259,10],[50,-232,10],[54,-213,9],
+    [48,-198,10],[52,-190,10],[59,-188,11],[54,-151,9],
+    [49,-123,10],[42,-99,11],[49,-88,9],[46,-69,10],
+    // Behind the back tee.
+    [-28,-562,9],[-19,-566,9],[-10,-568,10],[-1,-569,10],
+    [8,-567,9],[21,-565,10],[31,-561,9],[40,-555,9]
+].map(([across,forward,height])=>({...point(across,forward),height}));
 const gradeStations=[[-550,1],[-468,1],[-320,4],[-274,3],[-229,3],[-206,2],[-137,2],[-114,.8],[-91,.25],[-41,.18],[-24,.13],[-17,0]];
 function fairwayGrade(x){
     const forward=(x-1780)/yardsToPlan;
@@ -83,8 +112,8 @@ export const hole2={
     tees:[tee('1896','1896 (Black)',550,.7),tee('rawlins','Rawlins (Blue)',540,-16.87),
         tee('butler','Butler (Silver)',467,.68),tee('dixon','Dixon (White)',458,18.6)],
     pins:[{id:'center',name:'Center',x:1780*k,z:558*k}],
-    aimPoints:[point(24,-251),point(2,-91)],
-    flyoverPoints:fairwayRoute.map(([across,forward])=>point(across,forward)),
+    aimPoints:[route[4],route[8]],
+    flyoverPoints:route,
     shapes:{
         tee:trace('M-7 -557 L8 -557 L8 -546 L-7 -546 Z M-23 -547 L-11 -547 L-11 -525 L-23 -525 Z M-6 -474 L25 -474 L25 -451 L-6 -451 Z'),
         fairway,surround:collar,green,sand:leftSand+' '+rightSand,sandIsland
@@ -103,14 +132,10 @@ export const hole2={
         'M1698 489Q1718 462 1755 455',
         'M1826 654Q1898 602 1931 588'
     ],
-    scenery:{trees:[
-        [325,498,9],[450,497,10],[582,495,9],[722,503,10],[863,518,11],[1027,535,11],[1193,528,10],[1351,531,9],[1450,524,9],[1572,518,10],
-        [285,685,9],[432,707,10],[603,716,11],[758,704,10],[991,703,10],[1142,719,11],[1291,703,9],[1454,690,11],[1588,695,10],[1878,511,9],[1889,609,10],
-        [174,510,9],[154,536,9],[152,560,10],[155,586,10],[164,614,9],[184,640,9]
-    ].map(([x,z,height])=>({x:x*k,z:z*k,height})),buildings:[{x:109*k,z:676*k,width:15,height:5,depth:10}]},
+    scenery:{trees,buildings:[{x:109*k,z:676*k,width:15,height:5,depth:10}]},
     terrain:{baseRipple:0,rippleLength:80,elevation:fairwayGrade,bunkerDepth:.65,bunkerBlend:2},
     green:{front:1780-31*328/606*yardsToPlan,depth:31*yardsToPlan,center:[1780,558],blend:[110,103],
         backToFrontRise:0,contour:greenContour},
     provisional:['Tee offsets and fairway widths between survey references','Barranca bank profiles and lie patch locations','Tree heights and bunker depths'],
-    sources:['February 2025 Springhaven yardage book','Supplied Hole 2 aerial and playable five-foot barranca description']
+    sources:['February 2025 Springhaven yardage book','Supplied Hole 2 aerial, PARennial overhead and playable five-foot barranca description']
 };
