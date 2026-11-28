@@ -4,7 +4,7 @@ import {clamp,ease,mix} from '../core/physics.mjs';
 // Use the playing corridor through carries and gaps between fairway and green.
 const centerlines=[
     [[540,438],[690,430],[870,439],[1100,464],[1350,495],[1425,504]],
-    [[665,592],[810,611],[1000,623],[1250,623],[1475,617],[1605,602],[1715,565]],
+    [],
     [[1480,582],[1550,586],[1620,590],[1655,576]],
     [[800,237],[940,234],[1030,210],[1140,127],[1250,140],[1410,225],[1570,258],[1720,249],[1810,255]],
     [[820,331],[920,370],[1050,424],[1160,456],[1230,458],[1370,395],[1460,341],[1530,307],[1605,237],[1710,230],[1775,221]],
@@ -42,7 +42,7 @@ export function flyoverPath(course,tee,{direct=false}={}){
     const {minX,maxX,minZ,maxZ}=course.greenBounds;
     const center={x:(minX+maxX)/2,z:(minZ+maxZ)/2};
     const unit=course.plan.metresPerUnit;
-    const corridor=direct?[]:(centerlines[course.number-1]??[]).map(([x,z])=>({x:x*unit,z:z*unit}));
+    const corridor=direct?[]:course.flyoverPoints??(centerlines[course.number-1]??[]).map(([x,z])=>({x:x*unit,z:z*unit}));
     const points=[tee,...corridor.filter(p=>p.x>tee.x+3),center];
     const samples=[{point:tee,at:0}];
     function append(point){

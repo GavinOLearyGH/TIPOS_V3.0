@@ -15,7 +15,7 @@ export function makeAtlas(course,view){
     if(view){
         // Paint all corridors before the high-priority lies so a neighbouring
         // fairway never colors over a tee, putting surface or hazard.
-        for(const pass of ['low','hazards','high','water']){
+        for(const pass of ['low','hazards','high','islands','water']){
             for(const layer of view.layers){
                 const {a,b,x,z}=layer.transform;
                 c.save();c.transform(a,b,-b,a,x,z);
@@ -35,10 +35,11 @@ function paintHole(c,course,foreground,pass=null){
     const b=course.atlasBounds??course.bounds,unit=course.plan.metresPerUnit;
     c.save();c.scale(unit,unit);
     const kinds=pass==='low'?['teeArea','fairway','surround']:pass==='high'?['sand','tee','green']:
-        pass==='water'?['water']:pass==='hazards'?[]:['road','teeArea','tee','fairway','surround','water','green','sand'];
+        pass==='water'?['water']:pass==='islands'?['sandIsland']:pass==='hazards'?[]:['road','teeArea','tee','fairway','surround','water','green','sand','sandIsland'];
     for(const kind of kinds){
         if(!course.shapes[kind])continue;
-        c.fillStyle=surfaceColors[kind];c.fill(new Path2D(course.shapes[kind]));
+        c.fillStyle=kind==='sandIsland'?surfaceColors.rough:surfaceColors[kind];
+        c.fill(new Path2D(course.shapes[kind]));
     }
     if(!pass||pass==='hazards')for(const feature of course.landforms??[]){
         if(!foreground){
@@ -72,8 +73,9 @@ function paintHole(c,course,foreground,pass=null){
         for(const path of course.paths)c.stroke(new Path2D(path));
     }
     if((!pass||pass==='high')&&course.shapes.sand){
-        const sand=new Path2D(course.shapes.sand);
-        c.save();c.clip(sand);c.lineJoin='round';
+        const island=course.shapes.sandIsland;
+        const sand=new Path2D(course.shapes.sand+(island?' '+island:''));
+        c.save();c.clip(sand,island?'evenodd':'nonzero');c.lineJoin='round';
         c.save();
         // Offset the shaded face into the bunker along the fixed light axis.
         c.translate(1.65/unit,1.05/unit);

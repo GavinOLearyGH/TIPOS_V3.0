@@ -53,7 +53,7 @@ export function createCourse(definition){
         const lie=lieAt(x,z);if(lie)return lie.material;
         if(definition.pathWidth&&distanceToLines(pathLines,x/unit,z/unit)<definition.pathWidth/2)return 'path';
         for(const kind of ['sand','green','tee','surround','fairway']){
-            if(contains(kind,x,z))return kind;
+            if(contains(kind,x,z)&&!(kind==='sand'&&contains('sandIsland',x,z)))return kind;
         }
         return 'rough';
     }
@@ -77,7 +77,7 @@ export function createCourse(definition){
             y+=pews.height*Math.exp(-(((px-pews.x-i*pews.spacing)/pews.width)**2))*ends;
         }
         if(contains('sand',x,z)&&surface(x,z)==='sand'){
-            const edge=distanceToLines(paths.sand,px,pz);
+            const edge=Math.min(distanceToLines(paths.sand,px,pz),distanceToLines(paths.sandIsland??[],px,pz));
             y-=terrain.bunkerDepth*ease(edge/terrain.bunkerBlend);
         }
         return y;

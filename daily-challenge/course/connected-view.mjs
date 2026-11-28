@@ -56,10 +56,11 @@ const entries=playableHoles.map(definition=>{
     const transform={a,b,x:greenReference.x-a*pin.x+b*pin.z,z:greenReference.z-b*pin.x-a*pin.z};
     const route=[tee,...(course.aimPoints??[]),pin];
     const unit=course.plan.metresPerUnit;
+    const sandIslands=shapes.sandIsland?geometryPath(shapes.sandIsland):[];
     const areas=playingKinds.map(kind=>shapes[kind]?geometryPath(shapes[kind]):[]);
     const ground=course.terrainGround??course.ground;
     const bounds=extent(corners(course.bounds).map(([x,z])=>toWorld(transform,x,z)));
-    return {course,pin,transform,angle,route,unit,areas,ground,bounds};
+    return {course,pin,transform,angle,route,unit,areas,ground,bounds,sandIslands};
 });
 // The reference aerial is north-up. The wind engine takes the direction air travels.
 export function courseWindAngle(from){
@@ -89,14 +90,16 @@ function candidates(x,z){
 }
 
 function materialAt(x,z){
-    let best=null,hazard=null;
+    let best=null,hazard=null,sandIsland=false;
     for(const p of candidates(x,z)){
         if(p.edge)continue;
         const area=areaAt(p.entry,p.x,p.z);
+        sandIsland||=containsPoint(p.entry.sandIslands,p.x/p.entry.unit,p.z/p.entry.unit);
         if(area<Infinity&&(!best||area<best.area||area===best.area&&p.route<best.route))best={...p,area};
         const lie=p.entry.course.lieAt?.(p.x,p.z);
         if(lie&&(!hazard||p.route<hazard.route))hazard={...p,lie};
     }
+    if(sandIsland&&best?.area>=3)return {surface:'rough',lie:null};
     if(best?.area<4)return {surface:playingKinds[best.area],lie:null};
     if(hazard)return {surface:hazard.lie.material,lie:hazard.lie};
     return {surface:best?playingKinds[best.area]:'rough',lie:null};
