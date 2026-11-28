@@ -102,3 +102,15 @@ export function flyoverCamera(course,path,progress,aspect){
     const target=[eye[0]+reach*Math.cos(yaw),eye[1]-look*Math.sin(pitch),eye[2]+reach*Math.sin(yaw)];
     return {eye,target};
 }
+
+export function puttingGreenCamera(ball,pin,ground,aspect,aimHeading){
+    const center=between(ball,pin,.5),span=distance(ball,pin);
+    const heading=span>.01?Math.atan2(pin.z-ball.z,pin.x-ball.x):aimHeading;
+    const elevation=Math.max(ground(ball.x,ball.z),ground(center.x,center.z),ground(pin.x,pin.z));
+    const height=Math.max(6.5,5.5/Math.max(.25,aspect),span*1.3+2);
+    const setback=height*.42;
+    return {
+        eye:[center.x-Math.cos(heading)*setback,elevation+height,center.z-Math.sin(heading)*setback],
+        target:[center.x,elevation,center.z]
+    };
+}

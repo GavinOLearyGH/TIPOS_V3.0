@@ -14,7 +14,7 @@ import {buildId} from '../core/build-info.mjs';
 import {dragPower,dragHeading,shotCamera,startBallPull,pullDepth,shotPower,drawShotPullGuide} from '../core/controls.mjs';
 import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
 import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
-import {flyoverPath,flyoverCamera} from './flyover.mjs';
+import {flyoverPath,flyoverCamera,puttingGreenCamera} from './flyover.mjs';
 import {crossCountrySelection,createCrossCountryGame,openPlayTarget,droneCamera} from './cross-country.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {precipitationOverlay} from './precipitation.mjs';
@@ -211,10 +211,12 @@ function updateWindDisplay(){
     $('wind-text').textContent=reading.text;
     $('wind-label').setAttribute('aria-label',reading.text+'; direction the wind blows relative to your aim');
 }
-function canReadPutt(){
+function onTargetGreen(){
     const {ball}=round.state;
-    return editable()&&$('club').value==='Putter'&&
-        (openTarget?openTarget.onGreen(ball):course.surface(ball.x,ball.z)==='green');
+    return openTarget?openTarget.onGreen(ball):course.surface(ball.x,ball.z)==='green';
+}
+function canReadPutt(){
+    return editable()&&$('club').value==='Putter'&&onTargetGreen();
 }
 function updateHUD(){
     if(!round)return;
@@ -245,7 +247,7 @@ function updateHUD(){
     $('reload-build').disabled=active();
     $('face-pin').disabled=!editable()||!!drag||!!turnDrag;
     $('flyover').disabled=active()||!renderer||$('complete').open||officialBusy||Boolean(officialSession&&pendingShot);
-    $('flyover').textContent=tour?.drone?'Back to Shot':tour?.reading?'Back to shot':tour?'Skip flyover':openPlay?'Drone view':crossCountry?'Green view':'Flyover';
+    $('flyover').textContent=tour?.drone?'Back to Shot':tour?.reading?'Back to shot':tour?'Skip flyover':openPlay?'Drone view':crossCountry||onTargetGreen()?'Green view':'Flyover';
     $('cross-target').disabled=locked||!renderer||$('complete').open;
     $('stage').classList.toggle('drone-view',Boolean(tour?.drone));
     if(tour?.reading)$('stage').classList.add('reading-green');
@@ -382,19 +384,26 @@ function stopTour(){
 }
 $('flyover').onclick=()=>{
     if(tour){stopTour();return;}
-    if(active()||drag||keyStarted!==null||!renderer)return;
+    if(active()||drag||turnDrag||keyStarted!==null||$('flyover').disabled)return;
     cancel();
-    const tee=course.tees.find(t=>t.id===$('tee').value)??course.tees[0];
     if(openPlay){
         const from=cameraForBall();
         tour={start:null,drone:true,from};
+    }else if(onTargetGreen()){
+        tour={reading:true,puttingRead:true};
     }else{
+        const tee=course.tees.find(t=>t.id===$('tee').value)??course.tees[0];
         const path=flyoverPath(course,tee,{direct:Boolean(crossCountry)});
         tour={start:null,path,duration:clamp(path.length/55,6,10),reading:Boolean(crossCountry)};
     }
     updateHUD();
 };
 function tourView(now){
+    if(tour.puttingRead){
+        const aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);
+        return {...puttingGreenCamera(round.state.ball,round.settings.pin,course.ground,aspect,heading),
+            greenGrid:showGreenGrid};
+    }
     tour.start??=now;
     const elapsed=(now-tour.start)/1000;
     if(tour.drone){
@@ -462,7 +471,7 @@ function frame(now){
         gridRegion:openTarget?.gridRegion,flying:active(),drone:Boolean(tour?.drone)});
     drawPrecipitation?.(now,Boolean(tour?.drone));
     if(tour?.drone)drawDrone();
-    const anchor=ready?projectBall(ball):null;
+    const anchor=ready||tour?.puttingRead?projectBall(ball):null;
     marker('ball-ring',anchor);
     const ahead=ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength}:null;
     marker('aim-ring',ahead?renderer.project({...ahead,y:course.ground(ahead.x,ahead.z)+.06}):null);
