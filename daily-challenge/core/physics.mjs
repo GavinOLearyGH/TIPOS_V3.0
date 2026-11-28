@@ -299,6 +299,13 @@ function obstacleContact(ball,from,obstacle){
     ball.x=x+nx*.025;ball.y=y+ny*.025;ball.z=z+nz*.025;
     ball.obstacle=obstacle.kind;
 }
+function groundGradient(ground,x,z){
+    const sample=.07;
+    return {
+        x:(ground(x+sample,z)-ground(x-sample,z))/(sample*2),
+        z:(ground(x,z+sample)-ground(x,z-sample))/(sample*2)
+    };
+}
 function advance(ball, course, settings, dt=stepTime){
     ball.time+=dt;
     if(ball.putted)dt*=1.14;
@@ -323,11 +330,9 @@ function advance(ball, course, settings, dt=stepTime){
     if(ball.mode==='air'){
         flightStep(ball,wind,dt);
     } else if(ball.mode==='roll'){
-        const sample=.07;
-        const gradeX=(rollingGround(ball.x+sample,ball.z)-rollingGround(ball.x-sample,ball.z))/(sample*2);
-        const gradeZ=(rollingGround(ball.x,ball.z+sample)-rollingGround(ball.x,ball.z-sample))/(sample*2);
-        ball.vx-=7*clamp(gradeX,-.55,.55)*dt;
-        ball.vz-=7*clamp(gradeZ,-.55,.55)*dt;
+        const grade=groundGradient(rollingGround,ball.x,ball.z);
+        ball.vx-=7*clamp(grade.x,-.55,.55)*dt;
+        ball.vz-=7*clamp(grade.z,-.55,.55)*dt;
         const pace=Math.hypot(ball.vx,ball.vz);
         rollingLie=(rollsUnderDeck?terrainSurface:surface)(ball.x,ball.z);
         const base=(surfaces[rollingLie]||surfaces.rough).brake*(rollingLie==='fairway'&&!ball.putted?1+.30*wetness:1);
@@ -455,4 +460,4 @@ function advance(ball, course, settings, dt=stepTime){
     }
     if(ball.time>45||!insideBounds(ball.x,ball.z)||ball.mode!=='air'&&course.isOutOfBounds?.(ball.x,ball.z))ball.mode='out';
 }
-export {calibrateClub,ballRadius,cupRadius,stepTime,clubs,bag,surfaces,windDirections,windVector,aimStep,powerStep,clamp,mix,ease,newBall,strike,advance,estimatePutt,flightProfile};
+export {calibrateClub,ballRadius,cupRadius,stepTime,clubs,bag,surfaces,windDirections,windVector,aimStep,powerStep,clamp,mix,ease,newBall,strike,advance,estimatePutt,flightProfile,groundGradient};

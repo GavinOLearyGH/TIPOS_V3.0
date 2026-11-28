@@ -101,6 +101,15 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid var(--line);bor
 .reading-green .shot-controls{left:0}
 .reading-green #flyover{width:auto;padding-inline:10px;white-space:nowrap}
 
+#putt-readout{position:absolute;z-index:1;inset:8px 8px auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;padding:3px 5px 3px 10px;border:1px solid #ffffff45;border-radius:8px;background:#182a20ef;color:white;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
+#putt-reference-toggle{min-height:44px;padding:4px 8px;background:transparent;color:white;font-size:12px}
+#putt-reference-toggle[aria-pressed="true"]{background:#ffe6a3;color:#182a20}
+#putt-reference,#putt-slope-markers{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#putt-reference-path{fill:none;stroke:#fff0cb;stroke-width:2;stroke-dasharray:2 6;stroke-linecap:round;opacity:.85;filter:drop-shadow(0 0 1px #172a20)}
+.putt-slope{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;gap:5px;min-width:52px;padding:3px 6px;border:1px solid #ffffff45;border-radius:6px;background:#182a20ee;color:white;font-size:12px;line-height:1.25;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.putt-slope b{display:inline-block;color:#ffe6a3;font-size:15px;line-height:1}
+[data-club-theme="springhaven"] :is(#putt-readout,.putt-slope){background:#19345aef}
+
 .cross-country-form{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px}
 .cross-country-form p{margin:0}
 

@@ -15,6 +15,7 @@ import {dragPower,dragHeading,shotCamera,startBallPull,pullDepth,shotPower,drawS
 import {holeByNumber,courseCatalog,playableHoles} from './catalog.mjs';
 import {createConnectedCourse,makeConnectedView} from './connected-view.mjs';
 import {flyoverPath,flyoverCamera,puttingGreenCamera} from './flyover.mjs';
+import {puttingRead} from './putting-read.mjs';
 import {crossCountrySelection,createCrossCountryGame,openPlayTarget,droneCamera} from './cross-country.mjs';
 import {createRound,fullBag} from '../core/round.mjs';
 import {precipitationOverlay} from './precipitation.mjs';
@@ -238,6 +239,9 @@ function updateHUD(){
         $('slope').textContent='At the ball · '+Math.abs(rise*100).toFixed(1)+'% '+(rise>=0?'uphill':'downhill')+
             (Math.abs(across)<.002?' · Minimal break':across>0?' · breaks left':' · breaks right');
     }
+    $('putt-readout').hidden=!tour?.puttingRead;
+    $('putt-slope-markers').hidden=!tour?.puttingRead||!showGreenGrid;
+    $('putt-reference-path').toggleAttribute('hidden',!tour?.puttingRead||!tour.showReference);
     $('green-grid').hidden=!tour?.reading&&!canReadPutt();
     $('green-grid').setAttribute('aria-pressed',String(showGreenGrid));
     $('green-grid').textContent=showGreenGrid?'Hide green grid':'Show green grid';
@@ -390,7 +394,9 @@ $('flyover').onclick=()=>{
         const from=cameraForBall();
         tour={start:null,drone:true,from};
     }else if(onTargetGreen()){
-        tour={reading:true,puttingRead:true};
+        tour={reading:true,puttingRead:puttingRead(round.state.ball,round.settings.pin,course.ground),showReference:false};
+        $('putt-distance').textContent=tour.puttingRead.summary;
+        $('putt-reference-toggle').setAttribute('aria-pressed','false');
     }else{
         const tee=course.tees.find(t=>t.id===$('tee').value)??course.tees[0];
         const path=flyoverPath(course,tee,{direct:Boolean(crossCountry)});
@@ -440,6 +446,37 @@ function drawDrone(){
         if($('drone-target').textContent!==label)$('drone-target').textContent=label;
     }
 }
+$('putt-reference-toggle').onclick=()=>{
+    if(!tour?.puttingRead)return;
+    tour.showReference=!tour.showReference;
+    $('putt-reference-toggle').setAttribute('aria-pressed',String(tour.showReference));
+    updateHUD();
+};
+function drawPuttingRead(){
+    const width=canvas.clientWidth,height=canvas.clientHeight;
+    const layout=width+':'+height;
+    if(tour.puttLayout===layout)return;
+    tour.puttLayout=layout;
+    const {slopes,reference}=tour.puttingRead;
+    const points=reference.map(renderer.project);
+    $('putt-reference-path').setAttribute('points',points.every(Boolean)?points.map(p=>p.x+','+p.y).join(' '):'');
+    for(let i=0;i<3;i++){
+        const reading=slopes[i],label=$('putt-slope-'+i);
+        const at=reading&&renderer.project(reading.at);
+        label.hidden=!at;
+        if(!at)continue;
+        const side=i===1?-1:1;
+        const onSide=at.x+side*42;
+        label.style.left=clamp(onSide,33,width-33)+'px';
+        label.style.top=clamp(at.y,64,height-64)+'px';
+        $('putt-degrees-'+i).textContent=reading.degrees+'°';
+        label.setAttribute('aria-label',reading.label+' · '+reading.degrees+' degrees');
+        const arrow=$('putt-arrow-'+i);
+        const down=reading.downhill&&renderer.project(reading.downhill);
+        arrow.hidden=!down;
+        if(down)arrow.style.transform='rotate('+Math.atan2(down.y-at.y,down.x-at.x)+'rad)';
+    }
+}
 function frame(now){
     const dt=Math.min(.05,Math.max(0,(now-(lastTime||now))/1000));lastTime=now;
     if(!renderer)return;
@@ -471,6 +508,7 @@ function frame(now){
         gridRegion:openTarget?.gridRegion,flying:active(),drone:Boolean(tour?.drone)});
     drawPrecipitation?.(now,Boolean(tour?.drone));
     if(tour?.drone)drawDrone();
+    if(tour?.puttingRead)drawPuttingRead();
     const anchor=ready||tour?.puttingRead?projectBall(ball):null;
     marker('ball-ring',anchor);
     const ahead=ready&&!drag?{x:ball.x+Math.cos(heading)*aimLength,z:ball.z+Math.sin(heading)*aimLength}:null;

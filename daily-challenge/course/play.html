@@ -9,7 +9,7 @@
     const theme=clubTheme();
     if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
     try{globalThis.sessionStorage.setItem(key,theme);}catch{}
-})();})();</script><meta name="course-build" content="0.3.0-b1a06400d9"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-b1a06400d9/course/style.css"></head>
+})();})();</script><meta name="course-build" content="0.3.0-c8e0cd96a6"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./releases/0.3.0-c8e0cd96a6/course/style.css"></head>
 <body class="course-play"><main>
 <header><div><div class="brand"><span class="irish-par-wordmark">THE IRISH PAR</span><span class="springhaven-wordmark">THE SPRINGHAVEN CLUB</span></div><div class="club-name">The Springhaven Club</div><h1 class="play-title" id="hole-title">Hole</h1></div><nav class="game-nav" aria-label="Game navigation"><a id="game-home" href="../">Home</a><a id="course-home" href="./">Practice</a></nav></header>
 <div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
@@ -27,6 +27,13 @@
 </div>
 <div class="view-tools" role="group" aria-label="View controls"><button id="face-pin" type="button">Face pin</button><button id="flyover" type="button">Flyover</button></div>
 <div class="shot-controls"><label>Club · carry<select id="club"></select><small id="club-risk" hidden role="status"></small></label><button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button></div>
+</div>
+<div id="putt-readout" hidden><span id="putt-distance"></span><button id="putt-reference-toggle" type="button" aria-pressed="false">Ball-to-cup line</button></div>
+<svg id="putt-reference" aria-hidden="true"><polyline id="putt-reference-path" hidden></polyline></svg>
+<div id="putt-slope-markers" role="group" aria-label="Downhill slope along the putt" hidden>
+<span id="putt-slope-0" class="putt-slope"><b id="putt-arrow-0" aria-hidden="true">➜</b><span id="putt-degrees-0"></span></span>
+<span id="putt-slope-1" class="putt-slope"><b id="putt-arrow-1" aria-hidden="true">➜</b><span id="putt-degrees-1"></span></span>
+<span id="putt-slope-2" class="putt-slope"><b id="putt-arrow-2" aria-hidden="true">➜</b><span id="putt-degrees-2"></span></span>
 </div>
 <svg id="drone-outline" aria-hidden="true" hidden><polygon id="drone-green"></polygon></svg>
 <div id="drone-ball" aria-hidden="true" hidden></div><div id="drone-target" role="status" hidden></div>
@@ -61,4 +68,4 @@
 <section id="official-result" hidden><p id="official-detail"></p><label id="official-name-label">Display name<input id="official-name" maxlength="28" autocomplete="nickname"></label><button id="publish-official" class="primary" type="button">Post to leaderboard</button><p id="official-post-status" role="status"></p></section>
 <section id="friend-share" hidden><button id="share-challenge" class="primary" type="button">Challenge a Friend</button><p id="friend-share-status" role="status"></p><label id="friend-copy" hidden>Copy challenge invitation<textarea id="friend-copy-text" readonly rows="4"></textarea></label></section>
 <div class="actions"><a id="official-board" class="button" hidden>View leaderboard</a><button id="choose-open-target" type="button" hidden>Choose another target</button><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><a class="button" id="next-hole" hidden>Next hole</a><button class="primary" id="replay">Replay hole</button><a id="practice-home" href="./">Choose a practice hole</a><a id="complete-home" class="button" href="../">Home</a></div></dialog>
-</main><script type="module" src="./releases/0.3.0-b1a06400d9/course/play.mjs"></script></body></html>
+</main><script type="module" src="./releases/0.3.0-c8e0cd96a6/course/play.mjs"></script></body></html>
