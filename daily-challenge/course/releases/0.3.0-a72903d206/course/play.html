@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><script>(()=>{const key="irish-par-theme";function clubTheme(){
+    const requested=new URLSearchParams(globalThis.location?.search).get('theme');
+    if(requested==='springhaven'||requested==='irish-par')return requested;
+    try{return globalThis.sessionStorage.getItem(key)==='springhaven'?'springhaven':'irish-par';}
+    catch{return 'irish-par';}
+}
+(function applyClubTheme(){
+    const theme=clubTheme();
+    if(globalThis.document?.documentElement)document.documentElement.dataset.clubTheme=theme;
+    try{globalThis.sessionStorage.setItem(key,theme);}catch{}
+})();})();</script><meta name="course-build" content="0.3.0-a72903d206"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>The Irish Par · Course Play</title><link rel="stylesheet" href="./style.css"></head>
+<body class="course-play"><main>
+<header><div><div class="brand"><span class="irish-par-wordmark">THE IRISH PAR</span><span class="springhaven-wordmark">THE SPRINGHAVEN CLUB</span></div><div class="club-name">The Springhaven Club</div><h1 class="play-title" id="hole-title">Hole</h1></div><nav class="game-nav" aria-label="Game navigation"><a id="game-home" href="../">Home</a><a id="course-home" href="./">Practice</a></nav></header>
+<div class="context"><span id="setup-label"></span><span id="score-label">Par 4</span></div>
+<p id="series-status" class="muted" hidden></p>
+<div id="render-error" hidden role="alert"></div>
+<label id="cross-target-control" hidden>Target green<select id="cross-target"></select></label>
+<div class="stage" id="stage">
+<canvas id="weather-effects" aria-hidden="true" hidden></canvas>
+<canvas id="scene" tabindex="0" aria-label="First-person course view. Drag down from the ball for power, slide left to aim right, and release to swing." aria-describedby="instructions"></canvas>
+<div class="game-hud">
+<div class="hud" aria-label="Shot conditions"><span id="distance"></span><span id="lie"></span><span id="wind-label" title="Arrow shows where the wind blows. Clock direction is relative to your aim."><b id="wind-arrow" aria-hidden="true">↑</b><span id="wind-text"></span></span><span id="slope" hidden></span></div>
+<div class="side-panels">
+<div class="power-rail" aria-label="Shot power"><span class="rail-label">Power</span><span id="power-label">0%</span><div id="power" role="progressbar" aria-label="Shot power" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="power-fill"></i></div><span id="putt-roll"></span></div>
+<div class="map" id="map-panel"><canvas id="map" width="180" height="510" role="img" aria-label="Overhead hole map. Tee at the bottom, green at the top, with live ball position."></canvas></div>
+</div>
+<div class="view-tools" role="group" aria-label="View controls"><button id="face-pin" type="button">Face pin</button><button id="flyover" type="button">Flyover</button></div>
+<div class="shot-controls"><label>Club · carry<select id="club"></select><small id="club-risk" hidden role="status"></small></label><button id="green-grid" type="button" aria-pressed="true" title="Moving marks show the local downhill direction." hidden>Green grid</button></div>
+</div>
+<svg id="drone-outline" aria-hidden="true" hidden><polygon id="drone-green"></polygon></svg>
+<div id="drone-ball" aria-hidden="true" hidden></div><div id="drone-target" role="status" hidden></div>
+<div id="ball-ring" hidden></div><div id="aim-ring" hidden></div><div id="pull-handle" hidden></div><div id="pull-line" hidden></div><div id="pull-aim" hidden></div>
+<div id="strike-panel" hidden aria-label="Strike timing"><span>Release in the green zone</span><div class="strike-track"><i id="strike-zone"></i><b id="strike-marker"></b></div></div>
+<span id="tour-label" hidden>Green read · Downhill direction</span><div id="fade" hidden></div>
+</div>
+<section class="shot-summary" id="shot-summary" aria-labelledby="shot-summary-title">
+<div class="shot-summary-heading"><h2 id="shot-summary-title">Patchman Data · Last shot</h2><span id="shot-summary-detail" role="status">Hit a shot to see your data.</span></div>
+<dl><div><dt>Carry</dt><dd id="shot-carry">—</dd></div><div><dt>Bounce + roll</dt><dd id="shot-roll">—</dd></div><div><dt>Total travel</dt><dd id="shot-total">—</dd></div></dl>
+</section>
+<section class="play-help" aria-labelledby="play-help-title">
+<h2 id="play-help-title">How to play</h2>
+<p id="instructions">Swipe away from the ball to turn. Pull back for power and slide left to aim right, or right to aim left. Hold, then release in the green zone. Putts only use power and aim.</p>
+<p class="keyboard-help">Keyboard · ← → to aim · Hold Space for power, release to hit · Esc cancels</p>
+</section>
+<div class="round-actions">
+<p id="status" role="status">Preparing the course…</p>
+<button id="retry-official" type="button" hidden>Retry saving shot</button><button id="review-official" type="button" hidden>View official result</button>
+<button id="reset" type="button">Reset hole</button>
+</div>
+<p class="build-line"><span id="build-version"></span><span id="update-notice" hidden>New build available. <button type="button" id="reload-build">Load update</button></span></p>
+<details id="round-settings"><summary>Set up your round</summary><div class="setup settings">
+<label id="hole-setting">Hole<select id="hole"></select></label>
+<label id="tee-setting">Tee<select id="tee"></select></label><label id="pin-setting">Pin<select id="pin"></select></label>
+<label>Prevailing wind · Hole 1 clock<select id="wind"></select></label>
+<label>Base wind · mph<input id="wind-speed" type="number" min="0" max="25" step="1" value="0"></label>
+<label>Green speed<select id="green-speed"><option value=".8">Slow</option><option value="1" selected>Medium</option><option value="1.24">Fast</option></select></label>
+<button id="apply" type="button">Start new round</button></div><p>Clock directions show where wind blows: 12 toward the Hole 1 green, 3 right, 6 toward its tee, 9 left. Wind shifts up to 15° either side and varies gently in strength. The on-screen arrow is relative to your current aim.</p></details>
+<details><summary>About this build</summary><p id="about-copy"></p></details>
+<dialog id="complete" aria-labelledby="complete-title"><div class="result-heading"><p class="brand" id="result-kind">PRACTICE RESULT</p><button id="close-result" type="button" aria-label="Close result">×</button></div><h2 id="complete-title"></h2><div class="result-summary"><p id="complete-detail"></p><strong id="round-score" class="score-badge" hidden></strong></div><div id="series-card"></div><p id="series-best"></p>
+<section id="official-result" hidden><p id="official-detail"></p><label id="official-name-label">Display name<input id="official-name" maxlength="28" autocomplete="nickname"></label><button id="publish-official" class="primary" type="button">Post to leaderboard</button><p id="official-post-status" role="status"></p></section>
+<section id="friend-share" hidden><button id="share-challenge" class="primary" type="button">Challenge a Friend</button><p id="friend-share-status" role="status"></p><label id="friend-copy" hidden>Copy challenge invitation<textarea id="friend-copy-text" readonly rows="4"></textarea></label></section>
+<div class="actions"><a id="official-board" class="button" hidden>View leaderboard</a><button id="choose-open-target" type="button" hidden>Choose another target</button><button id="series-replay" hidden>Replay this setup</button><button id="series-new" hidden>Play a new setup</button><a class="button" id="next-hole" hidden>Next hole</a><button class="primary" id="replay">Replay hole</button><a id="practice-home" href="./">Choose a practice hole</a><a id="complete-home" class="button" href="../">Home</a></div></dialog>
+</main><script type="module" src="./play.mjs"></script></body></html>
